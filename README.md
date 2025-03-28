@@ -24,15 +24,16 @@ This project was built with a focus on great user experience, security, and soli
 
 ## 🔧 Tech Stack
 
-- [Laravel 12](https://laravel.com/docs/12.x) (Starter Kit + [Inertia.js 2](https://inertiajs.com/))  
+- [Laravel 12](https://laravel.com/docs/12.x) with [Inertia.js 2](https://inertiajs.com/)  
 - [Vue.js 3](https://vuejs.org/) with Composition API + [TypeScript](https://www.typescriptlang.org/)  
-- [Pinia](https://pinia.vuejs.org/) (modern, modular state management)  
-- [Vite](https://vitejs.dev/) (ultra-fast build tool)  
-- [PEST](https://pestphp.com/) (elegant backend testing)  
-- [Vitest](https://vitest.dev/) (planned for frontend unit tests)  
-- [Element Plus](https://element-plus.org/)  
-- [Inertia SSR](https://inertiajs.com/server-side-rendering) (coming soon)  
+- [Pinia](https://pinia.vuejs.org/) with Setup Stores (hydrated by Inertia)  
+- [Vite](https://vitejs.dev/)  
+- [ShadCN Vue](https://vue.shadcn.dev/) (UI components, accessible by default)  
+- [PEST](https://pestphp.com/) for backend testing  
+- [Vitest](https://vitest.dev/) for frontend unit/integration testing  
+- [MySQL](https://www.mysql.com/) as the main database  
 - [GitHub Actions](https://docs.github.com/en/actions) for CI automation  
+
 
 
 ---
