@@ -1,6 +1,11 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/igor-ponso/secret-santa/main/.github/banner.png" alt="Secret Santa Banner" />
+  <img 
+    src="https://raw.githubusercontent.com/igor-ponso/secret-santa/main/.github/assets/banner.webp" 
+    alt="Secret Santa Banner" 
+    width="600"
+/>
 </p>
+
 
 <p align="center">
   <a href="#"><img src="https://img.shields.io/badge/build-passing-brightgreen" alt="Build Status"></a>
@@ -35,7 +40,7 @@ This project was built with a focus on great user experience, security, and soli
 ## 🎯 Planned Features
 
 - [x] Authenticated users can create Secret Santa groups  
-- [x] Shareable invitation link for guests  
+- [ ] Shareable invitation link for guests  
 - [ ] Set minimum and maximum gift value  
 - [ ] Draw restrictions (e.g., "X can't draw Y")  
 - [ ] Public group page with countdown  
@@ -63,7 +68,7 @@ This project was built with a focus on great user experience, security, and soli
 ## 🚀 Getting Started Locally
 
 1. Clone the repository:  
-   `git clone https://github.com/your-username/secret-santa.git`
+   `git clone https://github.com/igor-ponso/secret-santa.git`
 
 2. Navigate to the project folder:  
    `cd secret-santa`
