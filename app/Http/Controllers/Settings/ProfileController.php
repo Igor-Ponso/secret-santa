@@ -43,6 +43,8 @@ class ProfileController extends Controller
             // Salvar nova foto
             $path = $request->file('profile_photo')->store('avatars', 'public');
             $user->profile_photo_path = $path;
+        } else {
+            $user->profile_photo_path = null;
         }
 
         $user->save();
