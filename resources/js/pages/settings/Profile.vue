@@ -126,10 +126,9 @@ const avatarSrc = computed(() => {
                                         <DialogTitle>Remove profile photo?</DialogTitle>
                                         <DialogDescription>
                                             <p class="mt-4">
-                                                This will remove your current profile photo from view. The change won't be saved until you click
-                                                "Save".
+                                                Don’t worry — this just removes the photo from preview. Nothing is permanent until you hit “Save”.
                                             </p>
-                                            <p class="mt-4">You can upload a new photo, or reload the page to restore your original one.</p>
+                                            <p class="mt-4">You can reload the page to bring it back.</p>
                                         </DialogDescription>
                                     </DialogHeader>
 
