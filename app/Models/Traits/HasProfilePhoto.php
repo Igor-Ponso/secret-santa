@@ -9,19 +9,19 @@ trait HasProfilePhoto
     /**
      * Get the URL to the user's profile photo.
      */
-    public function getProfilePhotoUrlAttribute(): string
+    public function getProfilePhotoUrlAttribute(): ?string
     {
         return $this->profile_photo_path
             ? Storage::url($this->profile_photo_path)
-            : $this->defaultProfilePhotoUrl();
+            : null;
     }
 
     /**
-     * Get the default profile photo URL if none is uploaded.
+     * Get the avatar alias to the profile photo URL.
      */
-    protected function defaultProfilePhotoUrl(): string
+    public function getAvatarAttribute(): ?string
     {
-        $name = urlencode($this->name);
-        return "https://ui-avatars.com/api/?name={$name}&color=7F9CF5&background=EBF4FF";
+        return $this->profile_photo_url;
     }
+
 }

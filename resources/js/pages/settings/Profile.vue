@@ -8,12 +8,23 @@ import Avatar from '@/components/ui/avatar/Avatar.vue';
 import AvatarFallback from '@/components/ui/avatar/AvatarFallback.vue';
 import AvatarImage from '@/components/ui/avatar/AvatarImage.vue';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useInitials } from '@/composables/useInitials';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-
 import { type BreadcrumbItem, type SharedData, type User } from '@/types';
+import { Trash2 } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -33,21 +44,31 @@ const breadcrumbs: BreadcrumbItem[] = [
 const page = usePage<SharedData>();
 const user = page.props.auth.user as User;
 
+const { getInitials } = useInitials();
+
 const form = useForm({
     name: user.name,
     email: user.email,
     profile_photo: null as File | null,
 });
+
 const handleAvatarChange = (event: Event) => {
     const target = event.target as HTMLInputElement;
     if (target.files && target.files[0]) {
-        form.profile_photo = target.files[0];
+        const file = target.files[0];
+        if (file.size > 2 * 1024 * 1024) {
+            // 2MB limit
+            form.errors.profile_photo = 'File size exceeds 2MB.';
+            return;
+        }
+        form.profile_photo = file;
     }
 };
 
 const removeAvatar = () => {
     form.profile_photo = null;
-    user.profile_photo_url = null;
+    user.avatar = undefined;
+    form.errors.profile_photo = '';
 };
 
 const submit = () => {
@@ -58,18 +79,10 @@ const submit = () => {
 };
 
 const avatarSrc = computed(() => {
-    // se o usuário fez upload de um novo avatar
     if (form.profile_photo instanceof File) {
         return URL.createObjectURL(form.profile_photo);
     }
-
-    // se o usuário clicou em "remover"
-    if (form.profile_photo === null) {
-        return null;
-    }
-
-    // valor inicial do backend
-    return user.profile_photo_url;
+    return form.profile_photo === null ? null : user.avatar;
 });
 </script>
 
@@ -83,29 +96,54 @@ const avatarSrc = computed(() => {
                     <!-- Avatar Upload -->
                     <div class="flex items-center gap-4">
                         <div class="group relative">
-                            <label for="avatar-upload" class="cursor-pointer">
+                            <label for="avatar-upload" class="cursor-pointer" aria-label="Upload avatar">
                                 <Avatar size="lg">
-                                    <AvatarImage :src="avatarSrc ? avatarSrc : user.profile_photo_url" alt="User avatar" />
-                                    <AvatarFallback>{{ user.name[0] }} </AvatarFallback>
+                                    <AvatarImage :src="avatarSrc || user.avatar" alt="User avatar" />
+                                    <AvatarFallback>{{ getInitials(user.name) }}</AvatarFallback>
                                 </Avatar>
                             </label>
-
                             <input id="avatar-upload" type="file" accept="image/*" class="hidden" @change="handleAvatarChange" />
-
-                            <!-- Remove Button -->
-                            <button
-                                v-if="user.profile_photo_url || avatarSrc"
-                                type="button"
-                                @click="removeAvatar"
-                                class="absolute right-0 top-0 rounded-full opacity-0 transition-opacity group-hover:opacity-100"
-                            >
-                                ✖
-                            </button>
                         </div>
-
                         <div>
                             <p class="text-sm text-muted-foreground">Click the avatar to upload a new photo.</p>
                             <p class="text-sm text-muted-foreground">Max size: 2MB</p>
+                            <Dialog>
+                                <DialogTrigger as-child>
+                                    <Button
+                                        v-if="user.avatar || avatarSrc"
+                                        type="button"
+                                        variant="destructive"
+                                        size="sm"
+                                        class="mt-2"
+                                        aria-label="Open remove avatar dialog"
+                                    >
+                                        <Trash2 /> Remove avatar
+                                    </Button>
+                                </DialogTrigger>
+
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Remove profile photo?</DialogTitle>
+                                        <DialogDescription>
+                                            <p class="mt-4">
+                                                This will remove your current profile photo from view. The change won't be saved until you click
+                                                "Save".
+                                            </p>
+                                            <p class="mt-4">You can upload a new photo, or reload the page to restore your original one.</p>
+                                        </DialogDescription>
+                                    </DialogHeader>
+
+                                    <DialogFooter class="gap-2">
+                                        <DialogClose as-child>
+                                            <Button variant="secondary">Cancel</Button>
+                                        </DialogClose>
+
+                                        <DialogClose as-child>
+                                            <Button variant="destructive" @click="removeAvatar"> Yes, remove it </Button>
+                                        </DialogClose>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
                         </div>
                     </div>
                     <InputError :message="form.errors.profile_photo" class="mt-1" />
