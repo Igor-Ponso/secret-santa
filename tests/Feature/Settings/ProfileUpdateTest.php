@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
@@ -84,4 +85,35 @@ test('correct password must be provided to delete account', function () {
         ->assertRedirect('/settings/profile');
 
     expect($user->fresh())->not->toBeNull();
+});
+
+test('user can upload and remove avatar', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+
+    // Upload avatar
+    $response = $this->actingAs($user)->patch('/settings/profile', [
+        'name' => 'Test User',
+        'email' => $user->email,
+        'profile_photo' => UploadedFile::fake()->image('avatar.jpg'),
+    ]);
+
+    $response->assertRedirect('/settings/profile');
+
+    $user->refresh();
+    expect($user->profile_photo_path)->not->toBeNull();
+    Storage::disk('public')->assertExists($user->profile_photo_path);
+
+    // Remove avatar
+    $response = $this->actingAs($user)->patch('/settings/profile', [
+        'name' => 'Test User',
+        'email' => $user->email,
+        'remove_avatar' => '1',
+    ]);
+
+    $response->assertRedirect('/settings/profile');
+
+    $user->refresh();
+    expect($user->profile_photo_path)->toBeNull();
 });
