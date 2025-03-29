@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 
 import DeleteUser from '@/components/DeleteUser.vue';
@@ -9,6 +10,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
+import Avatar from '@/components/ui/avatar/Avatar.vue';
+import AvatarImage from '@/components/ui/avatar/AvatarImage.vue';
+import AvatarFallback from '@/components/ui/avatar/AvatarFallback.vue';
+
 import { type BreadcrumbItem, type SharedData, type User } from '@/types';
 
 interface Props {
@@ -28,14 +33,26 @@ const breadcrumbs: BreadcrumbItem[] = [
 const page = usePage<SharedData>();
 const user = page.props.auth.user as User;
 
+const avatarPreview = ref<string | null>(null);
+
 const form = useForm({
     name: user.name,
     email: user.email,
+    profile_photo: null as File | null,
 });
 
+const handleAvatarChange = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files[0]) {
+        form.profile_photo = target.files[0];
+        avatarPreview.value = URL.createObjectURL(target.files[0]);
+    }
+};
+
 const submit = () => {
-    form.patch(route('profile.update'), {
+    form.post(route('profile.update'), {
         preserveScroll: true,
+        forceFormData: true,
     });
 };
 </script>
@@ -46,21 +63,37 @@ const submit = () => {
 
         <SettingsLayout>
             <div class="flex flex-col space-y-6">
-                <HeadingSmall title="Profile information" description="Update your name and email address" />
-
+                <HeadingSmall title="Profile information" description="Update your name, email and avatar" />
                 <form @submit.prevent="submit" class="space-y-6">
+                    <!-- Avatar Upload -->
+                    <div class="flex items-center gap-4">
+                        <Avatar size="lg">
+                            <AvatarImage :src="avatarPreview || user.profile_photo_url || ''" alt="User avatar" />
+                            <AvatarFallback>{{ user.name[0] }}</AvatarFallback>
+                        </Avatar>
+
+                        <input
+                            type="file"
+                            accept="image/*"
+                            class="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-neutral-100 file:text-neutral-800 hover:file:bg-neutral-200"
+                            @change="handleAvatarChange"
+                        />
+                        <InputError :message="form.errors.profile_photo" class="mt-1" />
+                    </div>
+
+                    <!-- Name -->
                     <div class="grid gap-2">
                         <Label for="name">Name</Label>
-                        <Input id="name" class="mt-1 block w-full" v-model="form.name" required autocomplete="name" placeholder="Full name" />
+                        <Input id="name" v-model="form.name" required autocomplete="name" placeholder="Full name" />
                         <InputError class="mt-2" :message="form.errors.name" />
                     </div>
 
+                    <!-- Email -->
                     <div class="grid gap-2">
                         <Label for="email">Email address</Label>
                         <Input
                             id="email"
                             type="email"
-                            class="mt-1 block w-full"
                             v-model="form.email"
                             required
                             autocomplete="username"
@@ -69,6 +102,7 @@ const submit = () => {
                         <InputError class="mt-2" :message="form.errors.email" />
                     </div>
 
+                    <!-- Email Verification -->
                     <div v-if="mustVerifyEmail && !user.email_verified_at">
                         <p class="-mt-4 text-sm text-muted-foreground">
                             Your email address is unverified.
@@ -87,6 +121,7 @@ const submit = () => {
                         </div>
                     </div>
 
+                    <!-- Submit -->
                     <div class="flex items-center gap-4">
                         <Button :disabled="form.processing">Save</Button>
 
