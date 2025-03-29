@@ -24,3 +24,4 @@ yarn-error.log
 /.zed
 # macOS system files
 .DS_Store
+/.github/scripts
