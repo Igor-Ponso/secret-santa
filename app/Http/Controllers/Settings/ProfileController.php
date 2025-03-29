@@ -16,6 +16,9 @@ class ProfileController extends Controller
 {
     /**
      * Show the user's profile settings page.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Inertia\Response
      */
     public function edit(Request $request): Response
     {
@@ -27,33 +30,43 @@ class ProfileController extends Controller
 
     /**
      * Update the user's profile information.
+     *
+     * @param  \App\Http\Requests\Settings\ProfileUpdateRequest  $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $user = $request->user();
 
-        $user->fill($request->only(['name', 'email']));
+        $user->fill($request->validated());
 
-        if ($request->hasFile('profile_photo')) {
-            // Apagar foto anterior se existir
-            if ($user->profile_photo_path && Storage::exists($user->profile_photo_path)) {
-                Storage::delete($user->profile_photo_path);
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        if ($request->boolean('remove_avatar')) {
+            if ($user->profile_photo_path && Storage::disk('public')->exists($user->profile_photo_path)) {
+                Storage::disk('public')->delete($user->profile_photo_path);
             }
 
-            // Salvar nova foto
+            $user->profile_photo_path = null;
+        }
+
+        if ($request->hasFile('profile_photo')) {
             $path = $request->file('profile_photo')->store('avatars', 'public');
             $user->profile_photo_path = $path;
-        } else {
-            $user->profile_photo_path = null;
         }
 
         $user->save();
 
-        return redirect()->back()->with('success', 'Profile updated successfully.');
+        return to_route('profile.edit');
     }
 
     /**
-     * Delete the user's profile.
+     * Delete the user's account.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy(Request $request): RedirectResponse
     {
