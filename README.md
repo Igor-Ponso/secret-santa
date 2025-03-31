@@ -93,7 +93,7 @@ This project was built with a focus on great user experience, security, and soli
    `php artisan serve`
 
 9. In another terminal, run Vite:  
-   `bun run dev`
+   `npm run dev`
 
 ---
 
