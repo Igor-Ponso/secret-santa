@@ -26,7 +26,6 @@ This project was built with a focus on great user experience, security, and soli
 
 - [Laravel 12](https://laravel.com/docs/12.x) with [Inertia.js 2](https://inertiajs.com/)  
 - [Vue.js 3](https://vuejs.org/) with Composition API + [TypeScript](https://www.typescriptlang.org/)  
-- [Pinia](https://pinia.vuejs.org/) with Setup Stores (hydrated by Inertia)  
 - [Vite](https://vitejs.dev/)  
 - [ShadCN Vue](https://vue.shadcn.dev/) (UI components, accessible by default)  
 - [PEST](https://pestphp.com/) for backend testing  
