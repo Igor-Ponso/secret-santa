@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
 
 const page = usePage();
 const name = page.props.name;
-const quote = page.props.quote;
 
 defineProps<{
     title?: string;
@@ -14,19 +13,20 @@ defineProps<{
 
 <template>
     <div class="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
-        <div class="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
-            <div class="absolute inset-0 bg-zinc-900" />
-            <Link :href="route('home')" class="relative z-20 flex items-center text-lg font-medium">
-                <AppLogoIcon class="mr-2 size-8 fill-current text-white" />
-                {{ name }}
-            </Link>
-            <div v-if="quote" class="relative z-20 mt-auto">
-                <blockquote class="space-y-2">
-                    <p class="text-lg">&ldquo;{{ quote.message }}&rdquo;</p>
-                    <footer class="text-sm text-neutral-300">{{ quote.author }}</footer>
-                </blockquote>
+        <div class="relative hidden h-full flex-col bg-gradient-to-b from-red-800 via-red-600 to-red-500 p-10 text-white dark:border-r lg:flex">
+            <!-- Overlay escuro sutil por cima (opcional) -->
+            <div class="absolute inset-0 bg-black/30" />
+
+            <!-- Conteúdo principal -->
+            <div class="relative z-20 flex flex-col h-full">
+                <Link :href="route('home')" class="flex items-center text-lg font-medium">
+                    <DotLottieVue style="height: 60px; width: 60px" autoplay loop src="https://lottie.host/322f7625-05c2-469a-b338-01ac43139cb4/wHA2h57HAm.lottie" />
+                    {{ name }}
+                </Link>
+               
             </div>
         </div>
+
         <div class="lg:p-8">
             <div class="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
                 <div class="flex flex-col space-y-2 text-center">
@@ -38,3 +38,4 @@ defineProps<{
         </div>
     </div>
 </template>
+

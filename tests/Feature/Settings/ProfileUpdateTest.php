@@ -109,7 +109,7 @@ test('user can upload and remove avatar', function () {
     $response = $this->actingAs($user)->patch('/settings/profile', [
         'name' => 'Test User',
         'email' => $user->email,
-        'remove_avatar' => '1',
+        'remove_avatar' => true,
     ]);
 
     $response->assertRedirect('/settings/profile');

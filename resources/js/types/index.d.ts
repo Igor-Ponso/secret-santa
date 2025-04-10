@@ -36,4 +36,8 @@ export interface User {
     profile_photo_url?: string | null;
 }
 
+declare module '@inertiajs/vue3' {
+    export function usePage<TPageProps = SharedData>(): Page<TPageProps>;
+  }
+
 export type BreadcrumbItemType = BreadcrumbItem;
