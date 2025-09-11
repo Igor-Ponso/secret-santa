@@ -21,9 +21,27 @@ class GroupController extends Controller
     {
         $groups = Group::query()
             ->where('owner_id', Auth::id())
+            ->with(['invitations' => function ($q) {
+                $q->latest('id')->select(['id','group_id','email','accepted_at','declined_at']);
+            }])
             ->latest('id')
             ->select(['id', 'name', 'description', 'min_value', 'max_value', 'draw_at', 'created_at'])
-            ->get();
+            ->get()
+            ->map(function (Group $g) {
+                return [
+                    'id' => $g->id,
+                    'name' => $g->name,
+                    'description' => $g->description,
+                    'min_value' => $g->min_value,
+                    'max_value' => $g->max_value,
+                    'draw_at' => $g->draw_at,
+                    'created_at' => $g->created_at,
+                    'invitations' => $g->invitations->map(fn($i) => [
+                        'email' => $i->email,
+                        'status' => $i->accepted_at ? 'accepted' : ($i->declined_at ? 'declined' : 'pending'),
+                    ])
+                ];
+            });
 
         return Inertia::render('Groups/Index', [
             'groups' => $groups,

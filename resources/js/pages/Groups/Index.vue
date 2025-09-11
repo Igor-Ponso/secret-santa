@@ -13,6 +13,12 @@ interface Group {
     max_value?: number | null;
     draw_at?: string | null;
     created_at: string;
+    invitations?: Invitation[];
+}
+
+interface Invitation {
+    email: string;
+    status: 'pending' | 'accepted' | 'declined';
 }
 
 interface Props {
@@ -27,6 +33,9 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Groups', href: '/groups' }];
 
 const confirmOpen = ref(false);
 const pendingId = ref<number | null>(null);
+const inviteOpen = ref(false);
+const inviteGroupId = ref<number | null>(null);
+const inviteEmail = ref('');
 
 function askDelete(id: number) {
     pendingId.value = id;
@@ -41,6 +50,23 @@ function performDelete() {
             confirmOpen.value = false;
             pendingId.value = null;
         },
+    });
+}
+
+function openInvite(groupId: number) {
+    inviteGroupId.value = groupId;
+    inviteEmail.value = '';
+    inviteOpen.value = true;
+}
+
+function submitInvite() {
+    if (!inviteGroupId.value) return;
+    router.post(route('groups.invitations.store', inviteGroupId.value), { email: inviteEmail.value }, {
+        onError: () => errorToast('Failed to create invitation'),
+        onSuccess: () => {
+            inviteOpen.value = false;
+            inviteEmail.value = '';
+        }
     });
 }
 </script>
@@ -70,9 +96,23 @@ function performDelete() {
                         <span v-if="g.min_value !== null || g.max_value !== null">Gift: {{ g.min_value ?? 0 }} - {{ g.max_value ?? '∞' }}</span>
                         <span v-if="g.draw_at">Draw: {{ new Date(g.draw_at).toLocaleDateString() }}</span>
                     </div>
+                    <div v-if="g.invitations && g.invitations.length" class="mt-3 space-y-1">
+                        <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Invitations</p>
+                        <ul class="space-y-1">
+                            <li v-for="inv in g.invitations" :key="inv.email" class="flex items-center justify-between rounded border px-2 py-1 text-[11px]">
+                                <span class="truncate">{{ inv.email }}</span>
+                                <span :class="{
+                                    'text-green-600': inv.status === 'accepted',
+                                    'text-yellow-600': inv.status === 'pending',
+                                    'text-destructive': inv.status === 'declined'
+                                }">{{ inv.status }}</span>
+                            </li>
+                        </ul>
+                    </div>
                     <div class="mt-3 flex items-center gap-3">
                         <Link :href="route('groups.edit', g.id)" class="text-xs text-primary hover:underline">Edit</Link>
                         <button type="button" @click="askDelete(g.id)" class="text-xs text-destructive hover:underline">Delete</button>
+                        <button type="button" @click="openInvite(g.id)" class="text-xs text-muted-foreground hover:underline">Invite</button>
                     </div>
                 </li>
             </ul>
@@ -99,6 +139,21 @@ function performDelete() {
                         >
                             Delete
                         </button>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="inviteOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-background/70 p-4 backdrop-blur-sm">
+                <div class="w-full max-w-sm rounded-lg border bg-card p-5 shadow-lg">
+                    <h3 class="text-sm font-semibold">Invite to group</h3>
+                    <p class="mt-2 text-xs text-muted-foreground">Send an invitation by email.</p>
+                    <div class="mt-4 space-y-2">
+                        <label class="text-xs font-medium" for="invite_email">Email</label>
+                        <input id="invite_email" v-model="inviteEmail" type="email" class="w-full rounded-md border px-3 py-2 text-sm" />
+                    </div>
+                    <div class="mt-4 flex justify-end gap-2">
+                        <button type="button" class="rounded-md border px-3 py-1.5 text-xs hover:bg-accent" @click="inviteOpen = false">Cancel</button>
+                        <button type="button" class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90" @click="submitInvite()">Send</button>
                     </div>
                 </div>
             </div>

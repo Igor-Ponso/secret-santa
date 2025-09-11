@@ -6,7 +6,6 @@ use App\Models\Group;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/** @extends Factory<Group> */
 class GroupFactory extends Factory
 {
     protected $model = Group::class;

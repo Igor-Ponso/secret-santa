@@ -14,7 +14,7 @@ Route::get('dashboard', function () {
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
 
-Route::middleware(['auth', 'verified'])
+Route::middleware(['auth'])
     ->prefix('groups')
     ->name('groups.')
     ->group(function () {
@@ -24,4 +24,11 @@ Route::middleware(['auth', 'verified'])
         Route::get('/{group}/edit', [\App\Http\Controllers\GroupController::class, 'edit'])->name('edit');
         Route::put('/{group}', [\App\Http\Controllers\GroupController::class, 'update'])->name('update');
         Route::delete('/{group}', [\App\Http\Controllers\GroupController::class, 'destroy'])->name('destroy');
+        Route::post('/{group}/invitations', [\App\Http\Controllers\GroupInvitationController::class, 'store'])->name('invitations.store');
     });
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/invites/{token}', [\App\Http\Controllers\PublicInvitationController::class, 'show'])->name('invites.show');
+    Route::post('/invites/{token}/accept', [\App\Http\Controllers\PublicInvitationController::class, 'accept'])->name('invites.accept');
+    Route::post('/invites/{token}/decline', [\App\Http\Controllers\PublicInvitationController::class, 'decline'])->name('invites.decline');
+});
