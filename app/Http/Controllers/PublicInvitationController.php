@@ -9,10 +9,15 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Public (token-based) invitation endpoints.
+ * Requires authentication currently; could be relaxed to allow account creation flow.
+ */
 class PublicInvitationController extends Controller
 {
     public function __construct(private InvitationService $service) {}
 
+    /** Display invitation landing page. */
     public function show(string $plainToken): Response
     {
         $invitation = $this->service->findByPlainToken($plainToken);
@@ -32,6 +37,7 @@ class PublicInvitationController extends Controller
         ]);
     }
 
+    /** Accept an invitation. */
     public function accept(Request $request, string $plainToken): RedirectResponse
     {
         $invitation = $this->service->findByPlainToken($plainToken);
@@ -44,6 +50,7 @@ class PublicInvitationController extends Controller
         return redirect()->route('groups.index')->with('flash', ['success' => 'Invitation accepted']);
     }
 
+    /** Decline an invitation. */
     public function decline(string $plainToken): RedirectResponse
     {
         $invitation = $this->service->findByPlainToken($plainToken);

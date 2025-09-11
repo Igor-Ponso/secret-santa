@@ -6,11 +6,19 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateGroupRequest extends FormRequest
 {
+    /**
+     * Authorize the request (ownership verified via policy in controller).
+     */
     public function authorize(): bool
     {
         return $this->user() !== null; // policy will handle ownership in controller
     }
 
+    /**
+     * Validation rules for updating a group.
+     *
+     * @return array<string, array<int, string>|string>
+     */
     public function rules(): array
     {
         return [

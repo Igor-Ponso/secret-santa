@@ -14,7 +14,7 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasFactory, Notifiable, HasProfilePhoto;
 
     /**
-     * The attributes that are mass assignable.
+     * Mass assignable attributes.
      *
      * @var list<string>
      */
@@ -28,7 +28,7 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
+     * Attributes hidden when serialized.
      *
      * @var list<string>
      */
@@ -38,13 +38,17 @@ class User extends Authenticatable implements MustVerifyEmail
         'profile_photo_path',
     ];
 
+    /**
+     * Accessors automatically appended.
+     *
+     * @var list<string>
+     */
     protected $appends = [
         'avatar',
     ];
 
-
     /**
-     * Get the attributes that should be cast.
+     * Attribute cast map.
      *
      * @return array<string, string>
      */

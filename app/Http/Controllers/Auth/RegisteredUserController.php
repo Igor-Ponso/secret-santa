@@ -13,6 +13,9 @@ use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Handle user registration (form + persistence + initial login).
+ */
 class RegisteredUserController extends Controller
 {
     /**

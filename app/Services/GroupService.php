@@ -5,10 +5,15 @@ namespace App\Services;
 use App\Models\Group;
 use App\Models\User;
 
+/**
+ * Service encapsulating persistence concerns for Group aggregate.
+ * Validation is performed at FormRequest level; only whitelisted fields are passed here.
+ */
 class GroupService
 {
     /**
-     * Create a group for given owner.
+     * Create a group for a given owner.
+     * @param array<string,mixed> $data
      */
     public function create(array $data, User $owner): Group
     {
@@ -24,6 +29,10 @@ class GroupService
         return Group::create($payload);
     }
 
+    /**
+     * Update group core attributes (ownership immutable here).
+     * @param array<string,mixed> $data
+     */
     public function update(Group $group, array $data): Group
     {
         $group->update([
@@ -37,6 +46,9 @@ class GroupService
         return $group;
     }
 
+    /**
+     * Soft delete a group (cascading handled at DB constraints if configured).
+     */
     public function delete(Group $group): void
     {
         $group->delete();

@@ -13,6 +13,11 @@ class Group extends Model
     use HasFactory;
     use SoftDeletes;
 
+    /**
+     * Mass assignable attributes.
+     *
+     * @var list<string>
+     */
     protected $fillable = [
         'owner_id',
         'name',
@@ -22,15 +27,30 @@ class Group extends Model
         'draw_at'
     ];
 
+    /**
+     * Attribute casting rules.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
         'draw_at' => 'datetime',
     ];
 
+    /**
+     * Owner (group creator / administrator).
+     *
+     * @return BelongsTo<User, Group>
+     */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
+    /**
+     * Invitations issued for this group.
+     *
+     * @return HasMany<GroupInvitation>
+     */
     public function invitations(): HasMany
     {
         return $this->hasMany(GroupInvitation::class);

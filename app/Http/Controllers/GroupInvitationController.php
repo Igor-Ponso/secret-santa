@@ -7,10 +7,21 @@ use App\Models\Group;
 use App\Services\InvitationService;
 use Illuminate\Http\RedirectResponse;
 
+/**
+ * Controller for internal (owner) invitation management.
+ *
+ * Security considerations:
+ * - Consider rate limiting invitation creation (e.g. throttling by user/group) to prevent abuse.
+ * - Duplicate pending invitation check reduces email enumeration risk.
+ * - Plain tokens never persisted; only hashed form stored.
+ */
 class GroupInvitationController extends Controller
 {
     public function __construct(private InvitationService $service) {}
 
+    /**
+     * Create a new invitation for a group owner.
+     */
     public function store(StoreInvitationRequest $request, Group $group): RedirectResponse
     {
         $this->authorize('update', $group); // owner can invite
@@ -34,7 +45,10 @@ class GroupInvitationController extends Controller
         $url = route('invites.show', $plain);
 
         // (Future) Send email here.
-
-    return redirect()->route('groups.index')->with('flash', ['success' => 'Invitation created', 'info' => $url]);
+        // Security: don't leak full token in flash (UI toast). Provide truncated token for reference only.
+        return redirect()->route('groups.index')->with('flash', [
+            'success' => 'Invitation created',
+            'info' => 'Invite link generated (' . substr($plain, 0, 8) . '...)',
+        ]);
     }
 }

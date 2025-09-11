@@ -7,6 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $group_id
+ * @property int $inviter_id
+ * @property int|null $invited_user_id
+ * @property string $email
+ * @property string $token   Hashed token (sha256 hex) – never expose plain token after creation.
+ * @property \Illuminate\Support\Carbon|null $accepted_at
+ * @property \Illuminate\Support\Carbon|null $declined_at
+ * @property \Illuminate\Support\Carbon|null $expires_at
+ */
 class GroupInvitation extends Model
 {
     use HasFactory;

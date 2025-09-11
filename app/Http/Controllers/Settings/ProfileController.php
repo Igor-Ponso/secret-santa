@@ -12,13 +12,13 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * User profile settings (update details, avatar, account deletion).
+ */
 class ProfileController extends Controller
 {
     /**
      * Show the user's profile settings page.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Inertia\Response
      */
     public function edit(Request $request): Response
     {
@@ -29,10 +29,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the user's profile information.
-     *
-     * @param  \App\Http\Requests\Settings\ProfileUpdateRequest  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * Update the user's profile information (name, email, avatar).
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
@@ -48,7 +45,6 @@ class ProfileController extends Controller
             if ($user->profile_photo_path && Storage::disk('public')->exists($user->profile_photo_path)) {
                 Storage::disk('public')->delete($user->profile_photo_path);
             }
-
             $user->profile_photo_path = null;
         }
 
@@ -63,10 +59,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Delete the user's account.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * Delete the user's account permanently (soft-delete not applied).
      */
     public function destroy(Request $request): RedirectResponse
     {
@@ -75,9 +68,7 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
-
         Auth::logout();
-
         $user->delete();
 
         $request->session()->invalidate();

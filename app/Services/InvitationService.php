@@ -9,8 +9,21 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
 
+/**
+ * Service layer for creating and mutating group invitations.
+ *
+ * Responsibilities:
+ *  - Token generation & hashing
+ *  - Basic state transitions (accept / decline)
+ *  - Lookup by plain token (constant-time-ish hashing path)
+ */
 class InvitationService
 {
+    /**
+     * Create a new invitation.
+     * Token stored hashed (sha256) to avoid leaking raw token if DB compromised.
+     * The returned model carries a non-persisted attribute `plain_token` for one-time use (e.g. email composition).
+     */
     public function create(Group $group, User $inviter, string $email): GroupInvitation
     {
         return DB::transaction(function () use ($group, $inviter, $email) {
@@ -26,12 +39,18 @@ class InvitationService
         });
     }
 
+    /**
+     * Find invitation by its plain token (hashed lookup).
+     */
     public function findByPlainToken(string $plain): ?GroupInvitation
     {
         $hashed = hash('sha256', $plain);
         return GroupInvitation::where('token', $hashed)->first();
     }
 
+    /**
+     * Accept an invitation if still pending.
+     */
     public function accept(GroupInvitation $invitation, User $user): void
     {
         if ($invitation->accepted_at || $invitation->declined_at) return;
@@ -41,6 +60,9 @@ class InvitationService
         ])->save();
     }
 
+    /**
+     * Decline an invitation if still pending.
+     */
     public function decline(GroupInvitation $invitation): void
     {
         if ($invitation->accepted_at || $invitation->declined_at) return;

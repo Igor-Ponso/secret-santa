@@ -11,19 +11,28 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Controller handling CRUD operations for Groups.
+ * All routes protected by auth middleware. Authorization for ownership enforced via policy on mutating endpoints.
+ */
 class GroupController extends Controller
 {
     public function __construct(private GroupService $service)
     {
     }
 
+    /**
+     * List groups owned by the authenticated user.
+     */
     public function index(): Response
     {
         $groups = Group::query()
             ->where('owner_id', Auth::id())
-            ->with(['invitations' => function ($q) {
-                $q->latest('id')->select(['id','group_id','email','accepted_at','declined_at']);
-            }])
+            ->with([
+                'invitations' => function ($q) {
+                    $q->latest('id')->select(['id', 'group_id', 'email', 'accepted_at', 'declined_at']);
+                }
+            ])
             ->latest('id')
             ->select(['id', 'name', 'description', 'min_value', 'max_value', 'draw_at', 'created_at'])
             ->get()
@@ -48,11 +57,13 @@ class GroupController extends Controller
         ]);
     }
 
+    /** Show create form. */
     public function create(): Response
     {
         return Inertia::render('Groups/Create');
     }
 
+    /** Persist a new group. */
     public function store(StoreGroupRequest $request): RedirectResponse
     {
         $group = $this->service->create($request->validated(), $request->user());
@@ -61,6 +72,7 @@ class GroupController extends Controller
             ->with('flash', ['success' => 'Group created successfully']);
     }
 
+    /** Edit form (authorization via policy). */
     public function edit(Group $group): Response
     {
         $this->authorize('update', $group);
@@ -69,6 +81,7 @@ class GroupController extends Controller
         ]);
     }
 
+    /** Update existing group. */
     public function update(UpdateGroupRequest $request, Group $group): RedirectResponse
     {
         $this->authorize('update', $group);
@@ -78,6 +91,12 @@ class GroupController extends Controller
             ->with('flash', ['info' => 'Group updated successfully']);
     }
 
+    /** Soft delete a group.
+     *  
+     * @param Group $group
+     * 
+     * @return RedirectResponse
+     */
     public function destroy(Group $group): RedirectResponse
     {
         $this->authorize('delete', $group);

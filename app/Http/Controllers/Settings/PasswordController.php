@@ -11,6 +11,9 @@ use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * User password management (view + update).
+ */
 class PasswordController extends Controller
 {
     /**
