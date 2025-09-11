@@ -1,14 +1,20 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 
+import type { Method } from '@inertiajs/core';
+
 interface Props {
     href: string;
     tabindex?: number;
-    method?: string;
+    method?: Method; // constrain to Inertia verbs
     as?: string;
 }
 
-defineProps<Props>();
+withDefaults(defineProps<Props>(), {
+    method: undefined,
+    as: undefined,
+    tabindex: undefined,
+});
 </script>
 
 <template>

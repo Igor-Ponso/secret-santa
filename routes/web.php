@@ -13,3 +13,12 @@ Route::get('dashboard', function () {
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+
+Route::middleware(['auth', 'verified'])
+    ->prefix('groups')
+    ->name('groups.')
+    ->group(function () {
+        Route::get('/', [\App\Http\Controllers\GroupController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\GroupController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\GroupController::class, 'store'])->name('store');
+    });

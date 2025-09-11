@@ -3,7 +3,7 @@ import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItemType } from '@/types';
 
-defineProps<{
+const props = defineProps<{
     breadcrumbs?: BreadcrumbItemType[];
 }>();
 </script>
@@ -14,8 +14,8 @@ defineProps<{
     >
         <div class="flex items-center gap-2">
             <SidebarTrigger class="-ml-1" />
-            <template v-if="breadcrumbs.length > 0">
-                <Breadcrumbs :breadcrumbs="breadcrumbs" />
+            <template v-if="props.breadcrumbs && props.breadcrumbs.length > 0">
+                <Breadcrumbs :breadcrumbs="props.breadcrumbs" />
             </template>
         </div>
     </header>

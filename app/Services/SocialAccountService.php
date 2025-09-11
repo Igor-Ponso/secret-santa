@@ -36,7 +36,9 @@ class SocialAccountService
         try {
             $driver = Socialite::driver($provider); // base driver instance
             // Some providers need stateless for SPA / Inertia setups; call if available
-            if (method_exists($driver, 'stateless')) { /** @phpstan-ignore-line */ $driver = $driver->stateless(); }
+            if (method_exists($driver, 'stateless')) { /** @phpstan-ignore-line */
+                $driver = $driver->stateless();
+            }
             /** @var ProviderUser $socialUser */
             $socialUser = $driver->user();
         } catch (\Throwable $e) {
