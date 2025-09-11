@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import DateTimePicker from '@/components/DateTimePicker.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
@@ -8,7 +9,7 @@ const form = useForm({
     description: '',
     min_value: null as number | null,
     max_value: null as number | null,
-    draw_at: '' as string | null,
+    draw_at: null as string | null,
 });
 
 function submit() {
@@ -55,44 +56,49 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <p v-if="form.errors.description" class="text-xs text-destructive">{{ form.errors.description }}</p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid gap-4 sm:grid-cols-2">
                     <div class="space-y-2">
                         <label for="min_value" class="text-sm font-medium">Min Value</label>
-                        <input
-                            id="min_value"
-                            v-model.number="form.min_value"
-                            type="number"
-                            min="0"
-                            class="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                            :class="{ 'border-destructive': form.errors.min_value }"
-                        />
+                        <div class="relative">
+                            <input
+                                id="min_value"
+                                v-model.number="form.min_value"
+                                type="number"
+                                min="0"
+                                placeholder="Ex: 20"
+                                class="w-full rounded-md border bg-background px-3 py-2 pr-10 text-sm outline-none focus:ring-2 focus:ring-ring"
+                                :class="{ 'border-destructive': form.errors.min_value }"
+                            />
+                            <span class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs text-muted-foreground">R$</span>
+                        </div>
                         <p v-if="form.errors.min_value" class="text-xs text-destructive">{{ form.errors.min_value }}</p>
                     </div>
                     <div class="space-y-2">
                         <label for="max_value" class="text-sm font-medium">Max Value</label>
-                        <input
-                            id="max_value"
-                            v-model.number="form.max_value"
-                            type="number"
-                            min="0"
-                            class="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                            :class="{ 'border-destructive': form.errors.max_value }"
-                        />
+                        <div class="relative">
+                            <input
+                                id="max_value"
+                                v-model.number="form.max_value"
+                                type="number"
+                                min="0"
+                                placeholder="Ex: 100"
+                                class="w-full rounded-md border bg-background px-3 py-2 pr-10 text-sm outline-none focus:ring-2 focus:ring-ring"
+                                :class="{ 'border-destructive': form.errors.max_value }"
+                            />
+                            <span class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs text-muted-foreground">R$</span>
+                        </div>
                         <p v-if="form.errors.max_value" class="text-xs text-destructive">{{ form.errors.max_value }}</p>
                     </div>
                 </div>
 
-                <div class="space-y-2">
-                    <label for="draw_at" class="text-sm font-medium">Draw Date</label>
-                    <input
-                        id="draw_at"
-                        v-model="form.draw_at"
-                        type="datetime-local"
-                        class="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                        :class="{ 'border-destructive': form.errors.draw_at }"
-                    />
-                    <p v-if="form.errors.draw_at" class="text-xs text-destructive">{{ form.errors.draw_at }}</p>
-                </div>
+                <DateTimePicker
+                    v-model="form.draw_at"
+                    label="Draw Date *"
+                    :required="true"
+                    :min="new Date().toISOString()"
+                    placeholder="Escolha a data do sorteio"
+                />
+                <p v-if="form.errors.draw_at" class="text-xs text-destructive">{{ form.errors.draw_at }}</p>
 
                 <div class="flex items-center gap-3">
                     <button

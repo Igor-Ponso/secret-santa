@@ -9,13 +9,17 @@ interface Props {
     modelValue: string | null; // ISO string or null
     label?: string;
     required?: boolean;
-    min?: string | null; // ISO min
+    min?: string | null; // ISO min (date boundary)
+    placeholder?: string;
+    disabled?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     label: 'Draw Date',
     required: false,
     min: null,
+    placeholder: 'Select date & time',
+    disabled: false,
 });
 
 const emit = defineEmits<{
@@ -36,6 +40,7 @@ watch(
 
 // Using placeholder Calendar (Date based)
 const calendarValue = ref<Date | null>(internal.value);
+const minDate = computed(() => (props.min ? new Date(props.min) : null));
 
 function onCalendarSelect(v: Date | null) {
     calendarValue.value = v;
@@ -77,7 +82,17 @@ function clearDate() {
     emit('update:modelValue', null);
 }
 
-const displayValue = computed(() => (internal.value ? internal.value.toLocaleString() : 'Select date & time'));
+const displayValue = computed(() =>
+    internal.value
+        ? internal.value.toLocaleDateString(undefined, {
+              year: 'numeric',
+              month: 'short',
+              day: '2-digit',
+          }) +
+          ' ' +
+          internal.value.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })
+        : props.placeholder,
+);
 </script>
 
 <template>
@@ -91,7 +106,7 @@ const displayValue = computed(() => (internal.value ? internal.value.toLocaleStr
                 </Button>
             </PopoverTrigger>
             <PopoverContent class="w-[300px] space-y-3 p-3" align="start">
-                <Calendar v-model="calendarValue" @update:model-value="onCalendarSelect" class="border-none p-0" />
+                <Calendar v-model="calendarValue" :min="minDate" @update:model-value="onCalendarSelect" class="border-none p-0" />
                 <div class="flex items-center gap-2 border-t pt-2">
                     <Clock class="h-4 w-4 text-muted-foreground" />
                     <input
