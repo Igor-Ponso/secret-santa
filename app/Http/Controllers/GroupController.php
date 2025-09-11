@@ -26,15 +26,31 @@ class GroupController extends Controller
      */
     public function index(): Response
     {
+        $userId = Auth::id();
+
+        $wishlistCountSub = \App\Models\Wishlist::query()
+            ->selectRaw('COUNT(*)')
+            ->whereColumn('wishlists.group_id', 'groups.id')
+            ->where('wishlists.user_id', $userId);
+
         $groups = Group::query()
-            ->where('owner_id', Auth::id())
+            ->where('owner_id', $userId)
             ->with([
                 'invitations' => function ($q) {
                     $q->latest('id')->select(['id', 'group_id', 'email', 'accepted_at', 'declined_at']);
                 }
             ])
+            ->select([
+                'id',
+                'name',
+                'description',
+                'min_value',
+                'max_value',
+                'draw_at',
+                'created_at'
+            ])
+            ->selectSub($wishlistCountSub, 'wishlist_count')
             ->latest('id')
-            ->select(['id', 'name', 'description', 'min_value', 'max_value', 'draw_at', 'created_at'])
             ->get()
             ->map(function (Group $g) {
                 return [
@@ -45,6 +61,7 @@ class GroupController extends Controller
                     'max_value' => $g->max_value,
                     'draw_at' => $g->draw_at,
                     'created_at' => $g->created_at,
+                    'wishlist_count' => (int) $g->wishlist_count,
                     'invitations' => $g->invitations->map(fn($i) => [
                         'email' => $i->email,
                         'status' => $i->accepted_at ? 'accepted' : ($i->declined_at ? 'declined' : 'pending'),

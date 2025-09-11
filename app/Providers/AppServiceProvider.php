@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use App\Models\Group;
 use App\Policies\GroupPolicy;
+use App\Models\Wishlist;
+use App\Policies\WishlistPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(Group::class, GroupPolicy::class);
+        Gate::policy(Wishlist::class, WishlistPolicy::class);
 
         \Inertia\Inertia::share('flash', function () {
             return [

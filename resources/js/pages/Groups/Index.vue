@@ -14,6 +14,7 @@ interface Group {
     draw_at?: string | null;
     created_at: string;
     invitations?: Invitation[];
+    wishlist_count?: number; // added
 }
 
 interface Invitation {
@@ -99,6 +100,12 @@ function submitInvite() {
                     <div class="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
                         <span v-if="g.min_value !== null || g.max_value !== null">Gift: {{ g.min_value ?? 0 }} - {{ g.max_value ?? '∞' }}</span>
                         <span v-if="g.draw_at">Draw: {{ new Date(g.draw_at).toLocaleDateString() }}</span>
+                        <span
+                            v-if="g.wishlist_count !== undefined"
+                            class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
+                        >
+                            🎁 {{ g.wishlist_count }}
+                        </span>
                     </div>
                     <div v-if="g.invitations && g.invitations.length" class="mt-3 space-y-1">
                         <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Invitations</p>
@@ -120,10 +127,21 @@ function submitInvite() {
                             </li>
                         </ul>
                     </div>
-                    <div class="mt-3 flex items-center gap-3">
+                    <div class="mt-3 flex flex-wrap items-center gap-3">
                         <Link :href="route('groups.edit', g.id)" class="text-xs text-primary hover:underline">Edit</Link>
                         <button type="button" @click="askDelete(g.id)" class="text-xs text-destructive hover:underline">Delete</button>
                         <button type="button" @click="openInvite(g.id)" class="text-xs text-muted-foreground hover:underline">Invite</button>
+                        <Link
+                            :href="route('groups.wishlist.index', { group: g.id })"
+                            class="flex items-center gap-1 text-xs text-amber-600 hover:underline"
+                        >
+                            Wishlist
+                            <span
+                                v-if="g.wishlist_count && g.wishlist_count > 0"
+                                class="rounded bg-amber-600/10 px-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300"
+                                >{{ g.wishlist_count }}</span
+                            >
+                        </Link>
                     </div>
                 </li>
             </ul>

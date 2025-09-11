@@ -2,25 +2,30 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-
-Route::get('/', function () {
-    return Inertia::render('Welcome');
-})->name('home');
-
+use App\Http\Controllers\WishlistController;
 use App\Models\Group;
 use App\Models\GroupInvitation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
 
+Route::middleware(['auth', 'verified'])->prefix('groups/{group}/wishlist')->name('groups.wishlist.')->group(function () {
+    Route::get('/', [WishlistController::class, 'index'])->name('index');
+    Route::post('/', [WishlistController::class, 'store'])->name('store');
+    Route::put('/{wishlist}', [WishlistController::class, 'update'])->name('update');
+    Route::delete('/{wishlist}', [WishlistController::class, 'destroy'])->name('destroy');
+});
+
+Route::get('/', function () {
+    return Inertia::render('Welcome');
+})->name('home');
+
 Route::get('dashboard', function () {
     $user = Auth::user();
 
-    // Grupos do usuário
     $groups = Group::where('owner_id', $user->id)
         ->select(['id', 'name', 'draw_at'])
         ->get();
 
-    // Convites recebidos (pendentes)
     $pendingInvitations = GroupInvitation::where('email', $user->email)
         ->whereNull('accepted_at')
         ->whereNull('declined_at')
