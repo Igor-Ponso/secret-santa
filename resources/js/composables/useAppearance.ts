@@ -1,6 +1,7 @@
 import { onMounted, ref } from 'vue';
 
-type Appearance = 'light' | 'dark' | 'system';
+// Re-exportable theme appearance type (used across UI components)
+export type Appearance = 'light' | 'dark' | 'system';
 
 export function updateTheme(value: Appearance) {
     if (typeof window === 'undefined') {

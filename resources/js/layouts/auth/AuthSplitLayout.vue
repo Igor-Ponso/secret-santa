@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
+import ThemeToggle from '@/components/ThemeToggle.vue';
 import { computed } from 'vue';
 
 const page = usePage();
@@ -41,6 +42,9 @@ defineProps<{
     <div class="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
         <!-- Left visual panel (hidden on small screens) -->
         <div class="relative hidden h-full flex-col bg-gradient-to-b from-red-800 via-red-600 to-red-500 p-10 text-white dark:border-r lg:flex">
+            <div class="absolute right-4 top-4">
+                <ThemeToggle />
+            </div>
             <div class="relative z-20 flex h-full w-full flex-col items-center justify-center text-center">
                 <!-- Centered illustration and caption -->
                 <div class="flex flex-col items-center justify-center gap-6">
