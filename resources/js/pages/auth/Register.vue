@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SocialLoginButtons from '@/components/auth/SocialLoginButtons.vue';
 import InputError from '@/components/InputError.vue';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,8 @@ const submit = () => {
                     Create account
                 </Button>
             </div>
+
+            <SocialLoginButtons />
 
             <div class="text-center text-sm text-muted-foreground">
                 Already have an account?

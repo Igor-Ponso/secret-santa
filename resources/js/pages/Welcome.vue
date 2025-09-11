@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import mascotUrl from '@/assets/illustrations/mascot-hero.png';
 import { Head, Link } from '@inertiajs/vue3';
-import mascotUrl from '../../../resources/assets/illustrations/mascot-hero.png';
 </script>
 
 <template>
@@ -22,14 +22,17 @@ import mascotUrl from '../../../resources/assets/illustrations/mascot-hero.png';
         </header>
 
         <!-- Hero Section -->
+        <!-- Hero Section -->
         <section class="relative z-10 grid w-full max-w-6xl items-center gap-12 px-6 py-12 lg:grid-cols-[1fr_1.2fr]">
-            <!-- Mascot -->
+            <!-- Mascot with contrast background -->
             <div class="flex justify-center lg:justify-start">
-                <img
-                    :src="mascotUrl"
-                    alt="Santa Claus mascot"
-                    class="w-full max-w-sm drop-shadow-2xl transition-transform duration-300 ease-in-out hover:scale-[1.01] sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl"
-                />
+                <div class="relative inline-block rounded-[40%] bg-[#fff8f3] p-4 drop-shadow-[0_12px_16px_rgba(0,0,0,0.25)]">
+                    <img
+                        :src="mascotUrl"
+                        alt="Santa Claus mascot"
+                        class="w-full max-w-sm transition-transform duration-300 ease-in-out hover:scale-[1.01] sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl"
+                    />
+                </div>
             </div>
 
             <!-- Text -->
