@@ -23,5 +23,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(Group::class, GroupPolicy::class);
+
+        \Inertia\Inertia::share('flash', function () {
+            return [
+                'success' => session('flash.success') ?? session('success'),
+                'info' => session('flash.info') ?? session('info'),
+                'error' => session('flash.error') ?? session('error'),
+            ];
+        });
     }
 }

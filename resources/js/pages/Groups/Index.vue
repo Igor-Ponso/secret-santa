@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import { errorToast } from '@/lib/notifications';
 import type { BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
@@ -35,6 +36,7 @@ function askDelete(id: number) {
 function performDelete() {
     if (!pendingId.value) return;
     router.delete(route('groups.destroy', pendingId.value), {
+        onError: () => errorToast('Failed to delete group'),
         onFinish: () => {
             confirmOpen.value = false;
             pendingId.value = null;

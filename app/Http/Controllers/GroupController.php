@@ -57,7 +57,7 @@ class GroupController extends Controller
         $this->service->update($group, $request->validated());
 
         return redirect()->route('groups.index')
-            ->with('flash', ['success' => 'Group updated successfully']);
+            ->with('flash', ['info' => 'Group updated successfully']);
     }
 
     public function destroy(Group $group): RedirectResponse
