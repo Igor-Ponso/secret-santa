@@ -1,14 +1,14 @@
+import type { SharedData } from '@/types';
 import { createInertiaApp } from '@inertiajs/vue3';
 import createServer from '@inertiajs/vue3/server';
 import { renderToString } from '@vue/server-renderer';
 import { createSSRApp, h, type DefineComponent } from 'vue';
 import { route as ziggyRoute } from 'ziggy-js';
-import type { SharedData } from '@/types';
-import type { Page } from '@inertiajs/core';
+// Omit direct Page import to avoid editor resolution issues; use any and rely on runtime shape.
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-createServer((page: Page<any>) =>
+createServer((page: any) =>
     createInertiaApp({
         page,
         render: renderToString,
@@ -27,9 +27,7 @@ createServer((page: Page<any>) =>
 
             // Safely extract ziggy config (typed as unknown in page.props)
             const rawZiggy = (page.props as Partial<SharedData>).ziggy as { location: string } | undefined;
-            const ziggyConfig = rawZiggy
-                ? { ...rawZiggy, location: new URL(rawZiggy.location) }
-                : { location: new URL('http://localhost') };
+            const ziggyConfig = rawZiggy ? { ...rawZiggy, location: new URL(rawZiggy.location) } : { location: new URL('http://localhost') };
 
             // Wrap ziggyRoute preserving full signature; fallback config if omitted
             const route = ((name?: any, params?: any, absolute?: boolean, config?: any) =>

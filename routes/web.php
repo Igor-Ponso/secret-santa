@@ -21,4 +21,6 @@ Route::middleware(['auth', 'verified'])
         Route::get('/', [\App\Http\Controllers\GroupController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\GroupController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\GroupController::class, 'store'])->name('store');
+        Route::get('/{group}/edit', [\App\Http\Controllers\GroupController::class, 'edit'])->name('edit');
+        Route::put('/{group}', [\App\Http\Controllers\GroupController::class, 'update'])->name('update');
     });

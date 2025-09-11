@@ -4,11 +4,11 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreGroupRequest extends FormRequest
+class UpdateGroupRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() !== null; // auth middleware already enforced
+        return $this->user() !== null; // policy will handle ownership in controller
     }
 
     public function rules(): array

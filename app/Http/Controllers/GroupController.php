@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreGroupRequest;
+use App\Http\Requests\UpdateGroupRequest;
 use App\Models\Group;
 use App\Services\GroupService;
 use Illuminate\Http\RedirectResponse;
@@ -40,5 +41,22 @@ class GroupController extends Controller
 
         return redirect()->route('groups.index')
             ->with('flash', ['success' => 'Group created successfully']);
+    }
+
+    public function edit(Group $group): Response
+    {
+        $this->authorize('update', $group);
+        return Inertia::render('Groups/Edit', [
+            'group' => $group->only(['id', 'name', 'description', 'min_value', 'max_value', 'draw_at'])
+        ]);
+    }
+
+    public function update(UpdateGroupRequest $request, Group $group): RedirectResponse
+    {
+        $this->authorize('update', $group);
+        $this->service->update($group, $request->validated());
+
+        return redirect()->route('groups.index')
+            ->with('flash', ['success' => 'Group updated successfully']);
     }
 }

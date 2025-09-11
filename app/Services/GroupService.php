@@ -23,4 +23,17 @@ class GroupService
 
         return Group::create($payload);
     }
+
+    public function update(Group $group, array $data): Group
+    {
+        $group->update([
+            'name' => $data['name'],
+            'description' => $data['description'] ?? null,
+            'min_value' => $data['min_value'] ?? null,
+            'max_value' => $data['max_value'] ?? null,
+            'draw_at' => $data['draw_at'] ?? null,
+        ]);
+
+        return $group;
+    }
 }

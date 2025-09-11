@@ -1,4 +1,4 @@
-import type { PageProps } from '@inertiajs/core';
+import type { Page, PageProps } from '@inertiajs/core';
 import type { LucideIcon } from 'lucide-vue-next';
 import type { Config } from 'ziggy-js';
 
@@ -37,8 +37,9 @@ export interface User {
 }
 
 declare module '@inertiajs/vue3' {
+    // Augment usePage to return our SharedData-extended props
     export function usePage<TPageProps = SharedData>(): Page<TPageProps>;
-  }
+}
 
 export type BreadcrumbItemType = BreadcrumbItem;
 

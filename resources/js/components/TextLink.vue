@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 
-import type { Method } from '@inertiajs/core';
+// Inline Method type to avoid direct dependency on @inertiajs/core in this SFC (prevents resolution issues in some editors)
+type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
 interface Props {
     href: string;
