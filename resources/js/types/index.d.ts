@@ -41,3 +41,9 @@ declare module '@inertiajs/vue3' {
   }
 
 export type BreadcrumbItemType = BreadcrumbItem;
+
+// Allow importing SVGs as URLs (handled by Vite)
+declare module '*.svg' {
+    const src: string;
+    export default src;
+}

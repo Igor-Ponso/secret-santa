@@ -1,8 +1,9 @@
 <script setup lang="ts">
 // Image assets live in resources/assets, not under resources/js, so use the new @assets alias.
+import ThemeToggle from '@/components/ThemeToggle.vue';
 import mascotUrl from '@assets/illustrations/mascot-hero.png';
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import ThemeToggle from '@/components/ThemeToggle.vue';
+import { Gift } from 'lucide-vue-next';
 
 // Access typed page props (ensures $page typing through usePage if needed)
 const page = usePage();
@@ -15,14 +16,17 @@ const page = usePage();
         class="relative flex min-h-screen flex-col items-center justify-between overflow-hidden bg-gradient-to-b from-red-700 via-red-600 to-red-500 text-white"
     >
         <!-- Navbar -->
-        <header class="relative z-10 flex w-full max-w-6xl items-center justify-between px-6 py-4">
-            <h1 class="text-2xl font-bold tracking-wide">Secret Santa</h1>
-            <div class="flex items-center gap-4">
-                <nav class="space-x-4">
-                    <Link v-if="page.props.auth?.user" :href="route('dashboard')" class="hover:underline">Dashboard</Link>
+        <header class="relative z-10 flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:gap-6 sm:px-6 sm:py-5">
+            <h1 class="flex shrink-0 items-center gap-2" aria-label="Secret Santa">
+                <Gift class="h-7 w-7 text-white sm:h-8 sm:w-8" />
+                <span class="hidden text-2xl font-bold tracking-wide sm:inline">Secret Santa</span>
+            </h1>
+            <div class="flex min-w-0 flex-1 items-center justify-end gap-3 sm:gap-5">
+                <nav class="flex items-center gap-3 text-xs font-medium sm:gap-6 sm:text-sm">
+                    <Link v-if="page.props.auth?.user" :href="route('dashboard')" class="whitespace-nowrap hover:underline">Dashboard</Link>
                     <template v-else>
-                        <Link :href="route('login')" class="hover:underline">Log in</Link>
-                        <Link :href="route('register')" class="hover:underline">Register</Link>
+                        <Link :href="route('login')" class="whitespace-nowrap hover:underline">Log in</Link>
+                        <Link :href="route('register')" class="whitespace-nowrap hover:underline">Register</Link>
                     </template>
                 </nav>
                 <ThemeToggle />
@@ -30,22 +34,23 @@ const page = usePage();
         </header>
 
         <!-- Hero Section -->
-        <!-- Hero Section -->
-        <section class="relative z-10 grid w-full max-w-6xl items-center gap-12 px-6 py-12 lg:grid-cols-[1fr_1.2fr]">
+        <section
+            class="relative z-10 grid w-full max-w-6xl items-center gap-8 px-5 py-8 sm:gap-10 sm:px-6 sm:py-10 lg:grid-cols-[1fr_1.2fr] lg:gap-12 lg:py-12"
+        >
             <!-- Mascot with contrast background -->
             <div class="flex justify-center lg:justify-start">
-                <div class="relative inline-block rounded-[40%] bg-[#fff8f3] p-4 drop-shadow-[0_12px_16px_rgba(0,0,0,0.25)]">
+                <div class="relative inline-block rounded-[36%] bg-[#fff8f3] p-3 drop-shadow-[0_12px_16px_rgba(0,0,0,0.25)] sm:p-4">
                     <img
                         :src="mascotUrl"
                         alt="Santa Claus mascot"
-                        class="w-full max-w-sm transition-transform duration-300 ease-in-out hover:scale-[1.01] sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl"
+                        class="max-h-[40vh] w-full max-w-[260px] object-contain transition-transform duration-300 ease-in-out hover:scale-[1.01] sm:max-h-none sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl"
                     />
                 </div>
             </div>
 
             <!-- Text -->
             <div class="max-w-xl space-y-5 text-white">
-                <h2 class="text-5xl font-extrabold leading-tight tracking-tight">Welcome to Secret Santa</h2>
+                <h2 class="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">Welcome to Secret Santa</h2>
 
                 <p class="text-xl leading-relaxed text-white/90">Make gift exchanges easy, fun, and unforgettable.</p>
 
