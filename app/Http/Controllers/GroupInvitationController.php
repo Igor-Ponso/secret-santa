@@ -17,7 +17,9 @@ use Illuminate\Http\RedirectResponse;
  */
 class GroupInvitationController extends Controller
 {
-    public function __construct(private InvitationService $service) {}
+    public function __construct(private InvitationService $service)
+    {
+    }
 
     /**
      * Create a new invitation for a group owner.

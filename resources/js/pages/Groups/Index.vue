@@ -61,13 +61,17 @@ function openInvite(groupId: number) {
 
 function submitInvite() {
     if (!inviteGroupId.value) return;
-    router.post(route('groups.invitations.store', inviteGroupId.value), { email: inviteEmail.value }, {
-        onError: () => errorToast('Failed to create invitation'),
-        onSuccess: () => {
-            inviteOpen.value = false;
-            inviteEmail.value = '';
-        }
-    });
+    router.post(
+        route('groups.invitations.store', inviteGroupId.value),
+        { email: inviteEmail.value },
+        {
+            onError: () => errorToast('Failed to create invitation'),
+            onSuccess: () => {
+                inviteOpen.value = false;
+                inviteEmail.value = '';
+            },
+        },
+    );
 }
 </script>
 
@@ -99,13 +103,20 @@ function submitInvite() {
                     <div v-if="g.invitations && g.invitations.length" class="mt-3 space-y-1">
                         <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Invitations</p>
                         <ul class="space-y-1">
-                            <li v-for="inv in g.invitations" :key="inv.email" class="flex items-center justify-between rounded border px-2 py-1 text-[11px]">
+                            <li
+                                v-for="inv in g.invitations"
+                                :key="inv.email"
+                                class="flex items-center justify-between rounded border px-2 py-1 text-[11px]"
+                            >
                                 <span class="truncate">{{ inv.email }}</span>
-                                <span :class="{
-                                    'text-green-600': inv.status === 'accepted',
-                                    'text-yellow-600': inv.status === 'pending',
-                                    'text-destructive': inv.status === 'declined'
-                                }">{{ inv.status }}</span>
+                                <span
+                                    :class="{
+                                        'text-green-600': inv.status === 'accepted',
+                                        'text-yellow-600': inv.status === 'pending',
+                                        'text-destructive': inv.status === 'declined',
+                                    }"
+                                    >{{ inv.status }}</span
+                                >
                             </li>
                         </ul>
                     </div>
@@ -152,8 +163,16 @@ function submitInvite() {
                         <input id="invite_email" v-model="inviteEmail" type="email" class="w-full rounded-md border px-3 py-2 text-sm" />
                     </div>
                     <div class="mt-4 flex justify-end gap-2">
-                        <button type="button" class="rounded-md border px-3 py-1.5 text-xs hover:bg-accent" @click="inviteOpen = false">Cancel</button>
-                        <button type="button" class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90" @click="submitInvite()">Send</button>
+                        <button type="button" class="rounded-md border px-3 py-1.5 text-xs hover:bg-accent" @click="inviteOpen = false">
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                            @click="submitInvite()"
+                        >
+                            Send
+                        </button>
                     </div>
                 </div>
             </div>

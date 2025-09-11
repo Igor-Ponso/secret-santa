@@ -53,7 +53,8 @@ class InvitationService
      */
     public function accept(GroupInvitation $invitation, User $user): void
     {
-        if ($invitation->accepted_at || $invitation->declined_at) return;
+        if ($invitation->accepted_at || $invitation->declined_at)
+            return;
         $invitation->forceFill([
             'accepted_at' => Carbon::now(),
             'invited_user_id' => $user->id,
@@ -65,7 +66,8 @@ class InvitationService
      */
     public function decline(GroupInvitation $invitation): void
     {
-        if ($invitation->accepted_at || $invitation->declined_at) return;
+        if ($invitation->accepted_at || $invitation->declined_at)
+            return;
         $invitation->forceFill([
             'declined_at' => Carbon::now(),
         ])->save();

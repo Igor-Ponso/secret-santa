@@ -15,7 +15,9 @@ use Inertia\Response;
  */
 class PublicInvitationController extends Controller
 {
-    public function __construct(private InvitationService $service) {}
+    public function __construct(private InvitationService $service)
+    {
+    }
 
     /** Display invitation landing page. */
     public function show(string $plainToken): Response
@@ -28,7 +30,7 @@ class PublicInvitationController extends Controller
 
         return Inertia::render('Invites/Show', [
             'invitation' => [
-                'group' => $invitation->group->only(['id','name','description']),
+                'group' => $invitation->group->only(['id', 'name', 'description']),
                 'email' => $invitation->email,
                 'status' => $invitation->accepted_at ? 'accepted' : ($invitation->declined_at ? 'declined' : 'pending'),
                 'expired' => $invitation->isExpired(),
@@ -46,18 +48,28 @@ class PublicInvitationController extends Controller
         }
         abort_if($invitation->isExpired(), 410);
 
+        // Só permite aceitar se o e-mail do usuário autenticado for igual ao do convite
+        if (strtolower($request->user()->email) !== strtolower($invitation->email)) {
+            abort(403, 'This invitation is not for your account.');
+        }
+
         $this->service->accept($invitation, $request->user());
         return redirect()->route('groups.index')->with('flash', ['success' => 'Invitation accepted']);
     }
 
     /** Decline an invitation. */
-    public function decline(string $plainToken): RedirectResponse
+    public function decline(Request $request, string $plainToken): RedirectResponse
     {
         $invitation = $this->service->findByPlainToken($plainToken);
         if (!$invitation) {
             abort(404);
         }
         abort_if($invitation->isExpired(), 410);
+
+        // Só permite recusar se o e-mail do usuário autenticado for igual ao do convite
+        if (strtolower($request->user()->email) !== strtolower($invitation->email)) {
+            abort(403, 'This invitation is not for your account.');
+        }
 
         $this->service->decline($invitation);
         return redirect()->route('groups.index')->with('flash', ['info' => 'Invitation declined']);

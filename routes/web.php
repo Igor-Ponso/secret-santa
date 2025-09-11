@@ -24,7 +24,10 @@ Route::middleware(['auth'])
         Route::get('/{group}/edit', [\App\Http\Controllers\GroupController::class, 'edit'])->name('edit');
         Route::put('/{group}', [\App\Http\Controllers\GroupController::class, 'update'])->name('update');
         Route::delete('/{group}', [\App\Http\Controllers\GroupController::class, 'destroy'])->name('destroy');
-        Route::post('/{group}/invitations', [\App\Http\Controllers\GroupInvitationController::class, 'store'])->name('invitations.store');
+        // Limite: 5 convites por minuto por usuário
+        Route::post('/{group}/invitations', [\App\Http\Controllers\GroupInvitationController::class, 'store'])
+            ->middleware('throttle:5,1')
+            ->name('invitations.store');
     });
 
 Route::middleware(['auth', 'verified'])->group(function () {

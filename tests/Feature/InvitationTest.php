@@ -1,15 +1,15 @@
+// ...existing code...
 <?php
 
 use App\Models\Group;
 use App\Models\GroupInvitation;
 use App\Models\User;
 use App\Services\InvitationService;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
 
 use function Pest\Laravel\actingAs;
-use function Pest\Laravel\post; 
-use function Pest\Laravel\get; 
+use function Pest\Laravel\post;
+use function Pest\Laravel\get;
 
 it('owner can create invitation', function () {
     $owner = User::factory()->create(['email_verified_at' => now()]);
@@ -74,7 +74,8 @@ it('user can decline invitation', function () {
 it('invitation token not found returns 404 on show', function () {
     $user = User::factory()->create(['email_verified_at' => now()]);
     actingAs($user);
-    get(route('invites.show', 'nonexistenttoken'))->assertNotFound();
+    // Passando explicitamente o nome do parâmetro evita alerta falso do plugin (ele achava que era nome de rota)
+    get(route('invites.show', ['token' => 'nonexistenttoken']))->assertNotFound();
 });
 
 it('cannot accept twice', function () {
@@ -89,4 +90,32 @@ it('cannot accept twice', function () {
     $firstAcceptedAt = $inv->refresh()->accepted_at;
     post(route('invites.accept', $token));
     expect($inv->refresh()->accepted_at)->toEqual($firstAcceptedAt);
+});
+
+it('cannot accept or decline expired invitation', function () {
+    $owner = User::factory()->create(['email_verified_at' => now()]);
+    $invitee = User::factory()->create(['email' => 'expired@test.com', 'email_verified_at' => now()]);
+    $group = Group::factory()->for($owner, 'owner')->create();
+    $service = app(InvitationService::class);
+    $inv = $service->create($group, $owner, 'expired@test.com');
+    $token = $inv->getAttribute('plain_token');
+    $inv = $inv->fresh(); // remove plain_token antes de salvar
+    $inv->forceFill(['expires_at' => Carbon::now()->subDay()])->save();
+    actingAs($invitee);
+    post(route('invites.accept', $token))->assertStatus(410);
+    post(route('invites.decline', $token))->assertStatus(410);
+});
+
+it('does not expose full invitation token in flash', function () {
+    $owner = User::factory()->create(['email_verified_at' => now()]);
+    $group = Group::factory()->for($owner, 'owner')->create();
+    actingAs($owner);
+    $resp = post(route('groups.invitations.store', $group), ['email' => 'tokenleak@test.com']);
+    $resp->assertSessionHas('flash');
+    $flash = session('flash');
+    // O info só deve mostrar o prefixo do token, nunca o token completo (48 chars)
+    $matches = [];
+    preg_match('/\(([A-Za-z0-9]+)\.\.\.\)/', $flash['info'] ?? '', $matches);
+    expect(isset($matches[1]))->toBeTrue();
+    expect(strlen($matches[1]))->toBeLessThan(16); // prefixo curto
 });
