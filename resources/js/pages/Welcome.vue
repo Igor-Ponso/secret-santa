@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import mascotUrl from '@/assets/illustrations/mascot-hero.png';
-import { Head, Link } from '@inertiajs/vue3';
+// Image assets live in resources/assets, not under resources/js, so use the new @assets alias.
+import mascotUrl from '@assets/illustrations/mascot-hero.png';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+
+// Access typed page props (ensures $page typing through usePage if needed)
+const page = usePage();
 </script>
 
 <template>
@@ -13,7 +17,7 @@ import { Head, Link } from '@inertiajs/vue3';
         <header class="relative z-10 flex w-full max-w-6xl items-center justify-between px-6 py-4">
             <h1 class="text-2xl font-bold tracking-wide">Secret Santa</h1>
             <nav class="space-x-4">
-                <Link v-if="$page.props.auth.user" :href="route('dashboard')" class="hover:underline">Dashboard</Link>
+                <Link v-if="page.props.auth?.user" :href="route('dashboard')" class="hover:underline">Dashboard</Link>
                 <template v-else>
                     <Link :href="route('login')" class="hover:underline">Log in</Link>
                     <Link :href="route('register')" class="hover:underline">Register</Link>

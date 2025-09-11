@@ -29,7 +29,8 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            '@': path.resolve(__dirname, './resources/js'),
+            '@': path.resolve(__dirname, './resources/js'), // JS/TS source
+            '@assets': path.resolve(__dirname, './resources/assets'), // Static assets (images, etc.)
             'ziggy-js': resolve(__dirname, 'vendor/tightenco/ziggy'),
         },
     },

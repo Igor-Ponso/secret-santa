@@ -12,21 +12,21 @@ const visual = computed(() => {
 
     if (routeName.includes('Register')) {
         return {
-            image: new URL('@/assets/illustrations/naughty-nice-list.png', import.meta.url).href,
+            image: new URL('@assets/illustrations/naughty-nice-list.png', import.meta.url).href,
             caption: "Join the list. Naughty or Nice, there's always room for more.",
         };
     }
 
     if (routeName.includes('Login')) {
         return {
-            image: new URL('@/assets/illustrations/login-hero.png', import.meta.url).href,
+            image: new URL('@assets/illustrations/login-hero.png', import.meta.url).href,
             caption: 'Clock in and let the magic begin.',
         };
     }
 
     // Fallback visual for other auth-related pages
     return {
-        image: new URL('@/assets/illustrations/mascot-hero.png', import.meta.url).href,
+        image: new URL('@assets/illustrations/mascot-hero.png', import.meta.url).href,
         caption: 'Welcome!',
     };
 });
