@@ -1,8 +1,13 @@
 <script setup lang="ts">
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import AppLayout from '@/layouts/AppLayout.vue';
-import DateTimePicker from '@/components/DateTimePicker.vue';
+import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { CalendarDate, DateFormatter, getLocalTimeZone, type DateValue } from '@internationalized/date';
+import { Calendar as CalendarIcon } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
 
 interface GroupPayload {
     id: number;
@@ -22,6 +27,54 @@ const form = useForm({
     max_value: props.group.max_value,
     draw_at: props.group.draw_at ?? null,
 });
+
+// Date picker state (DateValue)
+const tz = getLocalTimeZone();
+const df = new DateFormatter('en-US', { dateStyle: 'long' });
+const dateValue = ref<DateValue | undefined>(
+    form.draw_at
+        ? (new CalendarDate(
+              new Date(form.draw_at).getFullYear(),
+              new Date(form.draw_at).getMonth() + 1,
+              new Date(form.draw_at).getDate(),
+          ) as DateValue)
+        : undefined,
+);
+
+function onCalendarUpdate(val: unknown) {
+    // Reka UI may emit complex date objects. We only care if it has toDate.
+    if (val && typeof val === 'object' && 'toDate' in (val as any)) {
+        dateValue.value = val as DateValue;
+    } else if (Array.isArray(val) && val.length && typeof val[0] === 'object') {
+        dateValue.value = val[0] as DateValue;
+    } else if (!val) {
+        dateValue.value = undefined;
+    }
+}
+
+// Sync dateValue -> form.draw_at
+watch(dateValue, (v) => {
+    if (!v) {
+        form.draw_at = null;
+        return;
+    }
+    const d = v.toDate(tz);
+    d.setHours(12, 0, 0, 0); // normalize to noon local to avoid TZ shift
+    form.draw_at = d.toISOString();
+});
+
+// Sync form.draw_at -> dateValue (in case server returns new value or is reset)
+watch(
+    () => form.draw_at,
+    (iso) => {
+        if (!iso) {
+            dateValue.value = undefined;
+            return;
+        }
+        const js = new Date(iso);
+        dateValue.value = new CalendarDate(js.getFullYear(), js.getMonth() + 1, js.getDate());
+    },
+);
 
 function submit() {
     form.put(route('groups.update', props.group.id));
@@ -98,14 +151,36 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <p v-if="form.errors.max_value" class="text-xs text-destructive">{{ form.errors.max_value }}</p>
                     </div>
                 </div>
-                <DateTimePicker
-                    v-model="form.draw_at"
-                    label="Draw Date *"
-                    :required="true"
-                    :min="new Date().toISOString()"
-                    placeholder="Atualize a data do sorteio"
-                />
-                <p v-if="form.errors.draw_at" class="text-xs text-destructive">{{ form.errors.draw_at }}</p>
+                <div class="space-y-2">
+                    <label class="text-sm font-medium">Draw Date *</label>
+                    <Popover>
+                        <PopoverTrigger as-child>
+                            <button
+                                type="button"
+                                :class="
+                                    cn(
+                                        'flex w-full items-center justify-start gap-2 rounded-md border bg-background px-3 py-2 text-left text-sm font-normal ring-offset-background transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+                                        !dateValue && 'text-muted-foreground',
+                                    )
+                                "
+                            >
+                                <CalendarIcon class="h-4 w-4" />
+                                <span class="truncate">
+                                    {{ dateValue ? df.format(dateValue.toDate(tz)) : 'Pick a date' }}
+                                </span>
+                            </button>
+                        </PopoverTrigger>
+                        <PopoverContent class="w-auto p-0" align="start">
+                            <Calendar
+                                :model-value="dateValue as any"
+                                @update:model-value="onCalendarUpdate"
+                                initial-focus
+                                class="rounded-md border"
+                            />
+                        </PopoverContent>
+                    </Popover>
+                    <p v-if="form.errors.draw_at" class="text-xs text-destructive">{{ form.errors.draw_at }}</p>
+                </div>
                 <div class="flex items-center gap-3">
                     <button
                         type="submit"

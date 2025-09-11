@@ -2,6 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover/index';
+import { CalendarDate, getLocalTimeZone, type DateValue } from '@internationalized/date';
 import { Calendar as CalendarIcon, Clock } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 
@@ -26,9 +27,13 @@ const emit = defineEmits<{
     (e: 'update:modelValue', value: string | null): void;
 }>();
 
-// Internal date state as Date object
+// Internal date state (Date for time manipulation) + Calendar date (DateValue)
 const open = ref(false);
 const internal = ref<Date | null>(props.modelValue ? new Date(props.modelValue) : null);
+const tz = getLocalTimeZone();
+const dateValue = ref<DateValue | undefined>(
+    internal.value ? new CalendarDate(internal.value.getFullYear(), internal.value.getMonth() + 1, internal.value.getDate()) : undefined,
+);
 
 watch(
     () => props.modelValue,
@@ -38,23 +43,12 @@ watch(
     },
 );
 
-// Using placeholder Calendar (Date based)
-const calendarValue = ref<Date | null>(internal.value);
-const minDate = computed(() => (props.min ? new Date(props.min) : null));
-
-function onCalendarSelect(v: Date | null) {
-    calendarValue.value = v;
-    if (!v) {
-        internal.value = null;
-        emit('update:modelValue', null);
-        return;
-    }
-    // merge time if already set
-    const base = internal.value ?? new Date();
-    const merged = new Date(v.getFullYear(), v.getMonth(), v.getDate(), base.getHours(), base.getMinutes(), 0, 0);
-    internal.value = merged;
-    emit('update:modelValue', merged.toISOString());
-}
+// Minimum date (as DateValue) if provided
+const minValue = computed<DateValue | undefined>(() => {
+    if (!props.min) return undefined;
+    const d = new Date(props.min);
+    return new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate());
+});
 
 const hours = ref<string>(internal.value ? String(internal.value.getHours()).padStart(2, '0') : '12');
 const minutes = ref<string>(internal.value ? String(internal.value.getMinutes()).padStart(2, '0') : '00');
@@ -64,6 +58,20 @@ watch(internal, (v) => {
         hours.value = String(v.getHours()).padStart(2, '0');
         minutes.value = String(v.getMinutes()).padStart(2, '0');
     }
+});
+
+// When calendar date changes, sync to internal preserving time (or default time if none)
+watch(dateValue, (val) => {
+    if (!val) {
+        internal.value = null;
+        emit('update:modelValue', null);
+        return;
+    }
+    const base = internal.value ?? new Date();
+    const picked = val.toDate(tz);
+    const merged = new Date(picked.getFullYear(), picked.getMonth(), picked.getDate(), base.getHours(), base.getMinutes(), 0, 0);
+    internal.value = merged;
+    emit('update:modelValue', merged.toISOString());
 });
 
 function applyTime() {
@@ -79,6 +87,7 @@ function applyTime() {
 
 function clearDate() {
     internal.value = null;
+    dateValue.value = undefined;
     emit('update:modelValue', null);
 }
 
@@ -106,7 +115,24 @@ const displayValue = computed(() =>
                 </Button>
             </PopoverTrigger>
             <PopoverContent class="w-[300px] space-y-3 p-3" align="start">
-                <Calendar v-model="calendarValue" :min="minDate" @update:model-value="onCalendarSelect" class="border-none p-0" />
+                <Calendar
+                    :model-value="dateValue as any"
+                    :min="minValue"
+                    @update:model-value="
+                        (val: any) => {
+                            if (!val) {
+                                dateValue = undefined as any;
+                                return;
+                            }
+                            if (Array.isArray(val)) {
+                                dateValue = val[0] as any;
+                            } else {
+                                dateValue = val as any;
+                            }
+                        }
+                    "
+                    class="border-none p-0"
+                />
                 <div class="flex items-center gap-2 border-t pt-2">
                     <Clock class="h-4 w-4 text-muted-foreground" />
                     <input
