@@ -23,4 +23,5 @@ Route::middleware(['auth', 'verified'])
         Route::post('/', [\App\Http\Controllers\GroupController::class, 'store'])->name('store');
         Route::get('/{group}/edit', [\App\Http\Controllers\GroupController::class, 'edit'])->name('edit');
         Route::put('/{group}', [\App\Http\Controllers\GroupController::class, 'update'])->name('update');
+        Route::delete('/{group}', [\App\Http\Controllers\GroupController::class, 'destroy'])->name('destroy');
     });

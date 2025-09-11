@@ -59,4 +59,13 @@ class GroupController extends Controller
         return redirect()->route('groups.index')
             ->with('flash', ['success' => 'Group updated successfully']);
     }
+
+    public function destroy(Group $group): RedirectResponse
+    {
+        $this->authorize('delete', $group);
+        $this->service->delete($group);
+
+        return redirect()->route('groups.index')
+            ->with('flash', ['success' => 'Group deleted successfully']);
+    }
 }

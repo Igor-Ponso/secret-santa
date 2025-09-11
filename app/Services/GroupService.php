@@ -36,4 +36,9 @@ class GroupService
 
         return $group;
     }
+
+    public function delete(Group $group): void
+    {
+        $group->delete();
+    }
 }
