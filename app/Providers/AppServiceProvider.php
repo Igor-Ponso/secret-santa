@@ -34,5 +34,7 @@ class AppServiceProvider extends ServiceProvider
                 'error' => session('flash.error') ?? session('error'),
             ];
         });
+
+        // Locale & translations no longer shared; handled entirely client-side via vue-i18n.
     }
 }

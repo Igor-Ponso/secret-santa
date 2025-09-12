@@ -8,6 +8,7 @@ import Toast, { type PluginOptions as ToastOptions, POSITION } from 'vue-toastif
 import 'vue-toastification/dist/index.css';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
+import { i18n } from './i18n';
 // (Removed custom module augmentation for 'vite/client' to avoid "is not a module" issues.)
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
@@ -34,8 +35,11 @@ createInertiaApp({
             newestOnTop: true,
         };
 
+        // locale now handled by vue-i18n (cookie + runtime switch)
+
         createApp({ render: () => h(App, props) })
             .use(plugin)
+            .use(i18n)
             .use(ZiggyVue)
             .use(Toast, toastOptions)
             .mount(el);

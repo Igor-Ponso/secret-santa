@@ -8,6 +8,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import { CalendarDate, DateFormatter, getLocalTimeZone, type DateValue } from '@internationalized/date';
 import { Calendar as CalendarIcon } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface GroupPayload {
     id: number;
@@ -80,23 +81,24 @@ function submit() {
     form.put(route('groups.update', props.group.id));
 }
 
+const { t } = useI18n();
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Groups', href: '/groups' },
-    { title: 'Edit', href: `/groups/${props.group.id}/edit` },
+    { title: t('common.misc.groups') || 'Groups', href: '/groups' },
+    { title: t('common.actions.edit') || 'Edit', href: `/groups/${props.group.id}/edit` },
 ];
 </script>
 
 <template>
-    <Head :title="`Edit: ${props.group.name}`" />
+    <Head :title="`${t('common.actions.edit')} ${props.group.name}`" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="mx-auto max-w-xl space-y-8 p-4">
             <div class="flex items-center justify-between">
-                <h1 class="text-xl font-semibold tracking-tight">Edit Group</h1>
-                <Link :href="route('groups.index')" class="text-sm text-primary hover:underline">Back</Link>
+                <h1 class="text-xl font-semibold tracking-tight">{{ t('common.actions.edit') }} {{ t('common.misc.groups') }}</h1>
+                <Link :href="route('groups.index')" class="text-sm text-primary hover:underline">{{ t('common.actions.back') }}</Link>
             </div>
             <form @submit.prevent="submit" class="space-y-6">
                 <div class="space-y-2">
-                    <label for="name" class="text-sm font-medium">Name *</label>
+                    <label for="name" class="text-sm font-medium">{{ t('common.labels.name') }} *</label>
                     <input
                         id="name"
                         v-model="form.name"
@@ -107,7 +109,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <p v-if="form.errors.name" class="text-xs text-destructive">{{ form.errors.name }}</p>
                 </div>
                 <div class="space-y-2">
-                    <label for="description" class="text-sm font-medium">Description</label>
+                    <label for="description" class="text-sm font-medium">{{ t('common.labels.description') }}</label>
                     <textarea
                         id="description"
                         v-model="form.description"
@@ -119,7 +121,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div class="space-y-2">
-                        <label for="min_value" class="text-sm font-medium">Min Value</label>
+                        <label for="min_value" class="text-sm font-medium">{{ t('common.labels.min_value') }}</label>
                         <div class="relative">
                             <input
                                 id="min_value"
@@ -135,7 +137,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <p v-if="form.errors.min_value" class="text-xs text-destructive">{{ form.errors.min_value }}</p>
                     </div>
                     <div class="space-y-2">
-                        <label for="max_value" class="text-sm font-medium">Max Value</label>
+                        <label for="max_value" class="text-sm font-medium">{{ t('common.labels.max_value') }}</label>
                         <div class="relative">
                             <input
                                 id="max_value"
@@ -152,7 +154,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </div>
                 </div>
                 <div class="space-y-2">
-                    <label class="text-sm font-medium">Draw Date *</label>
+                    <label class="text-sm font-medium">{{ t('common.labels.draw_date') }} *</label>
                     <Popover>
                         <PopoverTrigger as-child>
                             <button
@@ -166,7 +168,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             >
                                 <CalendarIcon class="h-4 w-4" />
                                 <span class="truncate">
-                                    {{ dateValue ? df.format(dateValue.toDate(tz)) : 'Pick a date' }}
+                                    {{ dateValue ? df.format(dateValue.toDate(tz)) : t('common.misc.pick_a_date') }}
                                 </span>
                             </button>
                         </PopoverTrigger>
@@ -187,7 +189,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                         :disabled="form.processing"
                         class="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50"
                     >
-                        Save
+                        {{ t('common.actions.save') }}
                     </button>
                 </div>
             </form>

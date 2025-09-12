@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
+use App\Http\Controllers\Settings\LanguageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -18,4 +19,7 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/Appearance');
     })->name('appearance');
+
+    Route::get('settings/language', [LanguageController::class, 'edit'])->name('language.edit');
+    Route::put('settings/language', [LanguageController::class, 'update'])->name('language.update');
 });

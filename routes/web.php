@@ -83,6 +83,8 @@ Route::middleware(['auth'])
         Route::get('/{group}', [\App\Http\Controllers\GroupController::class, 'show'])->name('show');
         Route::put('/{group}', [\App\Http\Controllers\GroupController::class, 'update'])->name('update');
         Route::post('/{group}/regenerate-code', [\App\Http\Controllers\GroupController::class, 'regenerateCode'])->name('regenerate_code');
+        Route::post('/{group}/transfer-ownership', [\App\Http\Controllers\GroupOwnershipController::class, 'store'])->name('transfer_ownership');
+        Route::delete('/{group}/participants/{user}', [\App\Http\Controllers\GroupParticipantController::class, 'destroy'])->name('participants.remove');
         Route::delete('/{group}', [\App\Http\Controllers\GroupController::class, 'destroy'])->name('destroy');
         // Limite: 5 convites por minuto por usuário
         Route::post('/{group}/invitations', [\App\Http\Controllers\GroupInvitationController::class, 'store'])

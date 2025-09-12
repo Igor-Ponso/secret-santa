@@ -3,6 +3,7 @@ import DateTimePicker from '@/components/DateTimePicker.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 
 const form = useForm({
     name: '',
@@ -16,24 +17,25 @@ function submit() {
     form.post(route('groups.store'));
 }
 
+const { t } = useI18n();
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Groups', href: '/groups' },
-    { title: 'Create', href: '/groups/create' },
+    { title: t('common.misc.groups') || 'Groups', href: '/groups' },
+    { title: t('common.actions.create') || 'Create', href: '/groups/create' },
 ];
 </script>
 
 <template>
-    <Head title="Create Group" />
+    <Head :title="t('common.actions.create') + ' ' + t('common.misc.groups') || 'Create Group'" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="mx-auto max-w-xl space-y-8 p-4">
             <div class="flex items-center justify-between">
-                <h1 class="text-xl font-semibold tracking-tight">Create Group</h1>
-                <Link :href="route('groups.index')" class="text-sm text-primary hover:underline">Back</Link>
+                <h1 class="text-xl font-semibold tracking-tight">{{ t('common.actions.create') }} {{ t('common.misc.groups') }}</h1>
+                <Link :href="route('groups.index')" class="text-sm text-primary hover:underline">{{ t('common.actions.back') }}</Link>
             </div>
 
             <form @submit.prevent="submit" class="space-y-6">
                 <div class="space-y-2">
-                    <label for="name" class="text-sm font-medium" required>Name</label>
+                    <label for="name" class="text-sm font-medium" required>{{ t('common.labels.name') }}</label>
                     <input
                         id="name"
                         v-model="form.name"
@@ -45,7 +47,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 </div>
 
                 <div class="space-y-2">
-                    <label for="description" class="text-sm font-medium">Description</label>
+                    <label for="description" class="text-sm font-medium">{{ t('common.labels.description') }}</label>
                     <textarea
                         id="description"
                         v-model="form.description"
@@ -58,7 +60,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div class="space-y-2">
-                        <label for="min_value" class="text-sm font-medium">Min Value</label>
+                        <label for="min_value" class="text-sm font-medium">{{ t('common.labels.min_value') }}</label>
                         <div class="relative">
                             <input
                                 id="min_value"
@@ -74,7 +76,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <p v-if="form.errors.min_value" class="text-xs text-destructive">{{ form.errors.min_value }}</p>
                     </div>
                     <div class="space-y-2">
-                        <label for="max_value" class="text-sm font-medium">Max Value</label>
+                        <label for="max_value" class="text-sm font-medium">{{ t('common.labels.max_value') }}</label>
                         <div class="relative">
                             <input
                                 id="max_value"
@@ -93,10 +95,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 
                 <DateTimePicker
                     v-model="form.draw_at"
-                    label="Draw Date *"
+                    :label="t('common.labels.draw_date') + ' *'"
                     :required="true"
                     :min="new Date().toISOString()"
-                    placeholder="Escolha a data do sorteio"
+                    :placeholder="t('common.misc.choose_draw_date')"
                 />
                 <p v-if="form.errors.draw_at" class="text-xs text-destructive">{{ form.errors.draw_at }}</p>
 
@@ -106,7 +108,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                         :disabled="form.processing"
                         class="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50"
                     >
-                        Create
+                        {{ t('common.actions.create') }}
                     </button>
                     <span v-if="form.progress" class="text-xs text-muted-foreground">Uploading: {{ form.progress.percentage }}%</span>
                 </div>

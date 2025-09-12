@@ -3,6 +3,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface GroupSummary {
     id: number;
@@ -71,56 +72,60 @@ function act(inv: LocalInvitation, action: 'accept' | 'decline') {
     );
 }
 
+const { t } = useI18n();
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Dashboard',
+        title: t('dashboard.heading') || 'Dashboard',
         href: '/dashboard',
     },
 ];
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head :title="t('dashboard.heading') || 'Dashboard'" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <div class="grid auto-rows-min gap-4 md:grid-cols-3">
                 <!-- Resumo -->
                 <div class="rounded-xl border bg-card p-4">
-                    <h2 class="mb-2 text-sm font-semibold">Resumo</h2>
+                    <h2 class="mb-2 text-sm font-semibold">{{ t('dashboard.summary') }}</h2>
                     <div class="space-y-1 text-xs">
                         <div>
-                            <span class="font-bold">{{ props.groupsCount }}</span> grupos
+                            <span class="font-bold">{{ props.groupsCount }}</span> {{ t('dashboard.groups_count_label') }}
                         </div>
                         <div>
-                            <span class="font-bold">{{ pendingCount }}</span> convites pendentes
+                            <span class="font-bold">{{ pendingCount }}</span> {{ t('dashboard.pending_invites_count_label') }}
                         </div>
                         <div>
-                            <span class="font-bold">{{ props.upcomingDraws.length }}</span> sorteios futuros
+                            <span class="font-bold">{{ props.upcomingDraws.length }}</span> {{ t('dashboard.upcoming_draws_count_label') }}
                         </div>
                     </div>
                     <div class="mt-4 flex gap-2">
                         <Link
                             :href="route('groups.create')"
                             class="rounded bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:bg-primary/90"
-                            >Novo Grupo</Link
+                            >{{ t('common.actions.new') }} {{ t('common.misc.groups') }}</Link
                         >
-                        <Link :href="route('groups.index')" class="rounded border px-3 py-1.5 text-xs hover:bg-accent">Ver Grupos</Link>
+                        <Link :href="route('groups.index')" class="rounded border px-3 py-1.5 text-xs hover:bg-accent"
+                            >{{ t('common.actions.view') }} {{ t('common.misc.groups') }}</Link
+                        >
                     </div>
                 </div>
                 <!-- Próximos Sorteios -->
                 <div class="rounded-xl border bg-card p-4">
-                    <h2 class="mb-2 text-sm font-semibold">Próximos Sorteios</h2>
+                    <h2 class="mb-2 text-sm font-semibold">{{ t('common.misc.upcoming_draws') }}</h2>
                     <ul v-if="props.upcomingDraws.length" class="space-y-1 text-xs">
                         <li v-for="g in props.upcomingDraws" :key="g.id">
-                            <span class="font-medium">{{ g.name }}</span> — {{ g.draw_at ? new Date(g.draw_at).toLocaleDateString() : 'Sem data' }}
+                            <span class="font-medium">{{ g.name }}</span> —
+                            {{ g.draw_at ? new Date(g.draw_at).toLocaleDateString() : t('common.misc.none') }}
                         </li>
                     </ul>
-                    <div v-else class="text-xs text-muted-foreground">Nenhum sorteio futuro.</div>
+                    <div v-else class="text-xs text-muted-foreground">{{ t('common.misc.no_upcoming_draws') }}</div>
                 </div>
                 <!-- Convites Pendentes -->
                 <div class="rounded-xl border bg-card p-4">
-                    <h2 class="mb-2 text-sm font-semibold">Convites Pendentes</h2>
+                    <h2 class="mb-2 text-sm font-semibold">{{ t('common.misc.pending_invitations') }}</h2>
                     <ul v-if="invitations.length" class="space-y-2 text-xs">
                         <li v-for="inv in invitations" :key="inv.group.id + '-' + inv.email" class="flex flex-col gap-1 rounded border p-2">
                             <div class="flex flex-wrap items-center justify-between gap-2">
@@ -139,7 +144,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                                             :disabled="inv.loading"
                                             class="rounded bg-green-600 px-2 py-1 text-xs font-semibold text-white hover:bg-green-500 disabled:opacity-50"
                                         >
-                                            {{ inv.loading ? '...' : 'Aceitar' }}
+                                            {{ inv.loading ? '...' : t('common.actions.add') /* reuse or create accept key */ }}
                                         </button>
                                         <button
                                             type="button"
@@ -147,26 +152,26 @@ const breadcrumbs: BreadcrumbItem[] = [
                                             :disabled="inv.loading"
                                             class="rounded bg-red-600 px-2 py-1 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-50"
                                         >
-                                            {{ inv.loading ? '...' : 'Recusar' }}
+                                            {{ inv.loading ? '...' : t('common.actions.delete') /* placeholder for decline */ }}
                                         </button>
                                     </template>
-                                    <span v-else class="text-xs text-muted-foreground">Ação via email</span>
+                                    <span v-else class="text-xs text-muted-foreground">Email action</span>
                                 </div>
                             </div>
                         </li>
                     </ul>
-                    <div v-else class="text-xs text-muted-foreground">Nenhum convite pendente.</div>
+                    <div v-else class="text-xs text-muted-foreground">{{ t('common.misc.no_pending_invitations') }}</div>
                 </div>
             </div>
             <!-- Atividades Recentes -->
             <div class="rounded-xl border bg-card p-4">
-                <h2 class="mb-2 text-sm font-semibold">Atividades Recentes</h2>
+                <h2 class="mb-2 text-sm font-semibold">{{ t('common.misc.recent_activity') }}</h2>
                 <ul v-if="props.recentActivities.length" class="space-y-1 text-xs">
                     <li v-for="a in props.recentActivities" :key="a.date + '-' + a.message">
                         <span class="text-muted-foreground">{{ new Date(a.date).toLocaleString() }}:</span> {{ a.message }}
                     </li>
                 </ul>
-                <div v-else class="text-xs text-muted-foreground">Nenhuma atividade recente.</div>
+                <div v-else class="text-xs text-muted-foreground">{{ t('common.misc.no_recent_activity') }}</div>
             </div>
         </div>
     </AppLayout>

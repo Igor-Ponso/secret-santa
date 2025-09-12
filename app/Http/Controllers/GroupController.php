@@ -292,6 +292,8 @@ class GroupController extends Controller
                 'id' => $group->id,
                 'name' => $group->name,
                 'description' => $group->description,
+                // Expose owner_id so frontend can correctly identify owner row (hide remove button etc.)
+                'owner_id' => $group->owner_id,
                 'is_owner' => $isOwner,
                 'has_draw' => $hasDraw,
                 'participant_count' => $participantCount,
@@ -304,6 +306,17 @@ class GroupController extends Controller
                 'join_requests_meta' => $joinRequestsMeta,
                 'pending_join_requests_count' => $isOwner ? $group->joinRequests()->where('status', 'pending')->count() : 0,
                 'metrics' => $metrics,
+                'activities' => \App\Models\Activity::where('group_id', $group->id)
+                    ->latest('id')
+                    ->limit(10)
+                    ->get(['id', 'action', 'user_id', 'target_user_id', 'created_at'])
+                    ->map(fn($a) => [
+                        'id' => $a->id,
+                        'action' => $a->action,
+                        'user_id' => $a->user_id,
+                        'target_user_id' => $a->target_user_id,
+                        'created_at' => $a->created_at?->toISOString(),
+                    ]),
             ]
         ]);
     }

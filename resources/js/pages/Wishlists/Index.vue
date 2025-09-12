@@ -2,6 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface WishlistItem {
     id: number;
@@ -17,6 +18,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { t } = useI18n();
 
 // Create form
 const createForm = useForm({
@@ -71,20 +73,20 @@ function setOrder(order: 'created' | 'alpha') {
 </script>
 
 <template>
-    <Head :title="`Wishlist - ${props.group.name}`" />
+    <Head :title="`${t('wishlist.title')} - ${props.group.name}`" />
     <AppLayout
         :breadcrumbs="[
-            { title: 'Groups', href: route('groups.index') },
+            { title: t('common.misc.groups'), href: route('groups.index') },
             { title: props.group.name, href: route('groups.wishlist.index', { group: props.group.id }) },
-            { title: 'Wishlist', href: route('groups.wishlist.index', { group: props.group.id }) },
+            { title: t('wishlist.title'), href: route('groups.wishlist.index', { group: props.group.id }) },
         ]"
     >
         <div class="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 class="text-xl font-semibold">Wishlist</h1>
+                    <h1 class="text-xl font-semibold">{{ t('wishlist.title') }}</h1>
                     <p class="text-xs text-muted-foreground">
-                        Grupo: <span class="font-medium">{{ props.group.name }}</span>
+                        {{ t('common.labels.group') }}: <span class="font-medium">{{ props.group.name }}</span>
                     </p>
                 </div>
                 <div class="flex items-center gap-3">
@@ -95,7 +97,7 @@ function setOrder(order: 'created' | 'alpha') {
                             :class="props.order === 'created' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'"
                             @click="setOrder('created')"
                         >
-                            Recentes
+                            {{ t('common.misc.wishlist_recent') }}
                         </button>
                         <button
                             type="button"
@@ -103,10 +105,10 @@ function setOrder(order: 'created' | 'alpha') {
                             :class="props.order === 'alpha' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'"
                             @click="setOrder('alpha')"
                         >
-                            A-Z
+                            {{ t('common.misc.wishlist_alpha') }}
                         </button>
                     </div>
-                    <Link :href="route('groups.index')" class="text-xs text-primary hover:underline">Voltar</Link>
+                    <Link :href="route('groups.index')" class="text-xs text-primary hover:underline">{{ t('common.misc.wishlist_back') }}</Link>
                 </div>
             </div>
 
@@ -116,7 +118,7 @@ function setOrder(order: 'created' | 'alpha') {
                     <input
                         v-model="createForm.item"
                         type="text"
-                        placeholder="Item"
+                        :placeholder="t('common.misc.wishlist_item')"
                         class="rounded border px-3 py-2 text-sm focus:border-primary focus:ring-primary"
                         required
                         maxlength="255"
@@ -145,7 +147,7 @@ function setOrder(order: 'created' | 'alpha') {
                         :disabled="createForm.processing"
                         class="rounded bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                     >
-                        Adicionar
+                        {{ t('common.misc.wishlist_add') }}
                     </button>
                     <div v-if="createForm.errors.item" class="text-sm text-red-600">{{ createForm.errors.item }}</div>
                 </div>
@@ -156,15 +158,15 @@ function setOrder(order: 'created' | 'alpha') {
                 <table class="w-full text-sm">
                     <thead class="bg-gray-50 text-left dark:bg-gray-700/50">
                         <tr>
-                            <th class="w-1/3 px-4 py-2">Item</th>
-                            <th class="w-1/4 px-4 py-2">Nota</th>
-                            <th class="w-1/4 px-4 py-2">Link</th>
-                            <th class="px-4 py-2 text-right">Ações</th>
+                            <th class="w-1/3 px-4 py-2">{{ t('common.misc.wishlist_item') }}</th>
+                            <th class="w-1/4 px-4 py-2">{{ t('common.misc.wishlist_note') }}</th>
+                            <th class="w-1/4 px-4 py-2">{{ t('common.misc.wishlist_link') }}</th>
+                            <th class="px-4 py-2 text-right">{{ t('common.misc.wishlist_actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-if="!hasItems">
-                            <td colspan="4" class="px-4 py-6 text-center text-muted-foreground">Nenhum item ainda.</td>
+                            <td colspan="4" class="px-4 py-6 text-center text-muted-foreground">{{ t('common.misc.wishlist_empty') }}</td>
                         </tr>
                         <tr v-for="row in props.items" :key="row.id" class="border-t border-gray-100 dark:border-gray-700/60">
                             <template v-if="editingId === row.id">
@@ -198,14 +200,14 @@ function setOrder(order: 'created' | 'alpha') {
                                         @click="submitEdit(row.id)"
                                         class="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-500"
                                     >
-                                        Salvar
+                                        {{ t('common.actions.save') }}
                                     </button>
                                     <button
                                         @click="cancelEdit"
                                         type="button"
                                         class="rounded bg-gray-500 px-3 py-1 text-xs font-medium text-white hover:bg-gray-400"
                                     >
-                                        Cancelar
+                                        {{ t('common.actions.cancel') }}
                                     </button>
                                 </td>
                             </template>
@@ -232,13 +234,13 @@ function setOrder(order: 'created' | 'alpha') {
                                         @click="startEdit(row)"
                                         class="rounded bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500"
                                     >
-                                        Editar
+                                        {{ t('common.actions.edit') }}
                                     </button>
                                     <button
                                         @click="remove(row.id)"
                                         class="rounded bg-red-600 px-3 py-1 text-xs font-medium text-white hover:bg-red-500"
                                     >
-                                        Remover
+                                        {{ t('common.actions.delete') }}
                                     </button>
                                 </td>
                             </template>
@@ -247,7 +249,7 @@ function setOrder(order: 'created' | 'alpha') {
                 </table>
             </div>
             <div class="text-xs text-muted-foreground">
-                Somente você vê sua própria wishlist por enquanto. Regras de visibilidade após o sorteio serão adicionadas.
+                {{ t('common.misc.wishlist_visibility_hint') }}
             </div>
         </div>
     </AppLayout>

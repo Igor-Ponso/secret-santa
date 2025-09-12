@@ -1,12 +1,35 @@
 <?php
 
 return [
-    'create' => [
-        'success' => ':type created successfully',
-        'error' => ':type could not be created',
-    ],
-    'update' => [
-        'success' => ':type updated successfully',
-        'error' => ':type could not be updated',
+    'groups' => [
+        'participants' => 'Participants',
+        'invitations' => 'Invitations',
+        'join_requests' => 'Join Requests',
+        'draw' => 'Draw',
+        'generate_code' => 'Generate Code',
+        'new_code' => 'New Code',
+        'entry_code' => 'Entry Code',
+        'copy' => 'Copy',
+        'copied' => 'Copied',
+        'show_code' => 'Show code',
+        'hide_code' => 'Hide code',
+        'remove' => 'Remove',
+        'transfer' => 'Transfer',
+        'owner' => 'Owner',
+        'you' => 'You',
+        'search' => 'Search',
+        'search_email' => 'Search email',
+        'search_user' => 'Search user',
+        'no_participants' => 'No participants yet.',
+        'no_invites' => 'No invites.',
+        'no_join_requests' => 'No requests.',
+        'no_results' => 'No results for ":query".',
+        'confirm_remove_title' => 'Remove participant?',
+        'confirm_remove_desc' => 'This action revokes participation. User can be invited again later.',
+        'confirm_transfer_title' => 'Transfer ownership?',
+        'confirm_transfer_desc' => 'After transferring you will lose owner privileges.',
+        'confirm' => 'Confirm',
+        'cancel' => 'Cancel',
+        'activities' => 'Recent Activity',
     ],
 ];

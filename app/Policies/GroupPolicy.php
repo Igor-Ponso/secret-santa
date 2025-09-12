@@ -36,4 +36,10 @@ class GroupPolicy
     {
         return $group->owner_id === $user->id;
     }
+
+    /** Owner can remove a participant (not self). */
+    public function removeParticipant(User $user, Group $group): bool
+    {
+        return $group->owner_id === $user->id;
+    }
 }
