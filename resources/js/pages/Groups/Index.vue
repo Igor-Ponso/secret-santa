@@ -39,6 +39,27 @@ const pendingId = ref<number | null>(null);
 const inviteOpen = ref(false);
 const inviteGroupId = ref<number | null>(null);
 const inviteEmail = ref('');
+// Join by code
+const joinCode = ref('');
+const joining = ref(false);
+
+function submitJoinByCode() {
+    if (!joinCode.value.trim()) return;
+    joining.value = true;
+    router.post(
+        route('groups.join_requests.join_by_code'),
+        { code: joinCode.value.trim() },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                joining.value = false;
+            },
+            onSuccess: () => {
+                joinCode.value = '';
+            },
+        },
+    );
+}
 
 function askDelete(id: number) {
     pendingId.value = id;
@@ -89,6 +110,28 @@ function submitInvite() {
                     class="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
                     >New Group</Link
                 >
+            </div>
+
+            <!-- Join by Code -->
+            <div class="flex max-w-md flex-col gap-2 rounded border p-4 text-xs">
+                <label for="join_code" class="font-medium">Entrar com código</label>
+                <div class="flex gap-2">
+                    <input
+                        id="join_code"
+                        v-model="joinCode"
+                        @keyup.enter="submitJoinByCode"
+                        placeholder="Código do grupo"
+                        class="flex-1 rounded border px-2 py-1"
+                    />
+                    <button
+                        :disabled="joining || !joinCode"
+                        @click="submitJoinByCode"
+                        class="rounded bg-primary px-3 py-1 text-primary-foreground disabled:opacity-50"
+                    >
+                        {{ joining ? 'Enviando...' : 'Enviar' }}
+                    </button>
+                </div>
+                <p class="text-[10px] text-muted-foreground">Use o código compartilhado para solicitar entrada. O dono precisa aprovar.</p>
             </div>
 
             <div v-if="groupsSorted.length === 0" class="rounded border border-dashed p-8 text-center text-sm text-muted-foreground">

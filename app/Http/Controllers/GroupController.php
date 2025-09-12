@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\Request;
 
 /**
  * Controller handling CRUD operations for Groups.
@@ -37,7 +38,7 @@ class GroupController extends Controller
             ->where('owner_id', $userId)
             ->with([
                 'invitations' => function ($q) {
-                    $q->latest('id')->select(['id', 'group_id', 'email', 'accepted_at', 'declined_at']);
+                    $q->latest('id')->select(['id', 'group_id', 'email', 'accepted_at', 'declined_at', 'revoked_at', 'expires_at']);
                 }
             ])
             ->select([
@@ -64,7 +65,7 @@ class GroupController extends Controller
                     'wishlist_count' => (int) $g->wishlist_count,
                     'invitations' => $g->invitations->map(fn($i) => [
                         'email' => $i->email,
-                        'status' => $i->accepted_at ? 'accepted' : ($i->declined_at ? 'declined' : 'pending'),
+                        'status' => method_exists($i, 'status') ? $i->status() : ($i->accepted_at ? 'accepted' : ($i->declined_at ? 'declined' : 'pending')),
                     ])
                 ];
             });
@@ -157,7 +158,7 @@ class GroupController extends Controller
     }
 
     /** Show group details & draw status */
-    public function show(Group $group): Response
+    public function show(Request $request, Group $group): Response
     {
         $this->authorize('view', $group);
         $hasDraw = false;
@@ -179,25 +180,95 @@ class GroupController extends Controller
         $canDraw = !$hasDraw && $participantCount >= 2; // minimum 2 participants required
 
         // Participants (owner + accepted) - expose only id & name for privacy
-        $participants = $group->participants()
-            ->orderBy('name')
-            ->get(['id', 'name'])
-            ->map(fn($u) => ['id' => $u->id, 'name' => $u->name]);
+        // Build participants (owner + accepted invitation users) with accepted_at when available.
+        $acceptedParticipants = $group->invitations()
+            ->whereNotNull('accepted_at')
+            ->whereNotNull('invited_user_id')
+            ->with(['invitedUser:id,name'])
+            ->get()
+            ->map(fn($inv) => [
+                'id' => $inv->invited_user_id,
+                'name' => $inv->invitedUser?->name ?? 'Usuário',
+                'accepted_at' => $inv->accepted_at?->toISOString(),
+            ]);
+
+        $participants = collect([
+            [
+                'id' => $group->owner_id,
+                'name' => $group->owner?->name ?? 'Dono',
+                'accepted_at' => null,
+                'wishlist_count' => $group->wishlists()->where('user_id', $group->owner_id)->count(),
+            ],
+        ])->merge(
+                $acceptedParticipants->map(function ($p) use ($group) {
+                    $p['wishlist_count'] = $group->wishlists()->where('user_id', $p['id'])->count();
+                    return $p;
+                })
+            )->sortBy('name')->values();
 
         $isOwner = auth()->id() === $group->owner_id;
 
         // For owner, provide invitations summary (including pending) to manage engagement
         $invitationsSummary = [];
+        $joinRequestsSummary = [];
+        $invitationsMeta = [];
+        $joinRequestsMeta = [];
         if ($isOwner) {
-            $invitationsSummary = $group->invitations()
-                ->latest('id')
-                ->get(['id', 'email', 'accepted_at', 'declined_at', 'revoked_at', 'expires_at'])
+            $inviteSearch = trim((string) $request->query('invite_search', ''));
+            $jrSearch = trim((string) $request->query('jr_search', ''));
+            $invitePage = (int) $request->query('invite_page', 1);
+            $jrPage = (int) $request->query('jr_page', 1);
+            $perPage = 10;
+
+            $inviteQuery = $group->invitations()->latest('id');
+            if ($inviteSearch !== '') {
+                $inviteQuery->where('email', 'like', "%{$inviteSearch}%");
+            }
+            $invitePaginator = $inviteQuery->select(['id', 'email', 'accepted_at', 'declined_at', 'revoked_at', 'expires_at', 'created_at'])
+                ->paginate($perPage, ['*'], 'invite_page', $invitePage);
+            $invitationsSummary = collect($invitePaginator->items())
                 ->map(fn($inv) => [
                     'id' => $inv->id,
                     'email' => $inv->email,
                     'status' => $inv->status(),
+                    'created_at' => $inv->created_at?->toISOString(),
+                    'accepted_at' => $inv->accepted_at?->toISOString(),
+                    'declined_at' => $inv->declined_at?->toISOString(),
+                    'revoked_at' => $inv->revoked_at?->toISOString(),
                     'expires_at' => $inv->expires_at?->toISOString(),
                 ]);
+            $invitationsMeta = [
+                'current_page' => $invitePaginator->currentPage(),
+                'last_page' => $invitePaginator->lastPage(),
+                'per_page' => $invitePaginator->perPage(),
+                'total' => $invitePaginator->total(),
+                'search' => $inviteSearch,
+            ];
+
+            $jrQuery = $group->joinRequests()->latest('id')->with('user');
+            if ($jrSearch !== '') {
+                $jrQuery->whereHas('user', function ($q) use ($jrSearch) {
+                    $q->where('name', 'like', "%{$jrSearch}%")->orWhere('email', 'like', "%{$jrSearch}%");
+                });
+            }
+            $jrPaginator = $jrQuery->select(['id', 'user_id', 'status', 'approved_at', 'denied_at', 'created_at'])
+                ->paginate($perPage, ['*'], 'jr_page', $jrPage);
+            $joinRequestsSummary = collect($jrPaginator->items())
+                ->map(fn($jr) => [
+                    'id' => $jr->id,
+                    'user' => $jr->user?->only(['id', 'name', 'email']),
+                    'status' => $jr->status,
+                    'created_at' => $jr->created_at?->toISOString(),
+                    'approved_at' => $jr->approved_at?->toISOString(),
+                    'denied_at' => $jr->denied_at?->toISOString(),
+                ]);
+            $joinRequestsMeta = [
+                'current_page' => $jrPaginator->currentPage(),
+                'last_page' => $jrPaginator->lastPage(),
+                'per_page' => $jrPaginator->perPage(),
+                'total' => $jrPaginator->total(),
+                'search' => $jrSearch,
+            ];
         }
 
         // Readiness metrics for owner UI
@@ -227,8 +298,21 @@ class GroupController extends Controller
                 'can_draw' => $canDraw,
                 'participants' => $participants,
                 'invitations' => $invitationsSummary,
+                'invitations_meta' => $invitationsMeta,
+                'join_code' => $isOwner ? $group->join_code : null,
+                'join_requests' => $joinRequestsSummary,
+                'join_requests_meta' => $joinRequestsMeta,
+                'pending_join_requests_count' => $isOwner ? $group->joinRequests()->where('status', 'pending')->count() : 0,
                 'metrics' => $metrics,
             ]
         ]);
+    }
+
+    /** Regenerate join code (owner only). */
+    public function regenerateCode(Request $request, Group $group, \App\Services\GroupService $service): \Illuminate\Http\RedirectResponse
+    {
+        $this->authorize('update', $group);
+        $service->regenerateJoinCode($group);
+        return back()->with('flash', ['success' => 'Novo código gerado.']);
     }
 }

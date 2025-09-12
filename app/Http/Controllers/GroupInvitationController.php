@@ -31,11 +31,27 @@ class GroupInvitationController extends Controller
         $data = $request->validated();
         $email = $data['email'];
 
+        // If there is a declined invitation for this email, block automatic re-invite.
+        $declinedExists = $group->invitations()
+            ->where('email', $email)
+            ->whereNotNull('declined_at')
+            ->exists();
+        if ($declinedExists) {
+            return back()->with('flash', [
+                'error' => 'Este e-mail já recusou um convite. O usuário deve solicitar entrada para nova aprovação.'
+            ]);
+        }
+
         // Prevent duplicate pending invitation for same email
         $exists = $group->invitations()
             ->where('email', $email)
             ->whereNull('accepted_at')
             ->whereNull('declined_at')
+            ->whereNull('revoked_at')
+            ->where(function ($q) {
+                // treat expired as not pending
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
             ->exists();
         if ($exists) {
             return back()->with('flash', ['error' => 'Invitation already pending for this email.']);

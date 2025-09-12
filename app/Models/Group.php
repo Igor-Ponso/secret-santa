@@ -34,7 +34,8 @@ class Group extends Model
         'description',
         'min_value',
         'max_value',
-        'draw_at'
+        'draw_at',
+        'join_code'
     ];
 
     /**
@@ -64,6 +65,16 @@ class Group extends Model
     public function invitations(): HasMany
     {
         return $this->hasMany(GroupInvitation::class);
+    }
+
+    /**
+     * Join requests from users wanting to participate.
+     *
+     * @return HasMany<GroupJoinRequest>
+     */
+    public function joinRequests(): HasMany
+    {
+        return $this->hasMany(GroupJoinRequest::class);
     }
 
     /**

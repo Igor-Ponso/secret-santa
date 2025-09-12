@@ -75,12 +75,14 @@ Route::middleware(['auth'])
     ->prefix('groups')
     ->name('groups.')
     ->group(function () {
+        Route::post('/join-by-code', [\App\Http\Controllers\GroupJoinRequestController::class, 'joinByCode'])->name('join_requests.join_by_code');
         Route::get('/', [\App\Http\Controllers\GroupController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\GroupController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\GroupController::class, 'store'])->name('store');
         Route::get('/{group}/edit', [\App\Http\Controllers\GroupController::class, 'edit'])->name('edit');
         Route::get('/{group}', [\App\Http\Controllers\GroupController::class, 'show'])->name('show');
         Route::put('/{group}', [\App\Http\Controllers\GroupController::class, 'update'])->name('update');
+        Route::post('/{group}/regenerate-code', [\App\Http\Controllers\GroupController::class, 'regenerateCode'])->name('regenerate_code');
         Route::delete('/{group}', [\App\Http\Controllers\GroupController::class, 'destroy'])->name('destroy');
         // Limite: 5 convites por minuto por usuário
         Route::post('/{group}/invitations', [\App\Http\Controllers\GroupInvitationController::class, 'store'])
@@ -95,6 +97,10 @@ Route::middleware(['auth'])
         // Draw (Secret Santa assignment)
         Route::post('/{group}/draw', [\App\Http\Controllers\DrawController::class, 'run'])->name('draw.run');
         Route::get('/{group}/recipient', [\App\Http\Controllers\DrawController::class, 'recipient'])->name('draw.recipient');
+        // Join requests
+        Route::post('/{group}/join-requests', [\App\Http\Controllers\GroupJoinRequestController::class, 'store'])->name('join_requests.store');
+        Route::post('/{group}/join-requests/{joinRequest}/approve', [\App\Http\Controllers\GroupJoinRequestController::class, 'approve'])->name('join_requests.approve');
+        Route::post('/{group}/join-requests/{joinRequest}/deny', [\App\Http\Controllers\GroupJoinRequestController::class, 'deny'])->name('join_requests.deny');
     });
 
 Route::middleware(['auth', 'verified'])->group(function () {

@@ -24,9 +24,18 @@ class GroupService
             'min_value' => $data['min_value'] ?? null,
             'max_value' => $data['max_value'] ?? null,
             'draw_at' => $data['draw_at'] ?? null,
+            'join_code' => $this->generateJoinCode(),
         ];
 
         return Group::create($payload);
+    }
+
+    /** Regenerate a unique join code for a group. */
+    public function regenerateJoinCode(Group $group): Group
+    {
+        $group->join_code = $this->generateJoinCode();
+        $group->save();
+        return $group;
     }
 
     /**
@@ -52,5 +61,12 @@ class GroupService
     public function delete(Group $group): void
     {
         $group->delete();
+    }
+    private function generateJoinCode(): string
+    {
+        do {
+            $code = strtoupper(substr(bin2hex(random_bytes(6)), 0, 12));
+        } while (Group::where('join_code', $code)->exists());
+        return $code;
     }
 }

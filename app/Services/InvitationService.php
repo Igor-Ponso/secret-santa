@@ -68,6 +68,9 @@ class InvitationService
     {
         if ($invitation->accepted_at || $invitation->declined_at)
             return;
+        if ($invitation->getAttribute('plain_token')) {
+            $invitation->offsetUnset('plain_token');
+        }
         $invitation->forceFill([
             'declined_at' => Carbon::now(),
         ])->save();
@@ -78,6 +81,10 @@ class InvitationService
     {
         if ($invitation->accepted_at || $invitation->revoked_at)
             return; // cannot revoke accepted or already revoked
+        // Ensure transient plain_token attribute does not get treated as dirty
+        if ($invitation->getAttribute('plain_token')) {
+            $invitation->offsetUnset('plain_token');
+        }
         $invitation->forceFill([
             'revoked_at' => Carbon::now(),
         ])->save();
@@ -89,7 +96,7 @@ class InvitationService
      */
     public function resend(GroupInvitation $invitation): ?GroupInvitation
     {
-        if ($invitation->accepted_at || $invitation->declined_at || $invitation->revoked_at || $invitation->isExpired())
+        if ($invitation->accepted_at || $invitation->declined_at || $invitation->isExpired())
             return null;
 
         return DB::transaction(function () use ($invitation) {
@@ -101,6 +108,8 @@ class InvitationService
             $invitation->forceFill([
                 'token' => hash('sha256', $token),
                 'expires_at' => Carbon::now()->addDays(14),
+                // If previously revoked, reactivate
+                'revoked_at' => null,
             ])->save();
             return $invitation->setAttribute('plain_token', $token);
         });

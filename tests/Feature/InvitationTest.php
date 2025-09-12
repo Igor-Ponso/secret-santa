@@ -143,3 +143,66 @@ it('owner can resend pending invitation and email is sent', function () {
     }
     expect($sendCount)->toBe(2);
 });
+
+it('owner can create new invitation after revoking previous one', function () {
+    $owner = User::factory()->create(['email_verified_at' => now()]);
+    $group = Group::factory()->for($owner, 'owner')->create();
+    $service = app(InvitationService::class);
+    $inv = $service->create($group, $owner, 'revoke-reinvite@example.com');
+    // revoke
+    $service->revoke($inv);
+    expect($inv->refresh()->revoked_at)->not()->toBeNull();
+    // now create again (should allow)
+    $new = $service->create($group, $owner, 'revoke-reinvite@example.com');
+    expect($new->id)->not()->toBe($inv->id);
+    expect($group->invitations()->where('email', 'revoke-reinvite@example.com')->count())->toBe(2);
+});
+
+it('owner can resend previously revoked invitation (reactivate)', function () {
+    $owner = User::factory()->create(['email_verified_at' => now()]);
+    $group = Group::factory()->for($owner, 'owner')->create();
+    $service = app(InvitationService::class);
+    $inv = $service->create($group, $owner, 'revoked-resend@example.com');
+    $service->revoke($inv);
+    expect($inv->refresh()->status())->toBe('revoked');
+    // resend should reactivate
+    $resent = $service->resend($inv->refresh());
+    expect($resent)->not()->toBeNull();
+    expect($resent->revoked_at)->toBeNull();
+    expect($resent->status())->toBe('pending');
+});
+
+it('cannot create new invitation after decline for same email', function () {
+    $owner = User::factory()->create(['email_verified_at' => now()]);
+    $invitee = User::factory()->create(['email' => 'decline-twice@test.com', 'email_verified_at' => now()]);
+    $group = Group::factory()->for($owner, 'owner')->create();
+    $service = app(InvitationService::class);
+    $inv = $service->create($group, $owner, 'decline-twice@test.com');
+    // simulate decline via service
+    $service->decline($inv);
+    expect($inv->refresh()->declined_at)->not()->toBeNull();
+    // attempt create again through controller route to test rejection
+    actingAs($owner);
+    $response = post(route('groups.invitations.store', $group), ['email' => 'decline-twice@test.com']);
+    // Either validation passes and our flash error appears OR validation fails; in both cases no new row
+    $count = $group->invitations()->where('email', 'decline-twice@test.com')->count();
+    // ensure count did not increase
+    expect($count)->toBe(1);
+});
+
+it('user can request to join and owner can approve', function () {
+    $owner = User::factory()->create(['email_verified_at' => now()]);
+    $user = User::factory()->create(['email_verified_at' => now()]);
+    $group = Group::factory()->for($owner, 'owner')->create();
+    actingAs($user);
+    post(route('groups.join_requests.store', $group));
+    $jr = \App\Models\GroupJoinRequest::where('group_id', $group->id)->where('user_id', $user->id)->first();
+    expect($jr)->not()->toBeNull();
+    actingAs($owner);
+    post(route('groups.join_requests.approve', [$group, $jr]));
+    $jr->refresh();
+    expect($jr->status)->toBe('approved');
+    // Should have created an accepted invitation linking user
+    $accepted = $group->invitations()->where('invited_user_id', $user->id)->whereNotNull('accepted_at')->exists();
+    expect($accepted)->toBeTrue();
+});
