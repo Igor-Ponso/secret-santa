@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { errorToast, successToast } from '@/lib/notifications';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
@@ -62,16 +61,11 @@ function act(inv: LocalInvitation, action: 'accept' | 'decline') {
         {},
         {
             preserveScroll: true,
-            onSuccess: () => {
-                removeInvitation(inv.id);
-                if (action === 'accept') successToast('Convite aceito');
-                else successToast('Convite recusado');
-            },
+            onSuccess: () => removeInvitation(inv.id),
             onError: () => {
                 mutateInvitation(inv.id, (i) => {
                     i.loading = false;
                 });
-                errorToast('Falha ao processar convite');
             },
         },
     );
@@ -143,7 +137,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                                             type="button"
                                             @click="act(inv, 'accept')"
                                             :disabled="inv.loading"
-                                            class="rounded bg-green-600 px-2 py-1 text-[10px] font-semibold text-white hover:bg-green-500 disabled:opacity-50"
+                                            class="rounded bg-green-600 px-2 py-1 text-xs font-semibold text-white hover:bg-green-500 disabled:opacity-50"
                                         >
                                             {{ inv.loading ? '...' : 'Aceitar' }}
                                         </button>
@@ -151,12 +145,12 @@ const breadcrumbs: BreadcrumbItem[] = [
                                             type="button"
                                             @click="act(inv, 'decline')"
                                             :disabled="inv.loading"
-                                            class="rounded bg-red-600 px-2 py-1 text-[10px] font-semibold text-white hover:bg-red-500 disabled:opacity-50"
+                                            class="rounded bg-red-600 px-2 py-1 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-50"
                                         >
                                             {{ inv.loading ? '...' : 'Recusar' }}
                                         </button>
                                     </template>
-                                    <span v-else class="text-[10px] text-muted-foreground">Ação via email</span>
+                                    <span v-else class="text-xs text-muted-foreground">Ação via email</span>
                                 </div>
                             </div>
                         </li>

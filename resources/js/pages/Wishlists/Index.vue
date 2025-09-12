@@ -91,7 +91,7 @@ function setOrder(order: 'created' | 'alpha') {
                     <div class="inline-flex items-center gap-1 rounded-full border px-1 py-0.5">
                         <button
                             type="button"
-                            class="rounded px-2 py-1 text-[10px] font-medium"
+                            class="rounded px-2 py-1 text-xs font-medium"
                             :class="props.order === 'created' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'"
                             @click="setOrder('created')"
                         >
@@ -99,7 +99,7 @@ function setOrder(order: 'created' | 'alpha') {
                         </button>
                         <button
                             type="button"
-                            class="rounded px-2 py-1 text-[10px] font-medium"
+                            class="rounded px-2 py-1 text-xs font-medium"
                             :class="props.order === 'alpha' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'"
                             @click="setOrder('alpha')"
                         >
@@ -136,7 +136,7 @@ function setOrder(order: 'created' | 'alpha') {
                             class="rounded border px-3 py-2 text-sm focus:border-primary focus:ring-primary"
                             maxlength="255"
                         />
-                        <p class="text-[10px] text-muted-foreground">Esqueci http? Adiciono https automaticamente.</p>
+                        <p class="text-xs text-muted-foreground">Esqueci http? Adiciono https automaticamente.</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
@@ -246,7 +246,7 @@ function setOrder(order: 'created' | 'alpha') {
                     </tbody>
                 </table>
             </div>
-            <div class="text-[10px] text-muted-foreground">
+            <div class="text-xs text-muted-foreground">
                 Somente você vê sua própria wishlist por enquanto. Regras de visibilidade após o sorteio serão adicionadas.
             </div>
         </div>

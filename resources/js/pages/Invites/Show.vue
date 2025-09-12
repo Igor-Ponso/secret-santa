@@ -11,7 +11,6 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { errorToast } from '@/lib/notifications';
 import { Head, router } from '@inertiajs/vue3';
 
 interface InvitationPageProps {
@@ -27,11 +26,11 @@ interface InvitationPageProps {
 const props = defineProps<InvitationPageProps>();
 
 function accept() {
-    router.post(route('invites.accept', props.invitation.token), {}, { onError: () => errorToast('Failed to accept invitation') });
+    router.post(route('invites.accept', props.invitation.token));
 }
 
 function decline() {
-    router.post(route('invites.decline', props.invitation.token), {}, { onError: () => errorToast('Failed to decline invitation') });
+    router.post(route('invites.decline', props.invitation.token));
 }
 </script>
 

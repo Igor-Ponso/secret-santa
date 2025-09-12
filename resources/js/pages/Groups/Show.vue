@@ -11,10 +11,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import Pagination from '@/components/ui/pagination/Pagination.vue';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { errorToast, successToast } from '@/lib/notifications';
 import { Head, router } from '@inertiajs/vue3';
-import { LoaderCircle } from 'lucide-vue-next';
+import { Check, Copy, Eye, EyeOff, LoaderCircle } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 
 interface Recipient {
@@ -110,8 +110,10 @@ watch(jrSearch, () => {
 
 function copyJoinCode() {
     if (!group.value.join_code) return;
-    navigator.clipboard.writeText(group.value.join_code);
-    successToast('Código copiado');
+    navigator.clipboard.writeText(group.value.join_code).then(() => {
+        joinCodeCopied.value = true;
+        setTimeout(() => (joinCodeCopied.value = false), 1600);
+    });
 }
 
 function approveJoin(id: number) {
@@ -143,6 +145,8 @@ const drawing = ref(false);
 const actingOn = ref<number | null>(null);
 const joinRequestActing = ref<{ id: number | null; action: 'approve' | 'deny' | null }>({ id: null, action: null });
 const joinCodeRegenerating = ref(false);
+const joinCodeVisible = ref(false);
+const joinCodeCopied = ref(false);
 const userId = (window as any).Laravel?.user?.id; // assuming provided globally
 const dialogMode = ref<'resend' | 'revoke' | null>(null);
 const dialogInvitationId = ref<number | null>(null);
@@ -174,14 +178,6 @@ function performDialogAction() {
         {},
         {
             preserveScroll: true,
-            onError: () => errorToast(mode === 'resend' ? 'Falha ao reenviar' : 'Falha ao revogar'),
-            onSuccess: () => {
-                if (mode === 'resend') {
-                    successToast('Convite reenviado');
-                } else {
-                    successToast('Convite revogado');
-                }
-            },
             onFinish: () => {
                 actingOn.value = null;
                 closeDialog();
@@ -209,11 +205,7 @@ function runDraw() {
         {},
         {
             onSuccess: () => {
-                successToast('Sorteio realizado');
                 fetchRecipient();
-            },
-            onError: () => {
-                errorToast('Falha ao sortear');
             },
             onFinish: () => {
                 drawing.value = false;
@@ -230,8 +222,6 @@ function regenerateJoinCode() {
         {},
         {
             preserveScroll: true,
-            onSuccess: () => successToast(group.value.join_code ? 'Novo código gerado' : 'Código criado'),
-            onError: () => errorToast('Falha ao gerar código'),
             onFinish: () => (joinCodeRegenerating.value = false),
         },
     );
@@ -268,7 +258,7 @@ onMounted(fetchRecipient);
                         </button>
                     </div>
                 </div>
-                <div class="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+                <div class="flex flex-wrap gap-3 text-sm text-muted-foreground">
                     <span class="inline-flex items-center gap-1 rounded bg-accent/50 px-2 py-0.5">Participantes: {{ group.participant_count }}</span>
                     <span v-if="!group.has_draw && group.participant_count < 2" class="text-destructive">Mínimo 2 participantes para sortear.</span>
                     <span v-if="group.has_draw" class="text-green-600 dark:text-green-400">Sorteio concluído</span>
@@ -279,18 +269,18 @@ onMounted(fetchRecipient);
                     <div v-else-if="recipient" class="flex flex-col gap-2 rounded bg-accent px-3 py-2 text-sm font-medium">
                         <span>{{ recipient.name }}</span>
                         <div v-if="recipientWishlist.length" class="rounded border bg-background/70 p-2">
-                            <p class="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Wishlist</p>
+                            <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Wishlist</p>
                             <ul class="max-h-40 space-y-1 overflow-auto pr-1">
-                                <li v-for="w in recipientWishlist" :key="w.id" class="rounded bg-accent/40 px-2 py-1 text-[11px] leading-tight">
+                                <li v-for="w in recipientWishlist" :key="w.id" class="rounded bg-accent/40 px-2 py-1 text-sm leading-tight">
                                     <span class="font-medium">{{ w.item }}</span>
-                                    <a v-if="w.url" :href="w.url" target="_blank" rel="noopener" class="ml-2 text-[10px] underline hover:text-primary"
+                                    <a v-if="w.url" :href="w.url" target="_blank" rel="noopener" class="ml-2 text-xs underline hover:text-primary"
                                         >link</a
                                     >
-                                    <div v-if="w.note" class="mt-0.5 text-[10px] italic opacity-80">{{ w.note }}</div>
+                                    <div v-if="w.note" class="mt-0.5 text-xs italic opacity-80">{{ w.note }}</div>
                                 </li>
                             </ul>
                         </div>
-                        <div v-else class="text-[10px] text-muted-foreground">Sem itens na wishlist.</div>
+                        <div v-else class="text-xs text-muted-foreground">Sem itens na wishlist.</div>
                     </div>
                     <div v-else class="text-xs text-muted-foreground">Não encontrado (verifique se você participa do grupo).</div>
                 </div>
@@ -298,8 +288,8 @@ onMounted(fetchRecipient);
             </div>
 
             <!-- Owner overview metrics -->
-            <div v-if="group.is_owner && group.metrics" class="rounded border p-4 text-[11px]">
-                <h2 class="mb-2 text-sm font-semibold">Visão Geral</h2>
+            <div v-if="group.is_owner && group.metrics" class="rounded border p-4 text-sm">
+                <h2 class="mb-3 text-base font-semibold">Visão Geral</h2>
                 <div class="grid gap-3 sm:grid-cols-4">
                     <div class="flex flex-col gap-1">
                         <span class="text-xs font-medium">Pendentes</span><span class="text-lg font-bold">{{ group.metrics.pending }}</span>
@@ -320,7 +310,7 @@ onMounted(fetchRecipient);
             </div>
 
             <!-- Tabs navigation -->
-            <div class="flex gap-2 overflow-x-auto border-b pb-2 text-xs">
+            <div class="flex gap-2 overflow-x-auto border-b pb-2 text-sm">
                 <button
                     :class="['rounded px-3 py-1', activeTab === 'participants' ? 'bg-primary text-primary-foreground' : 'bg-accent']"
                     @click="activeTab = 'participants'"
@@ -340,98 +330,145 @@ onMounted(fetchRecipient);
                     @click="activeTab = 'join_requests'"
                 >
                     Pedidos
-                    <span v-if="group.pending_join_requests_count" class="ml-1 rounded bg-destructive px-1 text-[10px] text-destructive-foreground">{{
+                    <span v-if="group.pending_join_requests_count" class="ml-1 rounded bg-destructive px-1 text-xs text-destructive-foreground">{{
                         group.pending_join_requests_count
                     }}</span>
                 </button>
-                <div v-if="group.is_owner" class="ml-auto flex items-center gap-2 text-[10px]">
-                    <span v-if="group.join_code" class="rounded bg-accent px-2 py-0.5 font-mono">{{ group.join_code }}</span>
-                    <button
-                        v-if="group.join_code"
-                        class="rounded bg-accent px-2 py-0.5 disabled:opacity-50"
-                        :disabled="joinCodeRegenerating"
-                        @click="copyJoinCode"
-                    >
-                        Copiar
-                    </button>
-                    <button
-                        class="flex items-center gap-1 rounded bg-primary px-2 py-0.5 text-primary-foreground disabled:opacity-50"
-                        :disabled="joinCodeRegenerating"
-                        @click="regenerateJoinCode"
-                    >
-                        <LoaderCircle v-if="joinCodeRegenerating" class="h-3 w-3 animate-spin" />
-                        {{ group.join_code ? 'Novo' : 'Gerar Código' }}
-                    </button>
+                <div v-if="group.is_owner" class="ml-auto flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-4">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <span class="inline-flex cursor-help items-center gap-1 text-sm font-semibold tracking-wide">
+                                    Código de Entrada
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        class="h-3.5 w-3.5 opacity-60"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M11.25 11.25l.041-.02a.75.75 0 01.604 0l.041.02a.75.75 0 00.63 0l.041-.02a.75.75 0 01.604 0l.041.02M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                    </svg>
+                                </span>
+                            </TooltipTrigger>
+                            <TooltipContent class="max-w-xs">
+                                <p class="text-xs leading-snug">
+                                    Compartilhe este código com pessoas que você quer que solicitem entrada. Você pode regenerar a qualquer momento —
+                                    o antigo deixa de funcionar.
+                                </p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    <div class="flex items-center gap-3">
+                        <div v-if="group.join_code" class="relative">
+                            <span class="inline-flex select-text items-center gap-2 rounded bg-accent px-3 py-1 font-mono text-sm tracking-wide">
+                                <span>{{ joinCodeVisible ? group.join_code : '••••••••••••' }}</span>
+                                <button
+                                    type="button"
+                                    class="opacity-70 transition hover:opacity-100"
+                                    @click="joinCodeVisible = !joinCodeVisible"
+                                    :aria-label="joinCodeVisible ? 'Ocultar código' : 'Mostrar código'"
+                                    :title="joinCodeVisible ? 'Ocultar código' : 'Mostrar código'"
+                                >
+                                    <EyeOff v-if="joinCodeVisible" class="h-4 w-4" />
+                                    <Eye v-else class="h-4 w-4" />
+                                </button>
+                                <button
+                                    type="button"
+                                    class="opacity-70 transition hover:opacity-100"
+                                    @click="copyJoinCode"
+                                    :aria-label="joinCodeCopied ? 'Copiado!' : 'Copiar código'"
+                                    :title="joinCodeCopied ? 'Copiado!' : 'Copiar código'"
+                                >
+                                    <Check v-if="joinCodeCopied" class="h-4 w-4 text-green-600 transition" />
+                                    <Copy v-else class="h-4 w-4" />
+                                </button>
+                            </span>
+                        </div>
+                        <button
+                            class="flex items-center gap-1 rounded bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                            :disabled="joinCodeRegenerating"
+                            @click="regenerateJoinCode"
+                        >
+                            <LoaderCircle v-if="joinCodeRegenerating" class="h-4 w-4 animate-spin" />
+                            {{ group.join_code ? 'Novo Código' : 'Gerar Código' }}
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <!-- Participants Tab -->
             <div v-show="activeTab === 'participants'" class="space-y-3 rounded border p-4">
                 <div class="flex items-center justify-between gap-2">
-                    <h2 class="text-sm font-semibold">Participantes ({{ group.participant_count }})</h2>
-                    <input v-model="participantSearch" placeholder="Buscar" class="h-7 w-40 rounded border px-2 text-xs" />
+                    <h2 class="text-base font-semibold">Participantes ({{ group.participant_count }})</h2>
+                    <input
+                        v-model="participantSearch"
+                        placeholder="Buscar"
+                        class="h-8 w-48 rounded border bg-background px-2 text-sm placeholder:text-muted-foreground"
+                    />
                 </div>
-                <ul v-if="filteredParticipants.length" class="space-y-1 text-sm">
+                <ul v-if="filteredParticipants.length" class="space-y-1 text-base">
                     <li
                         v-for="p in filteredParticipants"
                         :key="p.id"
-                        class="flex items-center justify-between gap-2 rounded bg-accent/40 px-2 py-1 text-[11px]"
+                        class="flex items-center justify-between gap-2 rounded bg-accent/40 px-2 py-1 text-sm"
                     >
                         <div class="flex min-w-0 items-center gap-2">
-                            <span class="inline-block h-5 w-5 shrink-0 rounded-full bg-primary/20 text-center text-[10px] font-medium leading-5">{{
+                            <span class="inline-block h-5 w-5 shrink-0 rounded-full bg-primary/20 text-center text-xs font-medium leading-5">{{
                                 p.name[0]?.toUpperCase()
                             }}</span>
                             <span class="truncate">{{ p.name }}</span>
-                            <span v-if="p.id === userId" class="rounded bg-primary/10 px-1 py-0.5 text-[9px] uppercase tracking-wide">Você</span>
+                            <span v-if="p.id === userId" class="rounded bg-primary/10 px-1 py-0.5 text-xs uppercase tracking-wide">Você</span>
                             <span
                                 v-if="p.wishlist_count"
-                                class="rounded bg-amber-500/20 px-1 py-0.5 text-[9px] font-medium text-amber-700 dark:text-amber-300"
+                                class="rounded bg-amber-500/20 px-1 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300"
                                 >🎁 {{ p.wishlist_count }}</span
                             >
                         </div>
-                        <div v-if="p.accepted_at" class="flex items-center gap-2 text-[9px]">
+                        <div v-if="p.accepted_at" class="flex items-center gap-2 text-xs">
                             <Badge class="bg-green-600 text-white hover:bg-green-600/90">
                                 Aceito em {{ new Date(p.accepted_at).toLocaleString() }}
                             </Badge>
                         </div>
                     </li>
                 </ul>
-                <p v-else class="text-[11px] text-muted-foreground">Nenhum participante ainda.</p>
+                <p v-else class="text-sm text-muted-foreground">Nenhum participante ainda.</p>
             </div>
 
             <!-- Invitations Tab -->
             <div v-if="group.is_owner" v-show="activeTab === 'invitations'" class="space-y-3 rounded border p-4">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-sm font-semibold">Convites</h2>
-                    <input v-model="inviteSearch" placeholder="Buscar email" class="h-7 rounded border px-2 text-xs" />
+                    <h2 class="text-base font-semibold">Convites</h2>
+                    <input v-model="inviteSearch" placeholder="Buscar email" class="h-8 rounded border px-2 text-sm" />
                 </div>
                 <ul v-if="group.invitations && group.invitations.length" class="space-y-1 text-sm">
                     <li
                         v-for="inv in group.invitations"
                         :key="inv.id"
-                        class="flex items-center justify-between gap-2 rounded border px-2 py-1 text-[11px]"
+                        class="flex items-center justify-between gap-2 rounded border px-2 py-1 text-sm"
                     >
                         <div class="flex min-w-0 flex-1 flex-col">
                             <span class="truncate font-medium" :title="inv.email">{{ inv.email }}</span>
-                            <span class="mt-0.5 inline-flex flex-wrap items-center gap-2 text-[10px]">
+                            <span class="mt-0.5 inline-flex flex-wrap items-center gap-2 text-xs">
                                 <Badge :class="statusBadgeClass(inv.status)">{{ cap(inv.status) }}</Badge>
-                                <span
-                                    v-if="inv.expires_at && inv.status === 'pending'"
-                                    class="text-[9px] text-muted-foreground"
-                                    :title="inv.expires_at"
-                                >
+                                <span v-if="inv.expires_at && inv.status === 'pending'" class="text-xs text-muted-foreground" :title="inv.expires_at">
                                     expira em {{ new Date(inv.expires_at).toLocaleDateString() }}
                                 </span>
-                                <span v-if="inv.created_at" class="text-[9px] text-muted-foreground"
+                                <span v-if="inv.created_at" class="text-xs text-muted-foreground"
                                     >enviado {{ new Date(inv.created_at).toLocaleDateString() }}</span
                                 >
-                                <span v-if="inv.accepted_at" class="text-[9px] text-green-600"
+                                <span v-if="inv.accepted_at" class="text-xs text-green-600"
                                     >Aceito {{ new Date(inv.accepted_at).toLocaleDateString() }}</span
                                 >
-                                <span v-if="inv.declined_at" class="text-[9px] text-destructive"
+                                <span v-if="inv.declined_at" class="text-xs text-destructive"
                                     >Recusado {{ new Date(inv.declined_at).toLocaleDateString() }}</span
                                 >
-                                <span v-if="inv.revoked_at" class="text-[9px] text-destructive"
+                                <span v-if="inv.revoked_at" class="text-[11px] text-destructive"
                                     >Revogado {{ new Date(inv.revoked_at).toLocaleDateString() }}</span
                                 >
                             </span>
@@ -440,21 +477,21 @@ onMounted(fetchRecipient);
                             <button
                                 @click.prevent="openDialog('resend', inv.id)"
                                 :disabled="actingOn === inv.id"
-                                class="rounded bg-accent px-2 py-0.5 text-[10px] hover:bg-accent/70 disabled:opacity-50"
+                                class="rounded bg-accent px-2 py-0.5 text-xs hover:bg-accent/70 disabled:opacity-50"
                             >
                                 Reenviar
                             </button>
                             <button
                                 @click.prevent="openDialog('revoke', inv.id)"
                                 :disabled="actingOn === inv.id"
-                                class="rounded bg-destructive px-2 py-0.5 text-[10px] text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                                class="rounded bg-destructive px-2 py-0.5 text-xs text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
                             >
                                 Revogar
                             </button>
                         </div>
                     </li>
                 </ul>
-                <p v-else class="text-[11px] text-muted-foreground">Nenhum convite.</p>
+                <p v-else class="text-sm text-muted-foreground">Nenhum convite.</p>
                 <div v-if="group.invitations_meta && group.invitations_meta.last_page > 1" class="pt-2">
                     <Pagination
                         :page="group.invitations_meta.current_page"
@@ -468,24 +505,24 @@ onMounted(fetchRecipient);
             <!-- Join Requests Tab -->
             <div v-if="group.is_owner" v-show="activeTab === 'join_requests'" class="space-y-3 rounded border p-4">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-sm font-semibold">Pedidos de Entrada</h2>
-                    <input v-model="jrSearch" placeholder="Buscar usuário" class="h-7 rounded border px-2 text-xs" />
+                    <h2 class="text-base font-semibold">Pedidos de Entrada</h2>
+                    <input v-model="jrSearch" placeholder="Buscar usuário" class="h-8 rounded border px-2 text-sm" />
                 </div>
                 <ul v-if="group.join_requests && group.join_requests.length" class="space-y-1 text-sm">
                     <li
                         v-for="jr in group.join_requests"
                         :key="jr.id"
-                        class="flex items-center justify-between gap-2 rounded border px-2 py-1 text-[11px]"
+                        class="flex items-center justify-between gap-2 rounded border px-2 py-1 text-sm"
                     >
                         <div class="flex min-w-0 flex-1 flex-col">
                             <span class="truncate font-medium" :title="jr.user?.email">{{ jr.user?.name || 'Usuário' }}</span>
-                            <span class="text-[10px] text-muted-foreground">{{ jr.user?.email }}</span>
+                            <span class="text-xs text-muted-foreground">{{ jr.user?.email }}</span>
                         </div>
                         <div class="flex items-center gap-1" v-if="jr.status === 'pending'">
                             <button
                                 @click.prevent="approveJoin(jr.id)"
                                 :disabled="joinRequestActing.id === jr.id"
-                                class="flex items-center gap-1 rounded bg-green-600 px-2 py-0.5 text-[10px] text-white hover:bg-green-700 disabled:opacity-50"
+                                class="flex items-center gap-1 rounded bg-green-600 px-2 py-0.5 text-xs text-white hover:bg-green-700 disabled:opacity-50"
                             >
                                 <LoaderCircle
                                     v-if="joinRequestActing.id === jr.id && joinRequestActing.action === 'approve'"
@@ -496,7 +533,7 @@ onMounted(fetchRecipient);
                             <button
                                 @click.prevent="denyJoin(jr.id)"
                                 :disabled="joinRequestActing.id === jr.id"
-                                class="flex items-center gap-1 rounded bg-destructive px-2 py-0.5 text-[10px] text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                                class="flex items-center gap-1 rounded bg-destructive px-2 py-0.5 text-xs text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
                             >
                                 <LoaderCircle
                                     v-if="joinRequestActing.id === jr.id && joinRequestActing.action === 'deny'"
@@ -507,19 +544,19 @@ onMounted(fetchRecipient);
                         </div>
                         <span v-else class="inline-flex flex-wrap items-center gap-2">
                             <Badge :class="statusBadgeClass(jr.status)">{{ cap(jr.status) }}</Badge>
-                            <span class="text-[9px] text-muted-foreground" v-if="jr.created_at"
+                            <span class="text-xs text-muted-foreground" v-if="jr.created_at"
                                 >Enviado {{ new Date(jr.created_at).toLocaleDateString() }}</span
                             >
-                            <span class="text-[9px] text-green-600" v-if="jr.approved_at"
+                            <span class="text-xs text-green-600" v-if="jr.approved_at"
                                 >Aprovado {{ new Date(jr.approved_at).toLocaleDateString() }}</span
                             >
-                            <span class="text-[9px] text-destructive" v-if="jr.denied_at"
+                            <span class="text-xs text-destructive" v-if="jr.denied_at"
                                 >Recusado {{ new Date(jr.denied_at).toLocaleDateString() }}</span
                             >
                         </span>
                     </li>
                 </ul>
-                <p v-else class="text-[11px] text-muted-foreground">Nenhum pedido.</p>
+                <p v-else class="text-sm text-muted-foreground">Nenhum pedido.</p>
                 <div v-if="group.join_requests_meta && group.join_requests_meta.last_page > 1" class="pt-2">
                     <Pagination
                         :page="group.join_requests_meta.current_page"
@@ -530,7 +567,7 @@ onMounted(fetchRecipient);
                 </div>
             </div>
 
-            <p class="mt-2 text-[10px] text-muted-foreground">Após o sorteio, cada participante vê apenas seu destinatário e a wishlist associada.</p>
+            <p class="mt-4 text-sm text-muted-foreground">Após o sorteio, cada participante vê apenas seu destinatário e a wishlist associada.</p>
         </div>
 
         <!-- Single shared AlertDialog instance -->

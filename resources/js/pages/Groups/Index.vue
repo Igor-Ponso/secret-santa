@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { errorToast } from '@/lib/notifications';
 import type { BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
@@ -69,7 +68,6 @@ function askDelete(id: number) {
 function performDelete() {
     if (!pendingId.value) return;
     router.delete(route('groups.destroy', pendingId.value), {
-        onError: () => errorToast('Failed to delete group'),
         onFinish: () => {
             confirmOpen.value = false;
             pendingId.value = null;
@@ -89,7 +87,6 @@ function submitInvite() {
         route('groups.invitations.store', inviteGroupId.value),
         { email: inviteEmail.value },
         {
-            onError: () => errorToast('Failed to create invitation'),
             onSuccess: () => {
                 inviteOpen.value = false;
                 inviteEmail.value = '';
@@ -131,7 +128,7 @@ function submitInvite() {
                         {{ joining ? 'Enviando...' : 'Enviar' }}
                     </button>
                 </div>
-                <p class="text-[10px] text-muted-foreground">Use o código compartilhado para solicitar entrada. O dono precisa aprovar.</p>
+                <p class="text-xs text-muted-foreground">Use o código compartilhado para solicitar entrada. O dono precisa aprovar.</p>
             </div>
 
             <div v-if="groupsSorted.length === 0" class="rounded border border-dashed p-8 text-center text-sm text-muted-foreground">
@@ -142,23 +139,23 @@ function submitInvite() {
                 <li v-for="g in groupsSorted" :key="g.id" class="group rounded-lg border bg-card p-4 shadow-sm transition hover:shadow">
                     <h2 class="line-clamp-1 font-medium leading-tight">{{ g.name }}</h2>
                     <p v-if="g.description" class="mt-1 line-clamp-2 text-xs text-muted-foreground">{{ g.description }}</p>
-                    <div class="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+                    <div class="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                         <span v-if="g.min_value !== null || g.max_value !== null">Gift: {{ g.min_value ?? 0 }} - {{ g.max_value ?? '∞' }}</span>
                         <span v-if="g.draw_at">Draw: {{ new Date(g.draw_at).toLocaleDateString() }}</span>
                         <span
                             v-if="g.wishlist_count !== undefined"
-                            class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
+                            class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
                         >
                             🎁 {{ g.wishlist_count }}
                         </span>
                     </div>
                     <div v-if="g.invitations && g.invitations.length" class="mt-3 space-y-1">
-                        <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Invitations</p>
+                        <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Invitations</p>
                         <ul class="space-y-1">
                             <li
                                 v-for="inv in g.invitations"
                                 :key="inv.email"
-                                class="flex items-center justify-between rounded border px-2 py-1 text-[11px]"
+                                class="flex items-center justify-between rounded border px-2 py-1 text-sm"
                             >
                                 <span class="truncate">{{ inv.email }}</span>
                                 <span
@@ -173,7 +170,7 @@ function submitInvite() {
                             </li>
                         </ul>
                     </div>
-                    <div class="mt-4 flex flex-wrap items-center gap-2 text-[10px] font-medium">
+                    <div class="mt-4 flex flex-wrap items-center gap-2 text-xs font-medium">
                         <Link :href="route('groups.show', g.id)" class="rounded border px-2 py-1 hover:bg-accent">Ver</Link>
                         <Link :href="route('groups.edit', g.id)" class="rounded border px-2 py-1 hover:bg-accent">Editar</Link>
                         <button type="button" @click="openInvite(g.id)" class="rounded border px-2 py-1 hover:bg-accent">Convidar</button>
@@ -184,7 +181,7 @@ function submitInvite() {
                             Wishlist
                             <span
                                 v-if="g.wishlist_count && g.wishlist_count > 0"
-                                class="rounded bg-amber-600/10 px-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300"
+                                class="rounded bg-amber-600/10 px-1 text-xs font-semibold text-amber-700 dark:text-amber-300"
                                 >{{ g.wishlist_count }}</span
                             >
                         </Link>
@@ -201,17 +198,17 @@ function submitInvite() {
                     <li v-for="g in participatingSorted" :key="g.id" class="rounded-lg border bg-card p-4 shadow-sm transition hover:shadow">
                         <h3 class="line-clamp-1 font-medium leading-tight">{{ g.name }}</h3>
                         <p v-if="g.description" class="mt-1 line-clamp-2 text-xs text-muted-foreground">{{ g.description }}</p>
-                        <div class="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+                        <div class="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                             <span v-if="g.min_value !== null || g.max_value !== null">Gift: {{ g.min_value ?? 0 }} - {{ g.max_value ?? '∞' }}</span>
                             <span v-if="g.draw_at">Draw: {{ new Date(g.draw_at).toLocaleDateString() }}</span>
                             <span
                                 v-if="g.wishlist_count !== undefined"
-                                class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
+                                class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
                             >
                                 🎁 {{ g.wishlist_count }}
                             </span>
                         </div>
-                        <div class="mt-4 flex flex-wrap items-center gap-2 text-[10px] font-medium">
+                        <div class="mt-4 flex flex-wrap items-center gap-2 text-xs font-medium">
                             <Link :href="route('groups.show', g.id)" class="rounded border px-2 py-1 hover:bg-accent">Ver</Link>
                             <Link :href="route('groups.wishlist.index', { group: g.id })" class="rounded border px-2 py-1 hover:bg-accent"
                                 >Minha Wishlist</Link
