@@ -18,7 +18,8 @@ interface ShowProps {
         participant_count: number;
         can_draw: boolean;
         participants: { id: number; name: string }[];
-        invitations?: { id: number; email: string; status: string }[];
+        invitations?: { id: number; email: string; status: string; expires_at?: string | null }[];
+        metrics?: { pending: number; accepted: number; declined: number; revoked: number };
     };
 }
 
@@ -29,6 +30,37 @@ const recipient = ref<Recipient | null>(null);
 const recipientWishlist = ref<{ id: number; item: string; url?: string | null; note?: string | null }[]>([]);
 const loadingRecipient = ref(false);
 const drawing = ref(false);
+const actingOn = ref<number | null>(null);
+const userId = (window as any).Laravel?.user?.id; // assuming provided globally
+
+function resend(inv: { id: number }) {
+    actingOn.value = inv.id;
+    router.post(
+        route('groups.invitations.resend', { group: group.id, invitation: inv.id }),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => successToast('Convite reenviado'),
+            onError: () => errorToast('Falha ao reenviar'),
+            onFinish: () => (actingOn.value = null),
+        },
+    );
+}
+
+function revoke(inv: { id: number }) {
+    if (!confirm('Revogar este convite?')) return;
+    actingOn.value = inv.id;
+    router.post(
+        route('groups.invitations.revoke', { group: group.id, invitation: inv.id }),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => successToast('Convite revogado'),
+            onError: () => errorToast('Falha ao revogar'),
+            onFinish: () => (actingOn.value = null),
+        },
+    );
+}
 
 function fetchRecipient() {
     if (!props.group.has_draw) return;
@@ -125,11 +157,18 @@ onMounted(fetchRecipient);
                 <div class="space-y-3 rounded border p-4">
                     <h2 class="text-sm font-semibold">Participantes ({{ group.participant_count }})</h2>
                     <ul v-if="group.participants.length" class="space-y-1 text-sm">
-                        <li v-for="p in group.participants" :key="p.id" class="flex items-center gap-2 rounded bg-accent/40 px-2 py-1">
+                        <li v-for="p in group.participants" :key="p.id" class="flex items-center gap-2 rounded bg-accent/40 px-2 py-1 text-[11px]">
                             <span class="inline-block h-5 w-5 shrink-0 rounded-full bg-primary/20 text-center text-[10px] font-medium leading-5">{{
                                 p.name[0]?.toUpperCase()
                             }}</span>
                             <span class="truncate">{{ p.name }}</span>
+                            <span
+                                v-if="group.is_owner && p.id === userId"
+                                class="rounded bg-primary/10 px-1 py-0.5 text-[9px] uppercase tracking-wide"
+                                >Você</span
+                            >
+                            <span v-else-if="p.id === userId" class="rounded bg-primary/10 px-1 py-0.5 text-[9px] uppercase tracking-wide">Você</span>
+                            <span v-if="p.id === group.id /* impossible id overlap but keep placeholder */"></span>
                         </li>
                     </ul>
                     <p v-else class="text-[11px] text-muted-foreground">Nenhum participante ainda.</p>
@@ -140,20 +179,68 @@ onMounted(fetchRecipient);
                         <li
                             v-for="inv in group.invitations"
                             :key="inv.id"
-                            class="flex items-center justify-between rounded border px-2 py-1 text-[11px]"
+                            class="flex items-center justify-between gap-2 rounded border px-2 py-1 text-[11px]"
                         >
-                            <span class="truncate" :title="inv.email">{{ inv.email }}</span>
-                            <span
-                                :class="{
-                                    'text-green-600': inv.status === 'accepted',
-                                    'text-yellow-600': inv.status === 'pending',
-                                    'text-destructive': inv.status === 'declined',
-                                }"
-                                >{{ inv.status }}</span
-                            >
+                            <div class="flex min-w-0 flex-1 flex-col">
+                                <span class="truncate font-medium" :title="inv.email">{{ inv.email }}</span>
+                                <span class="mt-0.5 inline-flex items-center gap-1 text-[10px]">
+                                    <span
+                                        :class="{
+                                            'text-green-600': inv.status === 'accepted',
+                                            'text-yellow-600': inv.status === 'pending',
+                                            'text-destructive': inv.status === 'declined' || inv.status === 'revoked',
+                                            'text-muted-foreground': inv.status === 'expired',
+                                        }"
+                                        class="font-medium"
+                                        >{{ inv.status }}</span
+                                    >
+                                    <span
+                                        v-if="inv.expires_at && inv.status === 'pending'"
+                                        class="text-[9px] text-muted-foreground"
+                                        :title="inv.expires_at"
+                                    >
+                                        expira em {{ new Date(inv.expires_at).toLocaleDateString() }}
+                                    </span>
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-1" v-if="inv.status === 'pending'">
+                                <button
+                                    @click="resend(inv)"
+                                    :disabled="actingOn === inv.id"
+                                    class="rounded bg-accent px-2 py-0.5 text-[10px] hover:bg-accent/70 disabled:opacity-50"
+                                >
+                                    Reenviar
+                                </button>
+                                <button
+                                    @click="revoke(inv)"
+                                    :disabled="actingOn === inv.id"
+                                    class="rounded bg-destructive px-2 py-0.5 text-[10px] text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                                >
+                                    Revogar
+                                </button>
+                            </div>
                         </li>
                     </ul>
                     <p v-else class="text-[11px] text-muted-foreground">Nenhum convite enviado.</p>
+                </div>
+            </div>
+
+            <div v-if="group.is_owner && group.metrics" class="grid gap-4 rounded border p-4 text-[11px] md:grid-cols-4">
+                <div class="flex flex-col gap-1">
+                    <span class="text-xs font-semibold">Pendentes</span>
+                    <span class="text-lg font-bold">{{ group.metrics.pending }}</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <span class="text-xs font-semibold">Aceitos</span>
+                    <span class="text-lg font-bold text-green-600">{{ group.metrics.accepted }}</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <span class="text-xs font-semibold">Recusados</span>
+                    <span class="text-lg font-bold text-destructive">{{ group.metrics.declined }}</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <span class="text-xs font-semibold">Revogados</span>
+                    <span class="text-lg font-bold text-destructive">{{ group.metrics.revoked }}</span>
                 </div>
             </div>
 

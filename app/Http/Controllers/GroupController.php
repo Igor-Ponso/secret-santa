@@ -191,12 +191,29 @@ class GroupController extends Controller
         if ($isOwner) {
             $invitationsSummary = $group->invitations()
                 ->latest('id')
-                ->get(['id', 'email', 'accepted_at', 'declined_at'])
+                ->get(['id', 'email', 'accepted_at', 'declined_at', 'revoked_at', 'expires_at'])
                 ->map(fn($inv) => [
                     'id' => $inv->id,
                     'email' => $inv->email,
-                    'status' => $inv->accepted_at ? 'accepted' : ($inv->declined_at ? 'declined' : 'pending'),
+                    'status' => $inv->status(),
+                    'expires_at' => $inv->expires_at?->toISOString(),
                 ]);
+        }
+
+        // Readiness metrics for owner UI
+        $metrics = [];
+        if ($isOwner) {
+            $all = $group->invitations()->get(['id', 'accepted_at', 'declined_at', 'revoked_at']);
+            $pending = $all->filter(fn($i) => !$i->accepted_at && !$i->declined_at && !$i->revoked_at)->count();
+            $accepted = $all->filter(fn($i) => $i->accepted_at)->count();
+            $declined = $all->filter(fn($i) => $i->declined_at)->count();
+            $revoked = $all->filter(fn($i) => $i->revoked_at)->count();
+            $metrics = [
+                'pending' => $pending,
+                'accepted' => $accepted,
+                'declined' => $declined,
+                'revoked' => $revoked,
+            ];
         }
 
         return Inertia::render('Groups/Show', [
@@ -210,6 +227,7 @@ class GroupController extends Controller
                 'can_draw' => $canDraw,
                 'participants' => $participants,
                 'invitations' => $invitationsSummary,
+                'metrics' => $metrics,
             ]
         ]);
     }

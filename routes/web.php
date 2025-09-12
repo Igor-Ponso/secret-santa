@@ -86,6 +86,12 @@ Route::middleware(['auth'])
         Route::post('/{group}/invitations', [\App\Http\Controllers\GroupInvitationController::class, 'store'])
             ->middleware('throttle:5,1')
             ->name('invitations.store');
+        Route::post('/{group}/invitations/{invitation}/revoke', [\App\Http\Controllers\GroupInvitationController::class, 'revoke'])
+            ->middleware('throttle:10,1')
+            ->name('invitations.revoke');
+        Route::post('/{group}/invitations/{invitation}/resend', [\App\Http\Controllers\GroupInvitationController::class, 'resend'])
+            ->middleware('throttle:10,1')
+            ->name('invitations.resend');
         // Draw (Secret Santa assignment)
         Route::post('/{group}/draw', [\App\Http\Controllers\DrawController::class, 'run'])->name('draw.run');
         Route::get('/{group}/recipient', [\App\Http\Controllers\DrawController::class, 'recipient'])->name('draw.recipient');

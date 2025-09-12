@@ -48,4 +48,26 @@ class GroupInvitationController extends Controller
             'success' => 'Convite criado e enviado (verifique o email do convidado).',
         ]);
     }
+
+    /** Revoke a pending invitation. */
+    public function revoke(Group $group, \App\Models\GroupInvitation $invitation): RedirectResponse
+    {
+        $this->authorize('update', $group);
+        abort_unless($invitation->group_id === $group->id, 404);
+        $this->service->revoke($invitation);
+        return back()->with('flash', ['info' => 'Convite revogado']);
+    }
+
+    /** Resend a pending invitation regenerating token & extending expiry. */
+    public function resend(Group $group, \App\Models\GroupInvitation $invitation): RedirectResponse
+    {
+        $this->authorize('update', $group);
+        abort_unless($invitation->group_id === $group->id, 404);
+        $updated = $this->service->resend($invitation);
+        if (!$updated) {
+            return back()->with('flash', ['error' => 'Não é possível reenviar este convite.']);
+        }
+        // (Future) trigger mail job using $updated->plain_token
+        return back()->with('flash', ['success' => 'Convite reenviado']);
+    }
 }

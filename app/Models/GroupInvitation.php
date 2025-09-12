@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
  * @property string $token   Hashed token (sha256 hex) – never expose plain token after creation.
  * @property \Illuminate\Support\Carbon|null $accepted_at
  * @property \Illuminate\Support\Carbon|null $declined_at
+ * @property \Illuminate\Support\Carbon|null $revoked_at
  * @property \Illuminate\Support\Carbon|null $expires_at
  */
 class GroupInvitation extends Model
@@ -30,12 +31,14 @@ class GroupInvitation extends Model
         'token',
         'accepted_at',
         'declined_at',
+        'revoked_at',
         'expires_at',
     ];
 
     protected $casts = [
         'accepted_at' => 'datetime',
         'declined_at' => 'datetime',
+        'revoked_at' => 'datetime',
         'expires_at' => 'datetime',
     ];
 
@@ -57,5 +60,18 @@ class GroupInvitation extends Model
     public function isExpired(): bool
     {
         return $this->expires_at && $this->expires_at->isPast();
+    }
+
+    public function status(): string
+    {
+        if ($this->revoked_at)
+            return 'revoked';
+        if ($this->accepted_at)
+            return 'accepted';
+        if ($this->declined_at)
+            return 'declined';
+        if ($this->isExpired())
+            return 'expired';
+        return 'pending';
     }
 }

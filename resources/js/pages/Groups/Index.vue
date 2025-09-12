@@ -19,7 +19,7 @@ interface Group {
 
 interface Invitation {
     email: string;
-    status: 'pending' | 'accepted' | 'declined';
+    status: 'pending' | 'accepted' | 'declined' | 'revoked' | 'expired';
 }
 
 interface Props {
@@ -122,7 +122,8 @@ function submitInvite() {
                                     :class="{
                                         'text-green-600': inv.status === 'accepted',
                                         'text-yellow-600': inv.status === 'pending',
-                                        'text-destructive': inv.status === 'declined',
+                                        'text-destructive': inv.status === 'declined' || inv.status === 'revoked',
+                                        'text-muted-foreground': inv.status === 'expired',
                                     }"
                                     >{{ inv.status }}</span
                                 >

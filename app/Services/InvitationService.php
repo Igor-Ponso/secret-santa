@@ -72,4 +72,33 @@ class InvitationService
             'declined_at' => Carbon::now(),
         ])->save();
     }
+
+    /** Revoke an invitation (owner action). */
+    public function revoke(GroupInvitation $invitation): void
+    {
+        if ($invitation->accepted_at || $invitation->revoked_at)
+            return; // cannot revoke accepted or already revoked
+        $invitation->forceFill([
+            'revoked_at' => Carbon::now(),
+        ])->save();
+    }
+
+    /**
+     * Resend a pending (non accepted/declined/revoked/expired) invitation by regenerating token & extending expiry.
+     * Returns updated model with transient plain_token attribute.
+     */
+    public function resend(GroupInvitation $invitation): ?GroupInvitation
+    {
+        if ($invitation->accepted_at || $invitation->declined_at || $invitation->revoked_at || $invitation->isExpired())
+            return null;
+
+        return DB::transaction(function () use ($invitation) {
+            $token = Str::random(48);
+            $invitation->forceFill([
+                'token' => hash('sha256', $token),
+                'expires_at' => Carbon::now()->addDays(14),
+            ])->save();
+            return $invitation->setAttribute('plain_token', $token);
+        });
+    }
 }
