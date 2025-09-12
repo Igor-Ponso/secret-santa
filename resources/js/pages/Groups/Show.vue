@@ -13,10 +13,10 @@ import {
 import { Badge } from '@/components/ui/badge';
 import Pagination from '@/components/ui/pagination/Pagination.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { useDateFormat } from '@/lib/formatDate';
 import { Head, router } from '@inertiajs/vue3';
 import { Check, Copy, Eye, EyeOff, LoaderCircle } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
-import { useDateFormat } from '@/lib/formatDate';
 import { useI18n } from 'vue-i18n';
 
 interface Recipient {
@@ -583,12 +583,8 @@ onMounted(fetchRecipient);
                                 <span v-if="inv.accepted_at" class="text-xs text-green-600"
                                     >{{ t('groups.accepted') }} {{ formatDate(inv.accepted_at) }}</span
                                 >
-                                <span v-if="inv.declined_at" class="text-xs text-destructive"
-                                    >Recusado {{ formatDate(inv.declined_at) }}</span
-                                >
-                                <span v-if="inv.revoked_at" class="text-[11px] text-destructive"
-                                    >Revogado {{ formatDate(inv.revoked_at) }}</span
-                                >
+                                <span v-if="inv.declined_at" class="text-xs text-destructive">Recusado {{ formatDate(inv.declined_at) }}</span>
+                                <span v-if="inv.revoked_at" class="text-[11px] text-destructive">Revogado {{ formatDate(inv.revoked_at) }}</span>
                             </span>
                         </div>
                         <div class="flex items-center gap-1" v-if="inv.status === 'pending' || inv.status === 'revoked'">

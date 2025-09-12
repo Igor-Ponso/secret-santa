@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 // import { type BreadcrumbItem } from '@/types'; // not needed after reactive refactor using computed only
+import { useDateFormat } from '@/lib/formatDate';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import { useDateFormat } from '@/lib/formatDate';
 import { useI18n } from 'vue-i18n';
 
 interface GroupSummary {

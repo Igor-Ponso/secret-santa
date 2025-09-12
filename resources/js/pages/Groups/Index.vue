@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 // import type { BreadcrumbItem } from '@/types'; // breadcrumb now computed
+import { useDateFormat } from '@/lib/formatDate';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import { useDateFormat } from '@/lib/formatDate';
 import { useI18n } from 'vue-i18n';
 
 interface Group {
@@ -171,7 +171,9 @@ function submitInvite() {
                         </div>
                     </div>
                     <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                        <span v-if="g.min_value !== null || g.max_value !== null">{{ t('groups.gift_range') }}: {{ g.min_value ?? 0 }} - {{ g.max_value ?? '∞' }}</span>
+                        <span v-if="g.min_value !== null || g.max_value !== null"
+                            >{{ t('groups.gift_range') }}: {{ g.min_value ?? 0 }} - {{ g.max_value ?? '∞' }}</span
+                        >
                         <span v-if="g.draw_at">{{ t('groups.draw_date') }}: {{ formatDate(g.draw_at) }}</span>
                         <span
                             v-if="g.wishlist_count !== undefined"
@@ -184,15 +186,17 @@ function submitInvite() {
                     <div v-if="g.invitations && g.invitations.length" class="mt-4 grid grid-cols-3 gap-2 text-center">
                         <div class="rounded-md border bg-background/50 p-2">
                             <div class="text-xs font-semibold text-yellow-600">{{ t('groups.metrics_pending') }}</div>
-                            <div class="text-sm font-bold">{{ g.invitations.filter(i=>i.status==='pending').length }}</div>
+                            <div class="text-sm font-bold">{{ g.invitations.filter((i) => i.status === 'pending').length }}</div>
                         </div>
                         <div class="rounded-md border bg-background/50 p-2">
                             <div class="text-xs font-semibold text-green-600">{{ t('groups.metrics_accepted') }}</div>
-                            <div class="text-sm font-bold">{{ g.invitations.filter(i=>i.status==='accepted').length }}</div>
+                            <div class="text-sm font-bold">{{ g.invitations.filter((i) => i.status === 'accepted').length }}</div>
                         </div>
                         <div class="rounded-md border bg-background/50 p-2">
                             <div class="text-xs font-semibold text-destructive">{{ t('groups.metrics_declined') }}</div>
-                            <div class="text-sm font-bold">{{ g.invitations.filter(i=>i.status==='declined' || i.status==='revoked').length }}</div>
+                            <div class="text-sm font-bold">
+                                {{ g.invitations.filter((i) => i.status === 'declined' || i.status === 'revoked').length }}
+                            </div>
                         </div>
                     </div>
                     <div class="mt-5 flex flex-wrap items-center gap-2 text-[11px] font-medium" @click.stop>

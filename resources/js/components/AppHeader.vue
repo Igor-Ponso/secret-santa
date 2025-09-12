@@ -41,9 +41,7 @@ const activeItemStyles = computed(
 
 const { t } = useI18n();
 
-const mainNavItems = computed<NavItem[]>(() => [
-    { title: t('navigation.dashboard'), href: '/dashboard', icon: LayoutGrid },
-]);
+const mainNavItems = computed<NavItem[]>(() => [{ title: t('navigation.dashboard'), href: '/dashboard', icon: LayoutGrid }]);
 
 const rightNavItems = computed<NavItem[]>(() => [
     { title: t('navigation.repo'), href: 'https://github.com/laravel/vue-starter-kit', icon: Folder },
