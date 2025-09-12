@@ -34,14 +34,18 @@ Route::get('dashboard', function () {
         })
         ->with('group:id,name')
         ->get()
-        ->map(fn($i) => [
-            'group' => [
-                'id' => $i->group->id,
-                'name' => $i->group->name,
-            ],
-            'email' => $i->email,
-            'expires_at' => $i->expires_at?->toISOString(),
-        ]);
+        ->map(function ($i) {
+            // Provide the plain token reconstruction not possible; can't expose hashed token.
+            // For actions we can use a signed temporary route instead OR reuse the public routes expecting plain token.
+            // Since we only store hashed token, we cannot recover plain token => adjust accept/decline to allow authenticated by id.
+            return [
+                'group' => ['id' => $i->group->id, 'name' => $i->group->name],
+                'email' => $i->email,
+                'expires_at' => $i->expires_at?->toISOString(),
+                'token' => null, // placeholder until alt action endpoints created
+                'id' => $i->id,
+            ];
+        });
 
     // Próximos sorteios (draw_at futuro)
     $upcomingDraws = $groups->filter(fn($g) => $g->draw_at && $g->draw_at > Carbon::now())
@@ -75,16 +79,23 @@ Route::middleware(['auth'])
         Route::get('/create', [\App\Http\Controllers\GroupController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\GroupController::class, 'store'])->name('store');
         Route::get('/{group}/edit', [\App\Http\Controllers\GroupController::class, 'edit'])->name('edit');
+        Route::get('/{group}', [\App\Http\Controllers\GroupController::class, 'show'])->name('show');
         Route::put('/{group}', [\App\Http\Controllers\GroupController::class, 'update'])->name('update');
         Route::delete('/{group}', [\App\Http\Controllers\GroupController::class, 'destroy'])->name('destroy');
         // Limite: 5 convites por minuto por usuário
         Route::post('/{group}/invitations', [\App\Http\Controllers\GroupInvitationController::class, 'store'])
             ->middleware('throttle:5,1')
             ->name('invitations.store');
+        // Draw (Secret Santa assignment)
+        Route::post('/{group}/draw', [\App\Http\Controllers\DrawController::class, 'run'])->name('draw.run');
+        Route::get('/{group}/recipient', [\App\Http\Controllers\DrawController::class, 'recipient'])->name('draw.recipient');
     });
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/invites/{token}', [\App\Http\Controllers\PublicInvitationController::class, 'show'])->name('invites.show');
     Route::post('/invites/{token}/accept', [\App\Http\Controllers\PublicInvitationController::class, 'accept'])->name('invites.accept');
     Route::post('/invites/{token}/decline', [\App\Http\Controllers\PublicInvitationController::class, 'decline'])->name('invites.decline');
+    // Authenticated direct actions by id (no plain token exposure)
+    Route::post('/invitations/{invitation}/accept', [\App\Http\Controllers\UserInvitationActionController::class, 'accept'])->name('invites.auth.accept');
+    Route::post('/invitations/{invitation}/decline', [\App\Http\Controllers\UserInvitationActionController::class, 'decline'])->name('invites.auth.decline');
 });

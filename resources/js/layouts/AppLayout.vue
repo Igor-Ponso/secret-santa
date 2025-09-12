@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
 import { errorToast, infoToast, successToast } from '@/lib/notifications';
 import type { BreadcrumbItemType } from '@/types';
-import { usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { watch } from 'vue';
 
 interface Props {
@@ -17,6 +17,7 @@ const page = usePage();
 let lastSuccess: string | null = null;
 let lastError: string | null = null;
 let lastInfo: string | null = null;
+let clearedOnce = false;
 
 watch(
     () => page.props.flash as any,
@@ -33,6 +34,23 @@ watch(
         if (flash.error && flash.error !== lastError) {
             lastError = String(flash.error);
             errorToast(lastError);
+        }
+        // After displaying, request a silent visit to clear flash to avoid re-trigger on browser back
+        if (!clearedOnce && (flash.success || flash.info || flash.error)) {
+            // Trigger a minimal reload to clear server flash (Inertia remembers props otherwise on back)
+            router.get(
+                window.location.pathname + window.location.search,
+                {},
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                    onSuccess: () => {
+                        (page.props as any).flash = {};
+                        clearedOnce = true;
+                    },
+                },
+            );
         }
     },
     { immediate: true, deep: true },

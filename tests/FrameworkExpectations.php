@@ -5,7 +5,6 @@
 namespace Tests;
 
 /**
- * @mixin \Illuminate\Foundation\Testing\Concerns\InteractsWithHttp
  * @mixin \Illuminate\Foundation\Testing\Concerns\InteractsWithAuthentication
  */
 abstract class FrameworkExpectations extends TestCase

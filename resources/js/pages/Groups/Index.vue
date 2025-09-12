@@ -23,12 +23,14 @@ interface Invitation {
 }
 
 interface Props {
-    groups: Group[];
+    groups: Group[]; // owned
+    participating?: Group[]; // groups where user is participant only
 }
 
 const props = defineProps<Props>();
 
 const groupsSorted = computed(() => props.groups);
+const participatingSorted = computed(() => props.participating ?? []);
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Groups', href: '/groups' }];
 
@@ -127,13 +129,13 @@ function submitInvite() {
                             </li>
                         </ul>
                     </div>
-                    <div class="mt-3 flex flex-wrap items-center gap-3">
-                        <Link :href="route('groups.edit', g.id)" class="text-xs text-primary hover:underline">Edit</Link>
-                        <button type="button" @click="askDelete(g.id)" class="text-xs text-destructive hover:underline">Delete</button>
-                        <button type="button" @click="openInvite(g.id)" class="text-xs text-muted-foreground hover:underline">Invite</button>
+                    <div class="mt-4 flex flex-wrap items-center gap-2 text-[10px] font-medium">
+                        <Link :href="route('groups.show', g.id)" class="rounded border px-2 py-1 hover:bg-accent">Ver</Link>
+                        <Link :href="route('groups.edit', g.id)" class="rounded border px-2 py-1 hover:bg-accent">Editar</Link>
+                        <button type="button" @click="openInvite(g.id)" class="rounded border px-2 py-1 hover:bg-accent">Convidar</button>
                         <Link
                             :href="route('groups.wishlist.index', { group: g.id })"
-                            class="flex items-center gap-1 text-xs text-amber-600 hover:underline"
+                            class="flex items-center gap-1 rounded border px-2 py-1 hover:bg-accent"
                         >
                             Wishlist
                             <span
@@ -142,9 +144,38 @@ function submitInvite() {
                                 >{{ g.wishlist_count }}</span
                             >
                         </Link>
+                        <button type="button" @click="askDelete(g.id)" class="rounded border px-2 py-1 text-destructive hover:bg-destructive/5">
+                            Excluir
+                        </button>
                     </div>
                 </li>
             </ul>
+
+            <div v-if="participatingSorted.length" class="space-y-4">
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Participando</h2>
+                <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <li v-for="g in participatingSorted" :key="g.id" class="rounded-lg border bg-card p-4 shadow-sm transition hover:shadow">
+                        <h3 class="line-clamp-1 font-medium leading-tight">{{ g.name }}</h3>
+                        <p v-if="g.description" class="mt-1 line-clamp-2 text-xs text-muted-foreground">{{ g.description }}</p>
+                        <div class="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+                            <span v-if="g.min_value !== null || g.max_value !== null">Gift: {{ g.min_value ?? 0 }} - {{ g.max_value ?? '∞' }}</span>
+                            <span v-if="g.draw_at">Draw: {{ new Date(g.draw_at).toLocaleDateString() }}</span>
+                            <span
+                                v-if="g.wishlist_count !== undefined"
+                                class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
+                            >
+                                🎁 {{ g.wishlist_count }}
+                            </span>
+                        </div>
+                        <div class="mt-4 flex flex-wrap items-center gap-2 text-[10px] font-medium">
+                            <Link :href="route('groups.show', g.id)" class="rounded border px-2 py-1 hover:bg-accent">Ver</Link>
+                            <Link :href="route('groups.wishlist.index', { group: g.id })" class="rounded border px-2 py-1 hover:bg-accent"
+                                >Minha Wishlist</Link
+                            >
+                        </div>
+                    </li>
+                </ul>
+            </div>
 
             <div v-if="confirmOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-background/70 p-4 backdrop-blur-sm">
                 <div class="w-full max-w-sm rounded-lg border bg-card p-5 shadow-lg">

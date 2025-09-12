@@ -106,16 +106,15 @@ it('cannot accept or decline expired invitation', function () {
     post(route('invites.decline', $token))->assertStatus(410);
 });
 
-it('does not expose full invitation token in flash', function () {
+it('does not expose any token fragment in flash', function () {
     $owner = User::factory()->create(['email_verified_at' => now()]);
     $group = Group::factory()->for($owner, 'owner')->create();
     actingAs($owner);
     $resp = post(route('groups.invitations.store', $group), ['email' => 'tokenleak@test.com']);
     $resp->assertSessionHas('flash');
     $flash = session('flash');
-    // O info só deve mostrar o prefixo do token, nunca o token completo (48 chars)
-    $matches = [];
-    preg_match('/\(([A-Za-z0-9]+)\.\.\.\)/', $flash['info'] ?? '', $matches);
-    expect(isset($matches[1]))->toBeTrue();
-    expect(strlen($matches[1]))->toBeLessThan(16); // prefixo curto
+    // Nenhum campo adicional informativo contendo pedaços do token deve estar presente
+    expect($flash)->not->toHaveKey('info');
+    // Não deve haver sequência longa parecida com token (>=20 chars alfanuméricos contínuos)
+    expect($flash['success'] ?? '')->not->toMatch('/[A-Za-z0-9]{20,}/');
 });

@@ -12,7 +12,13 @@ class GroupPolicy
      */
     public function view(User $user, Group $group): bool
     {
-        return $group->owner_id === $user->id;
+        if ($group->owner_id === $user->id)
+            return true;
+        // participant: accepted invitation
+        return $group->invitations()
+            ->whereNotNull('accepted_at')
+            ->where('invited_user_id', $user->id)
+            ->exists();
     }
 
     /**

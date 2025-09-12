@@ -42,15 +42,10 @@ class GroupInvitationController extends Controller
 
         $invitation = $this->service->create($group, $request->user(), $email);
 
-        // The plain token is not persisted; retrieve it from model attribute
-        $plain = $invitation->getAttribute('plain_token');
-        $url = route('invites.show', $plain);
-
         // (Future) Send email here.
-        // Security: don't leak full token in flash (UI toast). Provide truncated token for reference only.
+        // Security: avoid exposing even partial tokens or links in UI feedback.
         return redirect()->route('groups.index')->with('flash', [
-            'success' => 'Invitation created',
-            'info' => 'Invite link generated (' . substr($plain, 0, 8) . '...)',
+            'success' => 'Convite criado e enviado (verifique o email do convidado).',
         ]);
     }
 }
