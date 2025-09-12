@@ -11,15 +11,23 @@ const props = defineProps<Props>();
 const form = useForm({ locale: props.current });
 const { locale } = useI18n();
 
+function writeLocaleCookie(value: string) {
+    // 1 year
+    document.cookie = `locale=${value};path=/;max-age=${60 * 60 * 24 * 365};SameSite=Lax`;
+}
+
 function changeLocale(loc: string) {
-    if (form.processing || loc === form.locale) return;
-    // Accept clicking on generic 'pt' button if ever passed; normalize here (UI currently passes pt_BR)
-    form.locale = loc === 'pt' ? 'pt_BR' : loc;
-    // Update cookie via controller (so backend email templates etc. could use it) then update client locale reactively.
+    const normalized = loc === 'pt' ? 'pt_BR' : loc;
+    if (form.processing || normalized === form.locale) return;
+    form.locale = normalized;
+    // Optimistic UI: switch immediately
+    locale.value = normalized;
+    writeLocaleCookie(normalized);
     form.put(route('language.update'), {
         preserveScroll: true,
-        onSuccess: () => {
-            locale.value = form.locale; // vue-i18n reactive switch
+        onError: () => {
+            // revert if server rejected
+            // (fallback to previous cookie value via page reload or manual revert)
         },
     });
 }

@@ -4,9 +4,11 @@ import ThemeToggle from '@/components/ThemeToggle.vue';
 import mascotUrl from '@assets/illustrations/mascot-hero.png';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Gift } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
 
 // Access typed page props (ensures $page typing through usePage if needed)
 const page = usePage();
+const { t } = useI18n();
 </script>
 
 <template>
@@ -19,14 +21,14 @@ const page = usePage();
         <header class="relative z-10 flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:gap-6 sm:px-6 sm:py-5">
             <h1 class="flex shrink-0 items-center gap-2" aria-label="Secret Santa">
                 <Gift class="h-7 w-7 text-white sm:h-8 sm:w-8" />
-                <span class="hidden text-2xl font-bold tracking-wide sm:inline">Secret Santa</span>
+                <span class="hidden text-2xl font-bold tracking-wide sm:inline">{{ t('landing.brand') }}</span>
             </h1>
             <div class="flex min-w-0 flex-1 items-center justify-end gap-3 sm:gap-5">
                 <nav class="flex items-center gap-3 text-xs font-medium sm:gap-6 sm:text-sm">
                     <Link v-if="page.props.auth?.user" :href="route('dashboard')" class="whitespace-nowrap hover:underline">Dashboard</Link>
                     <template v-else>
-                        <Link :href="route('login')" class="whitespace-nowrap hover:underline">Log in</Link>
-                        <Link :href="route('register')" class="whitespace-nowrap hover:underline">Register</Link>
+                        <Link :href="route('login')" class="whitespace-nowrap hover:underline">{{ t('landing.login') }}</Link>
+                        <Link :href="route('register')" class="whitespace-nowrap hover:underline">{{ t('landing.register') }}</Link>
                     </template>
                 </nav>
                 <ThemeToggle />
@@ -50,24 +52,21 @@ const page = usePage();
 
             <!-- Text -->
             <div class="max-w-xl space-y-5 text-white">
-                <h2 class="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">Welcome to Secret Santa</h2>
+                <h2 class="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">{{ t('landing.headline') }}</h2>
 
-                <p class="text-xl leading-relaxed text-white/90">Make gift exchanges easy, fun, and unforgettable.</p>
+                <p class="text-xl leading-relaxed text-white/90">{{ t('landing.tagline') }}</p>
 
-                <p class="text-base leading-relaxed text-white/80">
-                    Create personalized groups, invite friends or coworkers, define custom rules, and let us handle the draw — anonymously and
-                    effortlessly.
-                </p>
+                <p class="text-base leading-relaxed text-white/80">{{ t('landing.pitch') }}</p>
 
                 <div class="mt-4 flex flex-col items-start gap-3">
                     <Link
                         :href="route('register')"
                         class="rounded-lg bg-[#ffeaea] px-8 py-3 text-lg font-semibold text-red-800 shadow-lg transition hover:bg-red-100"
                     >
-                        Create Your Group Now
+                        {{ t('landing.cta_create') }}
                     </Link>
 
-                    <Link :href="route('login')" class="text-sm text-white underline hover:text-red-200"> Already have an account? </Link>
+                    <Link :href="route('login')" class="text-sm text-white underline hover:text-red-200"> {{ t('landing.cta_have_account') }} </Link>
                 </div>
             </div>
         </section>

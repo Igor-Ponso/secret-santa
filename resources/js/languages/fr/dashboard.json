@@ -1,0 +1,9 @@
+{
+    "dashboard": {
+        "heading": "Tableau de bord",
+        "summary": "Résumé",
+        "groups_count_label": "groupes",
+        "pending_invites_count_label": "invitations en attente",
+        "upcoming_draws_count_label": "tirages à venir"
+    }
+}

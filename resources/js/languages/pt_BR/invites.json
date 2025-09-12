@@ -1,0 +1,15 @@
+{
+    "invites": {
+        "title": "Convite",
+        "group_invitation": "Convite para Grupo",
+        "expired": "Este convite expirou.",
+        "already_status": "Já :status.",
+        "accept": "Aceitar",
+        "decline": "Recusar",
+        "accept_question": "Aceitar convite?",
+        "decline_question": "Recusar convite?",
+        "accept_desc": "Você entrará neste grupo e o dono verá você como participante. Continuar?",
+        "decline_desc": "Você só pode aceitar enquanto for válido. Recusar significa que não participará a menos que seja reconvidado.",
+        "invitation_for": "Convite para:"
+    }
+}

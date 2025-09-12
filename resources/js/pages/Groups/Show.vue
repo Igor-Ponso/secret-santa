@@ -394,19 +394,19 @@ onMounted(fetchRecipient);
                 <h2 class="mb-3 text-base font-semibold">{{ t('groups.overview') || 'Visão Geral' }}</h2>
                 <div class="grid gap-3 sm:grid-cols-4">
                     <div class="flex flex-col gap-1">
-                        <span class="text-xs font-medium">{{ t('groups.metrics_pending') || 'Pendentes' }}</span
+                        <span class="text-xs font-medium">{{ t('groups.metrics_pending') }}</span
                         ><span class="text-lg font-bold">{{ group.metrics.pending }}</span>
                     </div>
                     <div class="flex flex-col gap-1">
-                        <span class="text-xs font-medium">{{ t('groups.metrics_accepted') || 'Aceitos' }}</span
+                        <span class="text-xs font-medium">{{ t('groups.metrics_accepted') }}</span
                         ><span class="text-lg font-bold text-green-600">{{ group.metrics.accepted }}</span>
                     </div>
                     <div class="flex flex-col gap-1">
-                        <span class="text-xs font-medium">{{ t('groups.metrics_declined') || 'Recusados' }}</span
+                        <span class="text-xs font-medium">{{ t('groups.metrics_declined') }}</span
                         ><span class="text-lg font-bold text-destructive">{{ group.metrics.declined }}</span>
                     </div>
                     <div class="flex flex-col gap-1">
-                        <span class="text-xs font-medium">{{ t('groups.metrics_revoked') || 'Revogados' }}</span
+                        <span class="text-xs font-medium">{{ t('groups.metrics_revoked') }}</span
                         ><span class="text-lg font-bold text-destructive">{{ group.metrics.revoked }}</span>
                     </div>
                 </div>
@@ -521,7 +521,7 @@ onMounted(fetchRecipient);
                         </div>
                         <div class="flex items-center gap-2 text-xs">
                             <Badge v-if="p.accepted_at" class="bg-green-600 text-white hover:bg-green-600/90">
-                                {{ (t('groups.accepted_at') || 'Aceito em') + ' ' + new Date(p.accepted_at).toLocaleString() }}
+                                {{ t('groups.accepted_at') + ' ' + new Date(p.accepted_at).toLocaleString() }}
                             </Badge>
                             <div v-if="group.is_owner && p.id !== group.owner_id" class="flex items-center gap-1">
                                 <button
@@ -579,7 +579,7 @@ onMounted(fetchRecipient);
                                     (t('groups.sent') || 'enviado') + ' ' + new Date(inv.created_at).toLocaleDateString()
                                 }}</span>
                                 <span v-if="inv.accepted_at" class="text-xs text-green-600"
-                                    >Aceito {{ new Date(inv.accepted_at).toLocaleDateString() }}</span
+                                    >{{ t('groups.accepted') }} {{ new Date(inv.accepted_at).toLocaleDateString() }}</span
                                 >
                                 <span v-if="inv.declined_at" class="text-xs text-destructive"
                                     >Recusado {{ new Date(inv.declined_at).toLocaleDateString() }}</span

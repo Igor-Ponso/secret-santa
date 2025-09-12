@@ -1,0 +1,15 @@
+{
+    "invites": {
+        "title": "Invitation",
+        "group_invitation": "Invitation de Groupe",
+        "expired": "Cette invitation a expiré.",
+        "already_status": "Déjà :status.",
+        "accept": "Accepter",
+        "decline": "Refuser",
+        "accept_question": "Accepter l'invitation ?",
+        "decline_question": "Refuser l'invitation ?",
+        "accept_desc": "Vous rejoindrez ce groupe et le propriétaire vous verra comme participant. Continuer ?",
+        "decline_desc": "Vous ne pouvez accepter que tant qu'elle est valide. Refuser signifie que vous ne participerez pas sauf nouvelle invitation.",
+        "invitation_for": "Invitation pour :"
+    }
+}
