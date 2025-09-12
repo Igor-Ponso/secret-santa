@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
+import AppSidebarLayout from '@/layouts/app/AppSidebarLayout.vue';
 import { errorToast, infoToast, successToast } from '@/lib/notifications';
 import type { BreadcrumbItemType } from '@/types';
 import { router, usePage } from '@inertiajs/vue3';
@@ -58,7 +58,7 @@ watch(
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <AppSidebarLayout :breadcrumbs="breadcrumbs">
         <slot />
-    </AppLayout>
+    </AppSidebarLayout>
 </template>

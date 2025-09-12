@@ -6,16 +6,19 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
 import { BookOpen, Folder, LayoutGrid } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
 import AppLogo from './AppLogo.vue';
+
+const { t } = useI18n();
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
+        title: t('navigation.dashboard'),
         href: '/dashboard',
         icon: LayoutGrid,
     },
     {
-        title: 'Groups',
+        title: t('navigation.groups'),
         href: '/groups',
         icon: Folder,
     },
@@ -23,12 +26,12 @@ const mainNavItems: NavItem[] = [
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Github Repo',
+        title: t('navigation.repo'),
         href: 'https://github.com/laravel/vue-starter-kit',
         icon: Folder,
     },
     {
-        title: 'Documentation',
+        title: t('navigation.documentation'),
         href: 'https://laravel.com/docs/starter-kits',
         icon: BookOpen,
     },

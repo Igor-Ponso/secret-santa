@@ -1,9 +1,0 @@
-{
-    "dashboard": {
-        "heading": "Dashboard",
-        "summary": "Resumo",
-        "groups_count_label": "grupos",
-        "pending_invites_count_label": "convites pendentes",
-        "upcoming_draws_count_label": "sorteios futuros"
-    }
-}

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
+// import { type BreadcrumbItem } from '@/types'; // not needed after reactive refactor using computed only
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -73,12 +73,12 @@ function act(inv: LocalInvitation, action: 'accept' | 'decline') {
 }
 
 const { t } = useI18n();
-const breadcrumbs: BreadcrumbItem[] = [
+const breadcrumbs = computed(() => [
     {
-        title: t('dashboard.heading') || 'Dashboard',
+        title: t('dashboard.heading'),
         href: '/dashboard',
     },
-];
+]);
 </script>
 
 <template>

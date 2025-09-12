@@ -2,6 +2,11 @@
     "settings": {
         "breadcrumb_settings": "Configurações",
         "language": "Configurações de idioma",
-        "language_desc": "Selecione o idioma da interface"
+        "language_desc": "Selecione o idioma da interface",
+        "nav_profile": "Perfil",
+        "nav_password": "Senha",
+        "nav_appearance": "Aparência",
+        "nav_language": "Idioma",
+        "manage_account": "Gerencie seu perfil e configurações da conta"
     }
 }
