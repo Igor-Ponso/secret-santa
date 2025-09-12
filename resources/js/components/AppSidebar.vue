@@ -7,35 +7,20 @@ import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
 import { BookOpen, Folder, LayoutGrid } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
+import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
 const { t } = useI18n();
 
-const mainNavItems: NavItem[] = [
-    {
-        title: t('navigation.dashboard'),
-        href: '/dashboard',
-        icon: LayoutGrid,
-    },
-    {
-        title: t('navigation.groups'),
-        href: '/groups',
-        icon: Folder,
-    },
-];
+const mainNavItems = computed<NavItem[]>(() => [
+    { title: t('navigation.dashboard'), href: '/dashboard', icon: LayoutGrid },
+    { title: t('navigation.groups'), href: '/groups', icon: Folder },
+]);
 
-const footerNavItems: NavItem[] = [
-    {
-        title: t('navigation.repo'),
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: t('navigation.documentation'),
-        href: 'https://laravel.com/docs/starter-kits',
-        icon: BookOpen,
-    },
-];
+const footerNavItems = computed<NavItem[]>(() => [
+    { title: t('navigation.repo'), href: 'https://github.com/laravel/vue-starter-kit', icon: Folder },
+    { title: t('navigation.documentation'), href: 'https://laravel.com/docs/starter-kits', icon: BookOpen },
+]);
 </script>
 
 <template>

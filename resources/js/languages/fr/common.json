@@ -70,7 +70,8 @@
             "confirm": "Confirmer",
             "none": "Aucun",
             "pick_a_date": "Choisissez une date",
-            "choose_draw_date": "Choisissez la date du tirage"
+            "choose_draw_date": "Choisissez la date du tirage",
+            "expires_on": "Expire le"
         }
     },
     "landing": {

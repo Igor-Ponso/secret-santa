@@ -16,6 +16,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Check, Copy, Eye, EyeOff, LoaderCircle } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
+import { useDateFormat } from '@/lib/formatDate';
 import { useI18n } from 'vue-i18n';
 
 interface Recipient {
@@ -28,6 +29,7 @@ interface ShowProps {
 
 const props = defineProps<ShowProps>();
 const { t } = useI18n();
+const { formatDate } = useDateFormat();
 // Computed wrapper so when Inertia replaces props the template reacts
 const group = computed(() => props.group);
 // Tabs
@@ -573,19 +575,19 @@ onMounted(fetchRecipient);
                             <span class="mt-0.5 inline-flex flex-wrap items-center gap-2 text-xs">
                                 <Badge :class="statusBadgeClass(inv.status)">{{ cap(inv.status) }}</Badge>
                                 <span v-if="inv.expires_at && inv.status === 'pending'" class="text-xs text-muted-foreground" :title="inv.expires_at">
-                                    {{ (t('groups.expires_at') || 'expira em') + ' ' + new Date(inv.expires_at).toLocaleDateString() }}
+                                    {{ (t('groups.expires_at') || 'expira em') + ' ' + formatDate(inv.expires_at) }}
                                 </span>
                                 <span v-if="inv.created_at" class="text-xs text-muted-foreground">{{
-                                    (t('groups.sent') || 'enviado') + ' ' + new Date(inv.created_at).toLocaleDateString()
+                                    (t('groups.sent') || 'enviado') + ' ' + formatDate(inv.created_at)
                                 }}</span>
                                 <span v-if="inv.accepted_at" class="text-xs text-green-600"
-                                    >{{ t('groups.accepted') }} {{ new Date(inv.accepted_at).toLocaleDateString() }}</span
+                                    >{{ t('groups.accepted') }} {{ formatDate(inv.accepted_at) }}</span
                                 >
                                 <span v-if="inv.declined_at" class="text-xs text-destructive"
-                                    >Recusado {{ new Date(inv.declined_at).toLocaleDateString() }}</span
+                                    >Recusado {{ formatDate(inv.declined_at) }}</span
                                 >
                                 <span v-if="inv.revoked_at" class="text-[11px] text-destructive"
-                                    >Revogado {{ new Date(inv.revoked_at).toLocaleDateString() }}</span
+                                    >Revogado {{ formatDate(inv.revoked_at) }}</span
                                 >
                             </span>
                         </div>
@@ -674,13 +676,13 @@ onMounted(fetchRecipient);
                         <span v-else class="inline-flex flex-wrap items-center gap-2">
                             <Badge :class="statusBadgeClass(jr.status)">{{ cap(jr.status) }}</Badge>
                             <span class="text-xs text-muted-foreground" v-if="jr.created_at">{{
-                                (t('groups.sent') || 'Enviado') + ' ' + new Date(jr.created_at).toLocaleDateString()
+                                (t('groups.sent') || 'Enviado') + ' ' + formatDate(jr.created_at)
                             }}</span>
                             <span class="text-xs text-green-600" v-if="jr.approved_at">{{
-                                (t('groups.approved') || 'Aprovado') + ' ' + new Date(jr.approved_at).toLocaleDateString()
+                                (t('groups.approved') || 'Aprovado') + ' ' + formatDate(jr.approved_at)
                             }}</span>
                             <span class="text-xs text-destructive" v-if="jr.denied_at">{{
-                                (t('groups.denied') || 'Recusado') + ' ' + new Date(jr.denied_at).toLocaleDateString()
+                                (t('groups.denied') || 'Recusado') + ' ' + formatDate(jr.denied_at)
                             }}</span>
                         </span>
                     </li>

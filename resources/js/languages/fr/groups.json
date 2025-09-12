@@ -64,6 +64,8 @@
         "deny": "Refuser",
         "approved": "Approuvé",
         "denied": "Refusé",
-        "post_draw_hint": "Après le tirage, chaque participant ne voit que son destinataire et la wishlist associée."
+        "post_draw_hint": "Après le tirage, chaque participant ne voit que son destinataire et la wishlist associée.",
+        "gift_range": "Fourchette cadeau",
+        "draw_date": "Date du tirage"
     }
 }

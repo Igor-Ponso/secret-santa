@@ -3,6 +3,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 // import { type BreadcrumbItem } from '@/types'; // not needed after reactive refactor using computed only
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import { useDateFormat } from '@/lib/formatDate';
 import { useI18n } from 'vue-i18n';
 
 interface GroupSummary {
@@ -73,6 +74,7 @@ function act(inv: LocalInvitation, action: 'accept' | 'decline') {
 }
 
 const { t } = useI18n();
+const { formatDate, formatDateTime } = useDateFormat();
 const breadcrumbs = computed(() => [
     {
         title: t('dashboard.heading'),
@@ -118,7 +120,7 @@ const breadcrumbs = computed(() => [
                     <ul v-if="props.upcomingDraws.length" class="space-y-1 text-xs">
                         <li v-for="g in props.upcomingDraws" :key="g.id">
                             <span class="font-medium">{{ g.name }}</span> —
-                            {{ g.draw_at ? new Date(g.draw_at).toLocaleDateString() : t('common.misc.none') }}
+                            {{ g.draw_at ? formatDate(g.draw_at) : t('common.misc.none') }}
                         </li>
                     </ul>
                     <div v-else class="text-xs text-muted-foreground">{{ t('common.misc.no_upcoming_draws') }}</div>
@@ -133,7 +135,7 @@ const breadcrumbs = computed(() => [
                                     <span class="font-medium">{{ inv.group.name }}</span>
                                     <span class="text-muted-foreground"> — {{ inv.email }}</span>
                                     <span v-if="inv.expires_at" class="ml-1 text-muted-foreground"
-                                        >(expira {{ new Date(inv.expires_at).toLocaleDateString() }})</span
+                                        >({{ t('common.misc.expires_on') }} {{ formatDate(inv.expires_at) }})</span
                                     >
                                 </div>
                                 <div class="flex gap-2">
@@ -168,7 +170,7 @@ const breadcrumbs = computed(() => [
                 <h2 class="mb-2 text-sm font-semibold">{{ t('common.misc.recent_activity') }}</h2>
                 <ul v-if="props.recentActivities.length" class="space-y-1 text-xs">
                     <li v-for="a in props.recentActivities" :key="a.date + '-' + a.message">
-                        <span class="text-muted-foreground">{{ new Date(a.date).toLocaleString() }}:</span> {{ a.message }}
+                        <span class="text-muted-foreground">{{ formatDateTime(a.date) }}:</span> {{ a.message }}
                     </li>
                 </ul>
                 <div v-else class="text-xs text-muted-foreground">{{ t('common.misc.no_recent_activity') }}</div>

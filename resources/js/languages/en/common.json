@@ -70,7 +70,8 @@
             "confirm": "Confirm",
             "none": "None",
             "pick_a_date": "Pick a date",
-            "choose_draw_date": "Choose a draw date"
+            "choose_draw_date": "Choose a draw date",
+            "expires_on": "Expires on"
         }
     },
     "landing": {

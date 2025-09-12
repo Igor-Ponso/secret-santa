@@ -64,6 +64,8 @@
         "deny": "Deny",
         "approved": "Approved",
         "denied": "Denied",
-        "post_draw_hint": "After the draw each participant only sees their recipient and wishlist."
+        "post_draw_hint": "After the draw each participant only sees their recipient and wishlist.",
+        "gift_range": "Gift range",
+        "draw_date": "Draw date"
     }
 }

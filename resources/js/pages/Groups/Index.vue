@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import type { BreadcrumbItem } from '@/types';
+// import type { BreadcrumbItem } from '@/types'; // breadcrumb now computed
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import { useDateFormat } from '@/lib/formatDate';
 import { useI18n } from 'vue-i18n';
 
 interface Group {
@@ -33,7 +34,8 @@ const groupsSorted = computed(() => props.groups);
 const participatingSorted = computed(() => props.participating ?? []);
 
 const { t } = useI18n();
-const breadcrumbs: BreadcrumbItem[] = [{ title: t('common.misc.groups') || 'Groups', href: '/groups' }];
+const { formatDate } = useDateFormat();
+const breadcrumbs = computed(() => [{ title: t('common.misc.groups'), href: '/groups' }]);
 
 const confirmOpen = ref(false);
 const pendingId = ref<number | null>(null);
@@ -138,64 +140,80 @@ function submitInvite() {
             </div>
 
             <ul v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <li v-for="g in groupsSorted" :key="g.id" class="group rounded-lg border bg-card p-4 shadow-sm transition hover:shadow">
-                    <h2 class="line-clamp-1 font-medium leading-tight">{{ g.name }}</h2>
-                    <p v-if="g.description" class="mt-1 line-clamp-2 text-xs text-muted-foreground">{{ g.description }}</p>
-                    <div class="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                        <span v-if="g.min_value !== null || g.max_value !== null">Gift: {{ g.min_value ?? 0 }} - {{ g.max_value ?? '∞' }}</span>
-                        <span v-if="g.draw_at">Draw: {{ new Date(g.draw_at).toLocaleDateString() }}</span>
+                <li
+                    v-for="g in groupsSorted"
+                    :key="g.id"
+                    class="group relative cursor-pointer rounded-lg border bg-card p-4 shadow-sm transition hover:border-primary/50 hover:shadow-md"
+                    @click="route('groups.show', g.id) && router.get(route('groups.show', g.id))"
+                >
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="line-clamp-1 font-medium leading-tight group-hover:text-primary">{{ g.name }}</h2>
+                            <p v-if="g.description" class="mt-1 line-clamp-2 text-xs text-muted-foreground">{{ g.description }}</p>
+                        </div>
+                        <div class="flex items-center gap-1 opacity-0 transition group-hover:opacity-100" @click.stop>
+                            <button
+                                type="button"
+                                class="rounded p-1 text-muted-foreground hover:text-primary"
+                                :aria-label="t('common.actions.edit')"
+                                @click="router.get(route('groups.edit', g.id))"
+                            >
+                                ✏️
+                            </button>
+                            <button
+                                type="button"
+                                class="rounded p-1 text-muted-foreground hover:text-destructive"
+                                :aria-label="t('common.actions.delete')"
+                                @click="askDelete(g.id)"
+                            >
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                        <span v-if="g.min_value !== null || g.max_value !== null">{{ t('groups.gift_range') }}: {{ g.min_value ?? 0 }} - {{ g.max_value ?? '∞' }}</span>
+                        <span v-if="g.draw_at">{{ t('groups.draw_date') }}: {{ formatDate(g.draw_at) }}</span>
                         <span
                             v-if="g.wishlist_count !== undefined"
-                            class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
+                            class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
                         >
                             🎁 {{ g.wishlist_count }}
                         </span>
                     </div>
-                    <div v-if="g.invitations && g.invitations.length" class="mt-3 space-y-1">
-                        <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">{{ t('common.misc.invitations') }}</p>
-                        <ul class="space-y-1">
-                            <li
-                                v-for="inv in g.invitations"
-                                :key="inv.email"
-                                class="flex items-center justify-between rounded border px-2 py-1 text-sm"
-                            >
-                                <span class="truncate">{{ inv.email }}</span>
-                                <span
-                                    :class="{
-                                        'text-green-600': inv.status === 'accepted',
-                                        'text-yellow-600': inv.status === 'pending',
-                                        'text-destructive': inv.status === 'declined' || inv.status === 'revoked',
-                                        'text-muted-foreground': inv.status === 'expired',
-                                    }"
-                                    >{{ inv.status }}</span
-                                >
-                            </li>
-                        </ul>
+                    <!-- Mini invitation status dashboard -->
+                    <div v-if="g.invitations && g.invitations.length" class="mt-4 grid grid-cols-3 gap-2 text-center">
+                        <div class="rounded-md border bg-background/50 p-2">
+                            <div class="text-xs font-semibold text-yellow-600">{{ t('groups.metrics_pending') }}</div>
+                            <div class="text-sm font-bold">{{ g.invitations.filter(i=>i.status==='pending').length }}</div>
+                        </div>
+                        <div class="rounded-md border bg-background/50 p-2">
+                            <div class="text-xs font-semibold text-green-600">{{ t('groups.metrics_accepted') }}</div>
+                            <div class="text-sm font-bold">{{ g.invitations.filter(i=>i.status==='accepted').length }}</div>
+                        </div>
+                        <div class="rounded-md border bg-background/50 p-2">
+                            <div class="text-xs font-semibold text-destructive">{{ t('groups.metrics_declined') }}</div>
+                            <div class="text-sm font-bold">{{ g.invitations.filter(i=>i.status==='declined' || i.status==='revoked').length }}</div>
+                        </div>
                     </div>
-                    <div class="mt-4 flex flex-wrap items-center gap-2 text-xs font-medium">
-                        <Link :href="route('groups.show', g.id)" class="rounded border px-2 py-1 hover:bg-accent">{{
-                            t('common.actions.view')
-                        }}</Link>
-                        <Link :href="route('groups.edit', g.id)" class="rounded border px-2 py-1 hover:bg-accent">{{
-                            t('common.actions.edit')
-                        }}</Link>
-                        <button type="button" @click="openInvite(g.id)" class="rounded border px-2 py-1 hover:bg-accent">
-                            {{ t('common.actions.invite') }}
+                    <div class="mt-5 flex flex-wrap items-center gap-2 text-[11px] font-medium" @click.stop>
+                        <button
+                            type="button"
+                            @click="openInvite(g.id)"
+                            class="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
+                        >
+                            ➕ {{ t('common.actions.invite') }}
                         </button>
                         <Link
                             :href="route('groups.wishlist.index', { group: g.id })"
-                            class="flex items-center gap-1 rounded border px-2 py-1 hover:bg-accent"
+                            class="inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-semibold hover:bg-accent"
                         >
-                            Wishlist
+                            📝 {{ t('wishlist.title') }}
                             <span
                                 v-if="g.wishlist_count && g.wishlist_count > 0"
-                                class="rounded bg-amber-600/10 px-1 text-xs font-semibold text-amber-700 dark:text-amber-300"
+                                class="rounded bg-amber-600/10 px-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300"
                                 >{{ g.wishlist_count }}</span
                             >
                         </Link>
-                        <button type="button" @click="askDelete(g.id)" class="rounded border px-2 py-1 text-destructive hover:bg-destructive/5">
-                            {{ t('common.actions.delete') }}
-                        </button>
                     </div>
                 </li>
             </ul>
@@ -208,7 +226,7 @@ function submitInvite() {
                         <p v-if="g.description" class="mt-1 line-clamp-2 text-xs text-muted-foreground">{{ g.description }}</p>
                         <div class="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                             <span v-if="g.min_value !== null || g.max_value !== null">Gift: {{ g.min_value ?? 0 }} - {{ g.max_value ?? '∞' }}</span>
-                            <span v-if="g.draw_at">Draw: {{ new Date(g.draw_at).toLocaleDateString() }}</span>
+                            <span v-if="g.draw_at">{{ t('groups.draw_date') }}: {{ formatDate(g.draw_at) }}</span>
                             <span
                                 v-if="g.wishlist_count !== undefined"
                                 class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
