@@ -94,6 +94,10 @@ class InvitationService
 
         return DB::transaction(function () use ($invitation) {
             $token = Str::random(48);
+            // Remove any transient plain_token attribute so it isn't treated as dirty
+            if ($invitation->getAttribute('plain_token')) {
+                $invitation->offsetUnset('plain_token');
+            }
             $invitation->forceFill([
                 'token' => hash('sha256', $token),
                 'expires_at' => Carbon::now()->addDays(14),

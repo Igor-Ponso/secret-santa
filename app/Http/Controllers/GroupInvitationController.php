@@ -6,6 +6,7 @@ use App\Http\Requests\StoreInvitationRequest;
 use App\Models\Group;
 use App\Services\InvitationService;
 use Illuminate\Http\RedirectResponse;
+use App\Notifications\GroupInvitationNotification;
 
 /**
  * Controller for internal (owner) invitation management.
@@ -42,7 +43,11 @@ class GroupInvitationController extends Controller
 
         $invitation = $this->service->create($group, $request->user(), $email);
 
-        // (Future) Send email here.
+        // Send invitation email with one-time plain token link
+        if ($plain = $invitation->getAttribute('plain_token')) {
+            $invitation->notify(new GroupInvitationNotification($group, $plain));
+        }
+
         // Security: avoid exposing even partial tokens or links in UI feedback.
         return redirect()->route('groups.index')->with('flash', [
             'success' => 'Convite criado e enviado (verifique o email do convidado).',
@@ -67,7 +72,9 @@ class GroupInvitationController extends Controller
         if (!$updated) {
             return back()->with('flash', ['error' => 'Não é possível reenviar este convite.']);
         }
-        // (Future) trigger mail job using $updated->plain_token
+        if ($plain = $updated->getAttribute('plain_token')) {
+            $updated->notify(new GroupInvitationNotification($group, $plain));
+        }
         return back()->with('flash', ['success' => 'Convite reenviado']);
     }
 }

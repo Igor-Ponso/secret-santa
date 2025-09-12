@@ -21,7 +21,7 @@ use Illuminate\Support\Carbon;
  */
 class GroupInvitation extends Model
 {
-    use HasFactory;
+    use HasFactory, \Illuminate\Notifications\Notifiable;
 
     protected $fillable = [
         'group_id',
@@ -73,5 +73,11 @@ class GroupInvitation extends Model
         if ($this->isExpired())
             return 'expired';
         return 'pending';
+    }
+
+    /** Route notifications for the mail channel. */
+    public function routeNotificationForMail(): string
+    {
+        return $this->email;
     }
 }

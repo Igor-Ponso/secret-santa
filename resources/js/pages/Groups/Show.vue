@@ -1,4 +1,14 @@
 <script setup lang="ts">
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { errorToast, successToast } from '@/lib/notifications';
 import { Head, router } from '@inertiajs/vue3';
@@ -32,32 +42,48 @@ const loadingRecipient = ref(false);
 const drawing = ref(false);
 const actingOn = ref<number | null>(null);
 const userId = (window as any).Laravel?.user?.id; // assuming provided globally
+const dialogMode = ref<'resend' | 'revoke' | null>(null);
+const dialogInvitationId = ref<number | null>(null);
+const dialogOpen = ref(false);
 
-function resend(inv: { id: number }) {
-    actingOn.value = inv.id;
-    router.post(
-        route('groups.invitations.resend', { group: group.id, invitation: inv.id }),
-        {},
-        {
-            preserveScroll: true,
-            onSuccess: () => successToast('Convite reenviado'),
-            onError: () => errorToast('Falha ao reenviar'),
-            onFinish: () => (actingOn.value = null),
-        },
-    );
+function openDialog(mode: 'resend' | 'revoke', invId: number) {
+    dialogMode.value = mode;
+    dialogInvitationId.value = invId;
+    dialogOpen.value = true;
 }
 
-function revoke(inv: { id: number }) {
-    if (!confirm('Revogar este convite?')) return;
-    actingOn.value = inv.id;
+function closeDialog() {
+    dialogOpen.value = false;
+    // small timeout to allow close animation before clearing
+    setTimeout(() => {
+        dialogMode.value = null;
+        dialogInvitationId.value = null;
+    }, 150);
+}
+
+function performDialogAction() {
+    if (!dialogInvitationId.value || !dialogMode.value) return;
+    actingOn.value = dialogInvitationId.value;
+    const id = dialogInvitationId.value;
+    const mode = dialogMode.value;
+    const routeName = mode === 'resend' ? 'groups.invitations.resend' : 'groups.invitations.revoke';
     router.post(
-        route('groups.invitations.revoke', { group: group.id, invitation: inv.id }),
+        route(routeName, { group: group.id, invitation: id }),
         {},
         {
             preserveScroll: true,
-            onSuccess: () => successToast('Convite revogado'),
-            onError: () => errorToast('Falha ao revogar'),
-            onFinish: () => (actingOn.value = null),
+            onError: () => errorToast(mode === 'resend' ? 'Falha ao reenviar' : 'Falha ao revogar'),
+            onSuccess: () => {
+                if (mode === 'resend') {
+                    successToast('Convite reenviado');
+                } else {
+                    successToast('Convite revogado');
+                }
+            },
+            onFinish: () => {
+                actingOn.value = null;
+                closeDialog();
+            },
         },
     );
 }
@@ -205,14 +231,14 @@ onMounted(fetchRecipient);
                             </div>
                             <div class="flex items-center gap-1" v-if="inv.status === 'pending'">
                                 <button
-                                    @click="resend(inv)"
+                                    @click.prevent="openDialog('resend', inv.id)"
                                     :disabled="actingOn === inv.id"
                                     class="rounded bg-accent px-2 py-0.5 text-[10px] hover:bg-accent/70 disabled:opacity-50"
                                 >
                                     Reenviar
                                 </button>
                                 <button
-                                    @click="revoke(inv)"
+                                    @click.prevent="openDialog('revoke', inv.id)"
                                     :disabled="actingOn === inv.id"
                                     class="rounded bg-destructive px-2 py-0.5 text-[10px] text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
                                 >
@@ -245,6 +271,39 @@ onMounted(fetchRecipient);
             </div>
 
             <div class="text-[10px] text-muted-foreground">Após o sorteio, cada participante vê apenas seu destinatário e a wishlist associada.</div>
+
+            <!-- Single shared AlertDialog instance -->
+            <AlertDialog
+                v-if="dialogMode"
+                :open="dialogOpen"
+                @update:open="
+                    (v: any) => {
+                        if (!v) closeDialog();
+                    }
+                "
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            {{ dialogMode === 'revoke' ? 'Revogar convite?' : 'Reenviar convite?' }}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription class="text-xs">
+                            <template v-if="dialogMode === 'revoke'">
+                                Essa ação impedirá que o convidado aceite o convite existente. Você poderá criar outro depois.
+                            </template>
+                            <template v-else>
+                                Um novo token será gerado e o anterior se torna inválido. Garanta que vai reenviar o link atualizado por e-mail.
+                            </template>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel @click="closeDialog" class="text-xs">Cancelar</AlertDialogCancel>
+                        <AlertDialogAction @click="performDialogAction" :disabled="actingOn !== null" class="text-xs">
+                            {{ dialogMode === 'revoke' ? 'Revogar' : 'Reenviar' }}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     </AppLayout>
 </template>
