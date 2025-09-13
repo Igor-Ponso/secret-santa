@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import SocialLoginButtons from '@/components/auth/SocialLoginButtons.vue';
+import InputError from '@/components/InputError.vue';
+import TextLink from '@/components/TextLink.vue';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import AuthBase from '@/layouts/AuthLayout.vue';
+import { Head, useForm } from '@inertiajs/vue3';
+import { LoaderCircle } from 'lucide-vue-next';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
@@ -19,99 +27,57 @@ const submit = () => {
 </script>
 
 <template>
-    <div class="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-purple-50 to-white px-4 py-12 sm:px-6 lg:px-8">
-        <Head :title="t('auth.register')" />
-        <div class="w-full max-w-md space-y-8">
-            <div class="text-center">
-                <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
-                    {{ t('auth.register_title') }}
-                </h2>
-                <p class="mt-2 text-sm text-gray-600">
-                    {{ t('auth.has_account') }}
-                    <Link :href="route('login')" class="font-medium text-purple-600 hover:text-purple-500">
-                        {{ t('auth.sign_in') }}
-                    </Link>
-                </p>
+    <AuthBase
+        :title="t('auth.register_title', 'Create your account')"
+        :description="t('auth.register_desc', 'Fill the form below to create your account')"
+    >
+        <Head :title="t('auth.register', 'Register')" />
+
+        <form @submit.prevent="submit" class="flex flex-col gap-6">
+            <div class="grid gap-6">
+                <div class="grid gap-2">
+                    <Label for="name">{{ t('auth.name', 'Full name') }}</Label>
+                    <Input id="name" type="text" required autofocus autocomplete="name" v-model="form.name" />
+                    <InputError :message="form.errors.name" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label for="email">{{ t('auth.email', 'Email address') }}</Label>
+                    <Input id="email" type="email" required autocomplete="email" v-model="form.email" />
+                    <InputError :message="form.errors.email" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label for="password">{{ t('auth.password', 'Password') }}</Label>
+                    <Input
+                        id="password"
+                        type="password"
+                        required
+                        autocomplete="new-password"
+                        v-model="form.password"
+                        :placeholder="t('auth.password_placeholder', 'Password')"
+                    />
+                    <InputError :message="form.errors.password" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label for="password_confirmation">{{ t('auth.password_confirm', 'Confirm password') }}</Label>
+                    <Input id="password_confirmation" type="password" required autocomplete="new-password" v-model="form.password_confirmation" />
+                    <InputError :message="form.errors.password_confirmation" />
+                </div>
+
+                <Button type="submit" class="mt-2 w-full" :disabled="form.processing">
+                    <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
+                    {{ t('auth.create_account', 'Create account') }}
+                </Button>
             </div>
-            <form class="mt-8 space-y-6" @submit.prevent="submit">
-                <div class="-space-y-px rounded-md shadow-sm">
-                    <div>
-                        <label for="name" class="sr-only">{{ t('auth.name') }}</label>
-                        <input
-                            id="name"
-                            name="name"
-                            type="text"
-                            autocomplete="name"
-                            required
-                            v-model="form.name"
-                            class="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-purple-500 focus:outline-none focus:ring-purple-500 sm:text-sm"
-                            :placeholder="t('auth.name')"
-                        />
-                    </div>
-                    <div>
-                        <label for="email-address" class="sr-only">{{ t('auth.email') }}</label>
-                        <input
-                            id="email-address"
-                            name="email"
-                            type="email"
-                            autocomplete="email"
-                            required
-                            v-model="form.email"
-                            class="relative block w-full appearance-none rounded-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-purple-500 focus:outline-none focus:ring-purple-500 sm:text-sm"
-                            :placeholder="t('auth.email')"
-                        />
-                    </div>
-                    <div>
-                        <label for="password" class="sr-only">{{ t('auth.password') }}</label>
-                        <input
-                            id="password"
-                            name="password"
-                            type="password"
-                            autocomplete="new-password"
-                            required
-                            v-model="form.password"
-                            class="relative block w-full appearance-none rounded-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-purple-500 focus:outline-none focus:ring-purple-500 sm:text-sm"
-                            :placeholder="t('auth.password_placeholder')"
-                        />
-                    </div>
-                    <div>
-                        <label for="password_confirmation" class="sr-only">{{ t('auth.password_confirm') }}</label>
-                        <input
-                            id="password_confirmation"
-                            name="password_confirmation"
-                            type="password"
-                            autocomplete="new-password"
-                            required
-                            v-model="form.password_confirmation"
-                            class="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-purple-500 focus:outline-none focus:ring-purple-500 sm:text-sm"
-                            :placeholder="t('auth.password_confirm')"
-                        />
-                    </div>
-                </div>
-                <div>
-                    <button
-                        type="submit"
-                        class="group relative flex w-full justify-center rounded-md border border-transparent bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                    >
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                            <svg
-                                class="h-5 w-5 text-purple-500 group-hover:text-purple-400"
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                                aria-hidden="true"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
-                        </span>
-                        {{ t('auth.create_account') }}
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+
+            <SocialLoginButtons />
+
+            <div class="text-center text-sm text-muted-foreground">
+                {{ t('auth.has_account', 'Already have an account?') }}
+                <TextLink :href="route('login')">{{ t('auth.sign_in', 'Log in') }}</TextLink>
+            </div>
+        </form>
+    </AuthBase>
 </template>

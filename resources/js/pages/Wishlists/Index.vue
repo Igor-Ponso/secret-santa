@@ -119,7 +119,7 @@ function setOrder(order: 'created' | 'alpha') {
                         v-model="createForm.item"
                         type="text"
                         :placeholder="t('common.misc.wishlist_item')"
-                        class="rounded border px-3 py-2 text-sm focus:border-primary focus:ring-primary"
+                        class="rounded border bg-background px-3 py-2 text-sm focus:border-primary focus:ring-primary"
                         required
                         maxlength="255"
                     />
@@ -127,7 +127,7 @@ function setOrder(order: 'created' | 'alpha') {
                         v-model="createForm.note"
                         type="text"
                         placeholder="Nota (opcional)"
-                        class="rounded border px-3 py-2 text-sm focus:border-primary focus:ring-primary"
+                        class="rounded border bg-background px-3 py-2 text-sm focus:border-primary focus:ring-primary"
                         maxlength="255"
                     />
                     <div class="flex flex-col gap-1">
@@ -135,7 +135,7 @@ function setOrder(order: 'created' | 'alpha') {
                             v-model="createForm.url"
                             type="url"
                             placeholder="Link do produto (Amazon etc.)"
-                            class="rounded border px-3 py-2 text-sm focus:border-primary focus:ring-primary"
+                            class="rounded border bg-background px-3 py-2 text-sm focus:border-primary focus:ring-primary"
                             maxlength="255"
                         />
                         <p class="text-xs text-muted-foreground">Esqueci http? Adiciono https automaticamente.</p>
@@ -156,7 +156,7 @@ function setOrder(order: 'created' | 'alpha') {
             <!-- List -->
             <div class="overflow-hidden rounded-xl border bg-card shadow-sm">
                 <table class="w-full text-sm">
-                    <thead class="bg-gray-50 text-left dark:bg-gray-700/50">
+                    <thead class="text-left">
                         <tr>
                             <th class="w-1/3 px-4 py-2">{{ t('common.misc.wishlist_item') }}</th>
                             <th class="w-1/4 px-4 py-2">{{ t('common.misc.wishlist_note') }}</th>
@@ -174,7 +174,7 @@ function setOrder(order: 'created' | 'alpha') {
                                     <input
                                         v-model="editBuffers[row.id].item"
                                         type="text"
-                                        class="w-full rounded border px-2 py-1 text-xs focus:border-primary focus:ring-primary"
+                                        class="w-full rounded border bg-background px-2 py-1 text-xs focus:border-primary focus:ring-primary"
                                         required
                                         maxlength="255"
                                     />
@@ -183,7 +183,7 @@ function setOrder(order: 'created' | 'alpha') {
                                     <input
                                         v-model="editBuffers[row.id].note"
                                         type="text"
-                                        class="w-full rounded border px-2 py-1 text-xs focus:border-primary focus:ring-primary"
+                                        class="w-full rounded border bg-background px-2 py-1 text-xs focus:border-primary focus:ring-primary"
                                         maxlength="255"
                                     />
                                 </td>
@@ -191,7 +191,7 @@ function setOrder(order: 'created' | 'alpha') {
                                     <input
                                         v-model="editBuffers[row.id].url"
                                         type="url"
-                                        class="w-full rounded border px-2 py-1 text-xs focus:border-primary focus:ring-primary"
+                                        class="w-full rounded border bg-background px-2 py-1 text-xs focus:border-primary focus:ring-primary"
                                         maxlength="255"
                                     />
                                 </td>
@@ -213,9 +213,9 @@ function setOrder(order: 'created' | 'alpha') {
                             </template>
                             <template v-else>
                                 <td class="px-4 py-2 align-top">
-                                    <span class="font-medium text-gray-800 dark:text-gray-100">{{ row.item }}</span>
+                                    <span class="font-medium">{{ row.item }}</span>
                                 </td>
-                                <td class="px-4 py-2 align-top text-gray-600 dark:text-gray-400">
+                                <td class="px-4 py-2 align-top text-muted-foreground">
                                     {{ row.note || '—' }}
                                 </td>
                                 <td class="px-4 py-2 align-top text-xs">
