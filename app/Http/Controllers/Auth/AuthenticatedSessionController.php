@@ -36,6 +36,10 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // If a group was just auto-accepted from pending invite, redirect to onboarding
+        if ($groupId = $request->session()->pull('just_accepted_group_id')) {
+            return redirect()->route('groups.onboarding.show', $groupId);
+        }
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

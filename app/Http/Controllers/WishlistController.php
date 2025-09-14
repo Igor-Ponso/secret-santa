@@ -61,6 +61,41 @@ class WishlistController extends Controller
         return back()->with('flash', ['success' => 'Wishlist item added']);
     }
 
+    /** Batch create wishlist items (up to 5) atomically. */
+    public function batchStore(Request $request, Group $group): RedirectResponse
+    {
+        // Pre-normalize URL fields (add https:// if missing scheme) before validation to mirror single store behavior
+        if ($request->has('items') && is_array($request->input('items'))) {
+            $normalized = [];
+            foreach ($request->input('items') as $row) {
+                if (!empty($row['url']) && !preg_match('~^https?://~i', $row['url'])) {
+                    $row['url'] = 'https://' . ltrim($row['url']);
+                }
+                $normalized[] = $row;
+            }
+            $request->merge(['items' => $normalized]);
+        }
+        $data = $request->validate([
+            'items' => 'required|array|min:1|max:5',
+            'items.*.item' => 'required|string|max:255',
+            'items.*.note' => 'nullable|string|max:255',
+            'items.*.url' => 'nullable|url|max:255',
+        ]);
+        \DB::transaction(function () use ($data, $group, $request) {
+            foreach ($data['items'] as $row) {
+                $url = $row['url'] ?? null; // already normalized above
+                Wishlist::create([
+                    'user_id' => $request->user()->id,
+                    'group_id' => $group->id,
+                    'item' => $row['item'],
+                    'note' => $row['note'] ?? null,
+                    'url' => $url,
+                ]);
+            }
+        });
+        return back()->with('flash', ['success' => 'Items added']);
+    }
+
     /**
      * Update a wishlist item.
      */

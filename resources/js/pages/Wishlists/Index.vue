@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
@@ -42,7 +43,15 @@ function cancelEdit() {
 }
 
 function submitCreate() {
+    // Prevent sending empty/whitespace item
+    createForm.item = createForm.item.trim();
+    if (!createForm.item) return;
+    if (createForm.url && !/^https?:\/\//i.test(createForm.url)) {
+        // Let backend also normalize, but we can optimistically add here
+        createForm.url = 'https://' + createForm.url.trim();
+    }
     createForm.post(route('groups.wishlist.store', { group: props.group.id }), {
+        preserveScroll: true,
         onSuccess: () => {
             createForm.reset();
         },
@@ -65,6 +74,42 @@ function remove(id: number) {
 }
 
 const hasItems = computed(() => props.items && props.items.length > 0);
+
+// Batch mode state
+interface DraftItem {
+    item: string;
+    note: string;
+    url: string;
+}
+const batchMode = ref(false);
+const drafts = ref<DraftItem[]>([{ item: '', note: '', url: '' }]);
+
+function addDraft() {
+    if (drafts.value.length >= 5) return;
+    drafts.value.push({ item: '', note: '', url: '' });
+}
+function removeDraft(i: number) {
+    if (drafts.value.length === 1) return;
+    drafts.value.splice(i, 1);
+}
+function resetDrafts() {
+    drafts.value = [{ item: '', note: '', url: '' }];
+}
+function submitBatch() {
+    const payload = drafts.value.map((d) => ({ item: d.item.trim(), note: d.note.trim(), url: d.url.trim() })).filter((d) => d.item.length);
+    if (!payload.length) return;
+    router.post(
+        route('groups.wishlist.store.batch', { group: props.group.id }),
+        { items: payload },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                resetDrafts();
+                batchMode.value = false;
+            },
+        },
+    );
+}
 
 function setOrder(order: 'created' | 'alpha') {
     if (order === props.order) return;
@@ -112,44 +157,152 @@ function setOrder(order: 'created' | 'alpha') {
                 </div>
             </div>
 
-            <!-- Add form -->
-            <form @submit.prevent="submitCreate" class="space-y-3 rounded-xl border bg-card p-4">
-                <div class="flex flex-col gap-2">
-                    <input
-                        v-model="createForm.item"
-                        type="text"
-                        :placeholder="t('common.misc.wishlist_item')"
-                        class="rounded border bg-background px-3 py-2 text-sm focus:border-primary focus:ring-primary"
-                        required
-                        maxlength="255"
-                    />
-                    <input
-                        v-model="createForm.note"
-                        type="text"
-                        placeholder="Nota (opcional)"
-                        class="rounded border bg-background px-3 py-2 text-sm focus:border-primary focus:ring-primary"
-                        maxlength="255"
-                    />
-                    <div class="flex flex-col gap-1">
+            <!-- Add form / mode switcher -->
+            <div class="mb-2 flex flex-col gap-2">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h2 class="text-sm font-semibold">
+                        {{ batchMode ? t('wishlist.add_multiple') : t('common.misc.wishlist_add') }}
+                    </h2>
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="select-none text-muted-foreground">{{ t('wishlist.multi_mode_label') }}</span>
+                        <Switch :model-value="batchMode" @update:model-value="(v) => (batchMode = v)">
+                            <template #thumb>
+                                <span class="block h-3 w-3 rounded-full bg-primary-foreground"></span>
+                            </template>
+                        </Switch>
+                        <button
+                            v-if="batchMode"
+                            type="button"
+                            class="rounded border px-2 py-1 text-[10px] font-medium hover:bg-accent"
+                            @click="batchMode = false"
+                        >
+                            {{ t('common.actions.cancel') }}
+                        </button>
+                    </div>
+                </div>
+                <p v-if="batchMode" class="text-[11px] leading-snug text-muted-foreground">{{ t('wishlist.multi_hint') }}</p>
+            </div>
+            <form v-if="!batchMode" @submit.prevent="submitCreate" class="space-y-3 rounded-xl border bg-card p-4" novalidate>
+                <div class="flex flex-col gap-3">
+                    <label class="flex flex-col gap-1 text-xs font-medium">
+                        <span>{{ t('common.misc.wishlist_item') }}</span>
                         <input
-                            v-model="createForm.url"
-                            type="url"
-                            placeholder="Link do produto (Amazon etc.)"
+                            v-model="createForm.item"
+                            type="text"
+                            :placeholder="t('common.misc.wishlist_item')"
+                            class="rounded border bg-background px-3 py-2 text-sm focus:border-primary focus:ring-primary"
+                            required
+                            maxlength="255"
+                            autocomplete="off"
+                        />
+                        <span v-if="createForm.errors.item" class="text-[11px] font-normal text-red-600">{{ createForm.errors.item }}</span>
+                    </label>
+                    <label class="flex flex-col gap-1 text-xs font-medium">
+                        <span>{{ t('common.misc.wishlist_note') }}</span>
+                        <input
+                            v-model="createForm.note"
+                            type="text"
+                            :placeholder="t('common.misc.wishlist_note') + ' (' + t('common.actions.optional', 'Optional') + ')'"
                             class="rounded border bg-background px-3 py-2 text-sm focus:border-primary focus:ring-primary"
                             maxlength="255"
                         />
-                        <p class="text-xs text-muted-foreground">Esqueci http? Adiciono https automaticamente.</p>
-                    </div>
+                        <span v-if="createForm.errors.note" class="text-[11px] font-normal text-red-600">{{ createForm.errors.note }}</span>
+                    </label>
+                    <label class="flex flex-col gap-1 text-xs font-medium">
+                        <span>{{ t('common.misc.wishlist_link') }}</span>
+                        <input
+                            v-model="createForm.url"
+                            type="url"
+                            :placeholder="t('common.misc.wishlist_link') + ' (https://...)'"
+                            class="rounded border bg-background px-3 py-2 text-sm focus:border-primary focus:ring-primary"
+                            maxlength="255"
+                            autocomplete="off"
+                            inputmode="url"
+                        />
+                        <span v-if="createForm.errors.url" class="text-[11px] font-normal text-red-600">{{ createForm.errors.url }}</span>
+                        <p class="text-[11px] text-muted-foreground">
+                            {{ t('wishlist.autofix_scheme', 'If you forget http, we add https automatically.') }}
+                        </p>
+                    </label>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 pt-1">
                     <button
                         type="submit"
-                        :disabled="createForm.processing"
+                        :disabled="createForm.processing || !createForm.item.trim()"
                         class="rounded bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                     >
                         {{ t('common.misc.wishlist_add') }}
                     </button>
-                    <div v-if="createForm.errors.item" class="text-sm text-red-600">{{ createForm.errors.item }}</div>
+                    <button
+                        type="button"
+                        class="rounded border px-3 py-2 text-[11px] font-medium hover:bg-accent"
+                        @click="createForm.reset()"
+                        :disabled="createForm.processing"
+                    >
+                        {{ t('common.actions.cancel') }}
+                    </button>
+                </div>
+            </form>
+            <form v-else @submit.prevent="submitBatch" class="space-y-4 rounded-xl border bg-card p-4" novalidate>
+                <div class="flex flex-col gap-4">
+                    <div v-for="(d, i) in drafts" :key="i" class="space-y-2 rounded-md border p-3">
+                        <div class="flex gap-2">
+                            <input
+                                v-model="d.item"
+                                :placeholder="t('wishlist.multi_item_placeholder')"
+                                class="flex-1 rounded border bg-background px-2 py-1 text-xs focus:border-primary focus:ring-primary"
+                                maxlength="255"
+                            />
+                            <button
+                                type="button"
+                                @click="removeDraft(i)"
+                                :disabled="drafts.length === 1"
+                                class="rounded border px-2 py-1 text-[10px] font-medium hover:bg-accent disabled:opacity-40"
+                                aria-label="Remove row"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div class="grid gap-2 md:grid-cols-2">
+                            <input
+                                v-model="d.note"
+                                :placeholder="t('wishlist.multi_note_placeholder')"
+                                class="rounded border bg-background px-2 py-1 text-xs focus:border-primary focus:ring-primary"
+                                maxlength="255"
+                            />
+                            <input
+                                v-model="d.url"
+                                :placeholder="t('wishlist.multi_url_placeholder')"
+                                class="rounded border bg-background px-2 py-1 text-xs focus:border-primary focus:ring-primary"
+                                maxlength="255"
+                            />
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-3 pt-1">
+                    <button
+                        type="button"
+                        @click="addDraft"
+                        :disabled="drafts.length >= 5"
+                        class="rounded border px-3 py-2 text-[11px] font-medium hover:bg-accent disabled:opacity-40"
+                    >
+                        + {{ t('common.misc.add') || 'Add' }}
+                    </button>
+                    <button
+                        type="submit"
+                        :disabled="!drafts.some((d) => d.item.trim().length)"
+                        class="rounded bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    >
+                        {{ t('wishlist.multi_submit') }}
+                    </button>
+                    <button
+                        type="button"
+                        @click="resetDrafts"
+                        class="rounded border px-3 py-2 text-[11px] font-medium hover:bg-accent"
+                        :disabled="drafts.length === 1 && !drafts[0].item && !drafts[0].note && !drafts[0].url"
+                    >
+                        {{ t('common.actions.cancel') }}
+                    </button>
                 </div>
             </form>
 

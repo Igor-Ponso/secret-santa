@@ -30,6 +30,7 @@ const runtimeDict: Record<string, Dict> = {
             confirm_transfer_desc: 'After transferring you lose owner privileges.',
             no_results: 'No results for ":query".',
         },
+        // onboarding keys now moved to JSON locale file
     },
     pt: {},
 };

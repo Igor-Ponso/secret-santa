@@ -28,7 +28,11 @@ class UserInvitationActionController extends Controller
     {
         $this->ensureOwnership($invitation, $request);
         $this->service->accept($invitation, $request->user());
-        return back()->with('flash', ['success' => 'Convite aceito.']);
+        $hasItems = \App\Models\Wishlist::where('group_id', $invitation->group_id)
+            ->where('user_id', $request->user()->id)
+            ->exists();
+        $route = $hasItems ? 'groups.wishlist.index' : 'groups.onboarding.show';
+        return redirect()->route($route, $invitation->group_id)->with('flash', ['success' => 'Convite aceito.']);
     }
 
     public function decline(Request $request, GroupInvitation $invitation): RedirectResponse

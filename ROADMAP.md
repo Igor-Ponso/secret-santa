@@ -14,87 +14,106 @@ Built with Laravel 12, Inertia.js 2, Vue 3, Pinia, TypeScript, and ShadCN Vue.
 
 ---
 
-## 🧱 Phase 1 — Foundation & Auth
+## 🧱 Phase 1 — Foundation & Auth (Status: Mostly Complete)
 
-**Goals:** Setup initial layout, structure, and authentication.
+**Delivered:**
 
-- [x] Setup Laravel 12 + Inertia + Vue 3 Starter Kit
-- [x] Ensure authentication works (login, register, reset password)
-- [ ] Create layout with sidebar + topbar (ShadCN components)
-- [ ] Add avatar upload on profile page
-- [ ] Add ability to update name/email/password
-- [ ] Ensure all routes are protected by middleware
-- [ ] Add Setup Pinia Stores for user/auth state
-- [ ] Add PEST feature tests for auth
-- [ ] Add Vitest unit test for user store
+- [x] Laravel 12 + Inertia + Vue 3 base
+- [x] Auth (login / register / reset / email verification)
+- [x] Profile update (name/email/password) & password confirmation
+- [x] Feature tests (auth flows)
+- [x] Basic layout shell (iterating)
 
----
+**Pending / Nice to Have:**
 
-## 🎁 Phase 2 — Group & Draw Core
-
-**Goals:** Allow creating and joining groups, managing participants, and performing the Secret Santa draw.
-
-- [ ] Group creation form: name, description, min/max gift value, draw date
-- [ ] Generate and share invite link (`/join/{token}`)
-- [ ] Allow users to join via invite
-- [ ] Add participant list (including guest entries)
-- [ ] Add optional draw restrictions ("X cannot draw Y")
-- [ ] Implement draw algorithm (Eloquent service)
-- [ ] Store who drew who securely
-- [ ] Add Laravel authorization policies for group access
-- [ ] Add full PEST coverage for GroupController, DrawService
-- [ ] Add frontend tests with Vitest for forms and flow
+- [ ] Sidebar + richer nav structure
+- [ ] Avatar upload (profile photo column added; UI pending)
+- [ ] Pinia stores (using direct Inertia props for now)
+- [ ] Vitest unit tests for auth store (post store introduction)
 
 ---
 
-## 🌐 Phase 3 — Public + UX Polish
+## 🎁 Phase 2 — Group & Draw Core (Status: In Progress)
 
-**Goals:** Make it beautiful, responsive, and user-first.
+**Delivered:**
 
-- [ ] Public group landing page with countdown
-- [ ] Display draw result privately to each user
-- [ ] Add Dark Mode toggle
-- [ ] Mobile-first UI polish
-- [ ] Add i18n support
-- [ ] Add avatars to participant list
-- [ ] Add "Leave group" or "Delete my participation"
-- [ ] Add email notifications (draw reminder, results)
+- [x] Group creation (name, description)
+- [x] Participant list & counts
+- [x] Join code generation & regeneration
+- [x] Invitation lifecycle (create, resend, revoke, accept, decline, expire)
+- [x] Invitation privacy & status landing (no 404 for invalid)
+- [x] Draw service (single-run enforcement + assignments)
+- [x] Recipient fetch + wishlist display
+- [x] Participant management (remove with constraints, ownership transfer)
+- [x] Join requests (approve / deny, code join)
+- [x] Policies & access control additions
+- [x] Extensive feature test coverage
 
----
+**Pending / Planned:**
 
-## 📦 Phase 4 — DevOps & Production Ready
-
-**Goals:** Optimize performance, enforce best practices, and prepare for release.
-
-- [ ] Review queries (N+1, eager loading, indexing)
-- [ ] Use Laravel model binding everywhere (no IDs in requests)
-- [ ] Enforce clean service layer (`DrawService`, `GroupService`)
-- [ ] Add PHPDocs on all methods
-- [ ] Setup CI with GitHub Actions for PEST/Vitest on PR
-- [ ] Deploy to Forge or Vercel
-- [ ] Add analytics (privacy-friendly)
-- [ ] Polish README with badge, demo GIF, install instructions
-- [ ] Manual QA checklist
+- [ ] Min/max gift value fields
+- [ ] Draw restrictions (exclusions matrix)
+- [ ] Secure audit of assignment storage at rest (encryption / hashing strategy)
+- [ ] Enhanced metrics (draw readiness, wishlist completion %)
+- [ ] Frontend Vitest coverage for critical flows
 
 ---
 
-## ✅ Best Practices
+## 🌐 Phase 3 — Public + UX Polish (Status: Early)
 
-- Use Setup Stores and TypeScript on all Pinia state
-- Keep controllers thin, move logic to services
-- Validate with Form Requests
-- Use Resources for API formatting
-- Write PEST + Vitest tests for all new features
-- Comments only when something is not obvious
-- Prioritize performance — paginate, eager load, index
+**Delivered:**
+
+- [x] i18n scaffolding (en, pt_BR)
+- [x] Wishlist quick-access button
+- [x] Batch wishlist add mode + Switch UI
+
+**Planned:**
+
+- [ ] Public group landing + countdown
+- [ ] Dark Mode toggle
+- [ ] Avatar rendering (after upload UI)
+- [ ] Leave group (self removal) flow
+- [ ] Improved mobile density / navigation
+- [ ] Email notifications (draw executed, reminders, wishlist change)
+- [ ] Recipient enhancement (anonymized hint, gift guidelines)
+
+---
+
+## 📦 Phase 4 — DevOps & Production Ready (Status: Upcoming)
+
+**Planned:**
+
+- [ ] Query review & indexing pass
+- [ ] Formalize service boundaries + Form Request adoption everywhere
+- [ ] PHPDocs + type improvements
+- [ ] GitHub Actions CI (PEST + future Vitest)
+- [ ] Deployment pipeline (Forge / container)
+- [ ] Privacy-friendly analytics (Umami / Plausible)
+- [ ] Manual QA + accessibility audit
+
+**Partially Done:**
+
+- [x] Service layer started (InvitationService, DrawService, GroupService in progress)
+- [x] README badges & install docs
+
+---
+
+## ✅ Current Practices & Guidelines
+
+- Controllers lean; heavy logic in services (continuing refactors)
+- Validation currently inline in some controllers; migrating toward Form Requests
+- Inertia responses only include needed fields (manual shaping)
+- Tests required for new feature merges
+- Prefer localization keys over hardcoded strings
+- Avoid premature optimization; watch for N+1 in group show/draw flows
 
 ---
 
 ## 📘 Notes
 
-- DB: MySQL is more than enough (only avatars will be stored)
-- Frontend is fully Inertia + Vue 3 — no need for SPA routing
-- Consider Cypress or Playwright for final E2E flows (optional)
+- SQLite used locally for fast iteration; MySQL planned for staging/prod
+- Inertia + Vue approach avoids duplicating routing logic
+- E2E (Playwright) will be evaluated after core features freeze
 
 ---
 

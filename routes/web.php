@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
 Route::middleware(['auth', 'verified'])->prefix('groups/{group}/wishlist')->name('groups.wishlist.')->group(function () {
     Route::get('/', [WishlistController::class, 'index'])->name('index');
     Route::post('/', [WishlistController::class, 'store'])->name('store');
+    Route::post('/batch', [WishlistController::class, 'batchStore'])->name('store.batch');
     Route::put('/{wishlist}', [WishlistController::class, 'update'])->name('update');
     Route::delete('/{wishlist}', [WishlistController::class, 'destroy'])->name('destroy');
 });
@@ -86,6 +87,10 @@ Route::middleware(['auth'])
         Route::post('/{group}/transfer-ownership', [\App\Http\Controllers\GroupOwnershipController::class, 'store'])->name('transfer_ownership');
         Route::delete('/{group}/participants/{user}', [\App\Http\Controllers\GroupParticipantController::class, 'destroy'])->name('participants.remove');
         Route::delete('/{group}', [\App\Http\Controllers\GroupController::class, 'destroy'])->name('destroy');
+        // Onboarding (wishlist initial setup)
+        Route::get('/{group}/onboarding', [\App\Http\Controllers\OnboardingController::class, 'show'])->name('onboarding.show');
+        Route::post('/{group}/onboarding', [\App\Http\Controllers\OnboardingController::class, 'store'])->name('onboarding.store');
+        Route::post('/{group}/onboarding/skip', [\App\Http\Controllers\OnboardingController::class, 'skip'])->name('onboarding.skip');
         // Invitation management (rate limited via named limiter defined in AppServiceProvider)
         Route::middleware('throttle:group-invitations')->group(function () {
             Route::post('/{group}/invitations', [\App\Http\Controllers\GroupInvitationController::class, 'store'])

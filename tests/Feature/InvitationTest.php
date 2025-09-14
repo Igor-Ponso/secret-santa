@@ -79,11 +79,12 @@ it('user can decline invitation', function () {
     expect($inv->declined_at)->not()->toBeNull();
 });
 
-it('invitation token not found returns 404 on show', function () {
+it('invitation token not found shows invalid status (no 404)', function () {
     $user = User::factory()->create(['email_verified_at' => now()]);
     actingAs($user);
-    // Passando explicitamente o nome do parâmetro evita alerta falso do plugin (ele achava que era nome de rota)
-    get(route('invites.show', ['token' => 'nonexistenttoken']))->assertNotFound();
+    $resp = get(route('invites.show', ['token' => 'nonexistenttoken']))
+        ->assertOk();
+    $resp->assertSee('invalid');
 });
 
 it('cannot accept twice', function () {

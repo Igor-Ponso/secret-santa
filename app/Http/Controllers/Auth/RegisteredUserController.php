@@ -49,6 +49,9 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
+        if ($groupId = $request->session()->pull('just_accepted_group_id')) {
+            return redirect()->route('groups.onboarding.show', $groupId);
+        }
         return to_route('dashboard');
     }
 }

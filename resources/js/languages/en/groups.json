@@ -69,6 +69,8 @@
         "draw_date": "Draw date",
         "invite_link": "Group invite link",
         "invite_link_placeholder": "Loading invite link...",
-        "generate_invite_link": "Generate new link"
+        "generate_invite_link": "Generate new link",
+        "my_wishlist": "My wishlist",
+        "view_my_wishlist": "View my wishlist"
     }
 }

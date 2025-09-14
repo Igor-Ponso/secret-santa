@@ -13,6 +13,8 @@
 
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\Concerns\InteractsWithAuthentication;
+use Illuminate\Foundation\Testing\Concerns\InteractsWithHttp;
 
 // Bind Laravel TestCase so HTTP helpers are available.
 uses(TestCase::class)->in('Feature');

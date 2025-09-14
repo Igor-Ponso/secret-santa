@@ -1,0 +1,13 @@
+{
+    "onboarding": {
+        "title": "Monte sua primeira Wishlist",
+        "subtitle": "Adicione algumas ideias de presente para orientar seu Amigo Secreto. Você pode editar depois.",
+        "item_placeholder": "Item",
+        "note_placeholder": "Observação (opcional)",
+        "url_placeholder": "Link (opcional)",
+        "add_item": "Adicionar outro",
+        "finish": "Concluir",
+        "skip": "Pular",
+        "hint_limit": "Máx. 3 itens agora; você pode adicionar mais depois."
+    }
+}

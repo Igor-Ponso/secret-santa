@@ -1,0 +1,13 @@
+{
+    "onboarding": {
+        "title": "Build your first Wishlist",
+        "subtitle": "Add a few gift ideas so your Secret Santa has direction. You can edit later.",
+        "item_placeholder": "Item",
+        "note_placeholder": "Note (optional)",
+        "url_placeholder": "Link (optional)",
+        "add_item": "Add another",
+        "finish": "Finish",
+        "skip": "Skip",
+        "hint_limit": "Max 3 items now; you can add more later."
+    }
+}

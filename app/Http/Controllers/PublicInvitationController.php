@@ -28,6 +28,11 @@ class PublicInvitationController extends Controller
         $user = request()->user();
         $component = $user ? 'Invites/Show' : 'Invites/Public';
 
+        // If not authenticated, remember token to continue flow post login/registration
+        if (!$user) {
+            session(['pending_invite_token' => $plainToken]);
+        }
+
         if (!$invitation) {
             return Inertia::render($component, [
                 'invitation' => [
@@ -93,7 +98,13 @@ class PublicInvitationController extends Controller
         }
 
         $this->service->accept($invitation, $request->user());
-        return redirect()->route('groups.index')->with('flash', ['success' => 'Invitation accepted']);
+        // Redirect to onboarding if user has no wishlist items yet
+        $hasItems = \App\Models\Wishlist::where('group_id', $invitation->group_id)
+            ->where('user_id', $request->user()->id)
+            ->exists();
+        $targetRoute = $hasItems ? 'groups.wishlist.index' : 'groups.onboarding.show';
+        return redirect()->route($targetRoute, $invitation->group_id)
+            ->with('flash', ['success' => 'Invitation accepted']);
     }
 
     /** Decline an invitation. */

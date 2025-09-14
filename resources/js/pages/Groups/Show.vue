@@ -18,7 +18,7 @@ import Pagination from '@/components/ui/pagination/Pagination.vue';
 import { Recipient, GroupShowProps as ShowProps, WishlistItem } from '@/interfaces/group';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useDateFormat } from '@/lib/formatDate';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { Check, Copy, Eye, EyeOff, LoaderCircle } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -177,7 +177,13 @@ const removeTarget = ref<any>(null);
 const ownershipDialogOpen = ref(false);
 const ownershipTarget = ref<any>(null);
 const transferringOwnership = ref(false);
-const userId = (window as any).Laravel?.user?.id; // assuming provided globally
+// Current authenticated user (from Inertia shared props)
+const page = usePage();
+const userId = computed(() => (page.props as any).auth?.user?.id || (page.props as any).user?.id || null);
+const isParticipant = computed(() => {
+    if (!userId.value) return false;
+    return (group.value.participants || []).some((p: any) => p.id === userId.value);
+});
 const dialogMode = ref<'resend' | 'revoke' | null>(null);
 const dialogInvitationId = ref<number | null>(null);
 const dialogOpen = ref(false);
@@ -326,28 +332,41 @@ onMounted(fetchRecipient);
     >
         <div class="flex flex-col gap-6 p-4">
             <div class="flex flex-col gap-2">
-                <h1 class="text-xl font-semibold">{{ group.name }}</h1>
+                <div class="flex flex-wrap items-center gap-3">
+                    <h1 class="text-xl font-semibold">{{ group.name }}</h1>
+                    <button
+                        v-if="isParticipant"
+                        type="button"
+                        class="inline-flex items-center gap-1 rounded border px-3 py-1.5 text-xs font-medium hover:bg-accent"
+                        @click="router.visit(route('groups.wishlist.index', { group: group.id }))"
+                    >
+                        🎁 {{ t('groups.my_wishlist') }}
+                    </button>
+                </div>
                 <p v-if="group.description" class="max-w-prose text-sm text-muted-foreground">{{ group.description }}</p>
             </div>
 
             <div class="space-y-4 rounded border p-4">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-wrap items-center justify-between gap-3">
                     <h2 class="text-sm font-semibold">{{ t('groups.draw') }}</h2>
-                    <div v-if="group.is_owner && !group.has_draw">
-                        <button
-                            @click="runDraw"
-                            :disabled="drawing || !group.can_draw"
-                            class="flex items-center gap-1 rounded bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                        >
-                            <LoaderCircle v-if="drawing" class="h-4 w-4 animate-spin" />
-                            {{
-                                drawing
-                                    ? t('groups.drawing') || 'Sorteando...'
-                                    : group.can_draw
-                                      ? t('groups.run_draw') || 'Executar Sorteio'
-                                      : t('groups.waiting_participants') || 'Aguardando Participantes'
-                            }}
-                        </button>
+                    <div class="ml-auto flex items-center gap-2">
+                        <!-- Wishlist button already present in header; removed duplicate here -->
+                        <div v-if="group.is_owner && !group.has_draw">
+                            <button
+                                @click="runDraw"
+                                :disabled="drawing || !group.can_draw"
+                                class="flex items-center gap-1 rounded bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                            >
+                                <LoaderCircle v-if="drawing" class="h-4 w-4 animate-spin" />
+                                {{
+                                    drawing
+                                        ? t('groups.drawing') || 'Sorteando...'
+                                        : group.can_draw
+                                          ? t('groups.run_draw') || 'Executar Sorteio'
+                                          : t('groups.waiting_participants') || 'Aguardando Participantes'
+                                }}
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-3 text-sm text-muted-foreground">
@@ -466,9 +485,6 @@ onMounted(fetchRecipient);
                                     >🎅</span
                                 >
                             </span>
-                            <span v-if="p.id === userId" class="rounded bg-primary/10 px-1 py-0.5 text-xs uppercase tracking-wide">{{
-                                t('groups.you')
-                            }}</span>
                             <span
                                 v-if="p.wishlist_count"
                                 class="rounded bg-amber-500/20 px-1 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300"

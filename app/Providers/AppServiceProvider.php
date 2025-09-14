@@ -45,5 +45,35 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Locale & translations no longer shared; handled entirely client-side via vue-i18n.
+
+        // After auth (login/register), process pending invite token if present
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, function ($event) {
+            $this->consumePendingInvite($event->user);
+        });
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Registered::class, function ($event) {
+            $this->consumePendingInvite($event->user);
+        });
+    }
+
+    protected function consumePendingInvite($user): void
+    {
+        $token = session('pending_invite_token');
+        if (!$token)
+            return;
+        session()->forget('pending_invite_token');
+        $service = app(\App\Services\InvitationService::class);
+        $invitation = $service->findByPlainToken($token);
+        if (!$invitation)
+            return; // invalid token
+        if (strcasecmp($invitation->email, $user->email) !== 0) {
+            // store mismatch flag for UI feedback maybe
+            session(['invite_email_mismatch' => true]);
+            return;
+        }
+        if (!$invitation->accepted_at && !$invitation->declined_at && !$invitation->isExpired()) {
+            $service->accept($invitation, $user);
+            // Mark a session key so redirect logic in auth controllers can send user to onboarding
+            session(['just_accepted_group_id' => $invitation->group_id]);
+        }
     }
 }

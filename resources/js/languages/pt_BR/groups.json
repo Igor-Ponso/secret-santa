@@ -69,6 +69,8 @@
         "draw_date": "Data do sorteio",
         "invite_link": "Link de convite do grupo",
         "invite_link_placeholder": "Carregando link de convite...",
-        "generate_invite_link": "Gerar novo link"
+        "generate_invite_link": "Gerar novo link",
+        "my_wishlist": "Minha wishlist",
+        "view_my_wishlist": "Ver minha wishlist"
     }
 }

@@ -1,5 +1,16 @@
 {
     "wishlist": {
-        "title": "Wishlist"
+        "title": "Wishlist",
+        "empty": "No items yet.",
+        "add_first": "Add your first item",
+        "add_multiple": "Add multiple",
+        "multi_mode_label": "Multi-add mode",
+        "multi_submit": "Add all",
+        "multi_hint": "Up to 5 items. Leave blank rows and they'll be ignored.",
+        "multi_item_placeholder": "Gift idea",
+        "multi_note_placeholder": "Note (optional)",
+        "multi_url_placeholder": "Link (optional)",
+        "autofix_scheme": "If you forget http, we add https automatically.",
+        "batch_success": "Items added"
     }
 }
