@@ -4,17 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreInvitationRequest;
 use App\Models\Group;
+use App\Models\GroupInvitation;
+use App\Notifications\GroupInvitationNotification;
 use App\Services\InvitationService;
 use Illuminate\Http\RedirectResponse;
-use App\Notifications\GroupInvitationNotification;
+use Illuminate\Http\JsonResponse;
 
 /**
  * Controller for internal (owner) invitation management.
  *
  * Security considerations:
- * - Consider rate limiting invitation creation (e.g. throttling by user/group) to prevent abuse.
- * - Duplicate pending invitation check reduces email enumeration risk.
- * - Plain tokens never persisted; only hashed form stored.
+ * - Rate limiting (implement via middleware) recommended to avoid abuse.
+ * - Duplicate pending invitation check mitigates email enumeration.
+ * - Only hashed tokens stored; plain token kept transiently for delivery.
  */
 class GroupInvitationController extends Controller
 {
@@ -23,55 +25,110 @@ class GroupInvitationController extends Controller
     }
 
     /**
-     * Create a new invitation for a group owner.
+     * Return (or create) a sharable invitation link for the group.
+     *
+     * Selection rules:
+     *  - Reuse latest pending (not accepted / declined / revoked / expired) invitation.
+     *  - If none exists, create a new one bound to the current user (owner).
+     *  - If a pending invitation exists but we lost the transient plain token (e.g. new request lifecycle),
+     *    we regenerate by resending the invitation (new token) to avoid exposing hashed form.
+     *
+     * Rate limiting should be enforced at the route level via middleware.
+     *
+     * @param Group $group
+     * @return JsonResponse
+     */
+    public function link(Group $group): JsonResponse
+    {
+        $this->authorize('update', $group);
+
+        $invitation = $group->invitations()
+            ->whereNull('accepted_at')
+            ->whereNull('declined_at')
+            ->whereNull('revoked_at')
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->latest('id')
+            ->first();
+
+        if (!$invitation) {
+            // Create a fresh invitation using owner email context (self-link for sharing)
+            $invitation = $this->service->create($group, auth()->user(), auth()->user()->email);
+        } elseif (!$invitation->getAttribute('plain_token')) {
+            // We have a pending invitation but no transient plain token: regenerate a new one.
+            $invitation = $this->service->resend($invitation) ?: $this->service->create($group, auth()->user(), auth()->user()->email);
+        }
+
+        $plain = $invitation->getAttribute('plain_token');
+        if (!$plain) {
+            return response()->json(['error' => 'Could not generate invitation link.'], 400);
+        }
+
+        return response()->json([
+            'link' => route('invites.show', $plain), // use GET show route so it can be opened directly
+        ]);
+    }
+
+    /**
+     * Create a nominal (email based) invitation for a group.
+     *
+     * Validation & business rules:
+     *  - Block automatic reinvite if a declined invitation exists (forces join request flow).
+     *  - Prevent duplicate pending invitation for the same email.
+     *  - Sends notification with one-time plain token link.
+     *
+     * @param StoreInvitationRequest $request
+     * @param Group $group
+     * @return RedirectResponse
      */
     public function store(StoreInvitationRequest $request, Group $group): RedirectResponse
     {
-        $this->authorize('update', $group); // owner can invite
+        $this->authorize('update', $group);
         $data = $request->validated();
         $email = $data['email'];
 
-        // If there is a declined invitation for this email, block automatic re-invite.
         $declinedExists = $group->invitations()
             ->where('email', $email)
             ->whereNotNull('declined_at')
             ->exists();
         if ($declinedExists) {
             return back()->with('flash', [
-                'error' => 'Este e-mail já recusou um convite. O usuário deve solicitar entrada para nova aprovação.'
+                'error' => 'This email has already declined an invitation. User must request to join again.'
             ]);
         }
 
-        // Prevent duplicate pending invitation for same email
-        $exists = $group->invitations()
+        $duplicate = $group->invitations()
             ->where('email', $email)
             ->whereNull('accepted_at')
             ->whereNull('declined_at')
             ->whereNull('revoked_at')
             ->where(function ($q) {
-                // treat expired as not pending
                 $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
             })
             ->exists();
-        if ($exists) {
-            return back()->with('flash', ['error' => 'Invitation already pending for this email.']);
+        if ($duplicate) {
+            return back()->with('flash', ['error' => 'There is already a pending invitation for this email.']);
         }
 
         $invitation = $this->service->create($group, $request->user(), $email);
-
-        // Send invitation email with one-time plain token link
         if ($plain = $invitation->getAttribute('plain_token')) {
             $invitation->notify(new GroupInvitationNotification($group, $plain));
         }
 
-        // Security: avoid exposing even partial tokens or links in UI feedback.
         return redirect()->route('groups.index')->with('flash', [
-            'success' => 'Convite criado e enviado (verifique o email do convidado).',
+            'success' => 'Invitation created and email sent.'
         ]);
     }
 
-    /** Revoke a pending invitation. */
-    public function revoke(Group $group, \App\Models\GroupInvitation $invitation): RedirectResponse
+    /**
+     * Revoke a pending invitation.
+     *
+     * @param Group $group
+     * @param GroupInvitation $invitation
+     * @return RedirectResponse
+     */
+    public function revoke(Group $group, GroupInvitation $invitation): RedirectResponse
     {
         $this->authorize('update', $group);
         abort_unless($invitation->group_id === $group->id, 404);
@@ -79,8 +136,14 @@ class GroupInvitationController extends Controller
         return back()->with('flash', ['info' => 'Convite revogado']);
     }
 
-    /** Resend a pending invitation regenerating token & extending expiry. */
-    public function resend(Group $group, \App\Models\GroupInvitation $invitation): RedirectResponse
+    /**
+     * Resend a pending invitation regenerating token & extending expiration.
+     *
+     * @param Group $group
+     * @param GroupInvitation $invitation
+     * @return RedirectResponse
+     */
+    public function resend(Group $group, GroupInvitation $invitation): RedirectResponse
     {
         $this->authorize('update', $group);
         abort_unless($invitation->group_id === $group->id, 404);

@@ -16,24 +16,28 @@ import { useI18n } from 'vue-i18n';
 
 interface InvitationPageProps {
     invitation: {
-        group: { id: number; name: string; description?: string | null };
-        email: string;
-        status: 'pending' | 'accepted' | 'declined';
+        group: { id: number; name: string; description?: string | null } | null;
+        email: string | null; // only present if authenticated user matches invite
+        status: 'pending' | 'accepted' | 'declined' | 'revoked' | 'expired' | 'invalid';
         expired: boolean;
+        revoked?: boolean;
         token: string;
+        can_accept?: boolean;
     };
 }
 
 const props = defineProps<InvitationPageProps>();
 const { t } = useI18n();
 
-function accept() {
+const accept = () => {
+    if (props.invitation.status !== 'pending') return;
     router.post(route('invites.accept', props.invitation.token));
-}
+};
 
-function decline() {
+const decline = () => {
+    if (props.invitation.status !== 'pending') return;
     router.post(route('invites.decline', props.invitation.token));
-}
+};
 </script>
 
 <template>
@@ -41,19 +45,27 @@ function decline() {
     <AppLayout>
         <div class="mx-auto max-w-md space-y-6 p-6">
             <h1 class="text-xl font-semibold tracking-tight">{{ t('invites.group_invitation') }}</h1>
-            <div class="rounded-md border p-4 text-sm leading-relaxed">
+            <div class="rounded-md border p-4 text-sm leading-relaxed" v-if="props.invitation.status !== 'invalid'">
                 <p>
-                    {{ t('invites.accept_desc').split('.')[0] }}
-                    <span class="font-medium">{{ props.invitation.group.name }}</span>
-                    <span v-if="props.invitation.group.description" class="text-muted-foreground"> — {{ props.invitation.group.description }}</span>
+                    <template v-if="props.invitation.group">
+                        <span class="font-medium">{{ props.invitation.group.name }}</span>
+                        <span v-if="props.invitation.group.description" class="text-muted-foreground">
+                            — {{ props.invitation.group.description }}</span
+                        >
+                    </template>
                 </p>
-                <p class="mt-2 text-xs text-muted-foreground">{{ t('invites.invitation_for') }} {{ props.invitation.email }}</p>
-                <p v-if="props.invitation.expired" class="mt-2 text-xs font-medium text-destructive">{{ t('invites.expired') }}</p>
-                <p v-else-if="props.invitation.status !== 'pending'" class="mt-2 text-xs text-muted-foreground">
-                    {{ t('invites.already_status').replace(':status', props.invitation.status) }}
+                <p class="mt-2 text-xs text-muted-foreground" v-if="props.invitation.email">{{ t('invites.invitation_for_you') }}</p>
+                <p v-if="props.invitation.status === 'expired'" class="mt-2 text-xs font-medium text-destructive">{{ t('invites.expired') }}</p>
+                <p v-else-if="props.invitation.status === 'revoked'" class="mt-2 text-xs font-medium text-destructive">{{ t('invites.revoked') }}</p>
+                <p v-else-if="props.invitation.status === 'accepted'" class="mt-2 text-xs text-muted-foreground">
+                    {{ t('invites.already_accepted') }}
+                </p>
+                <p v-else-if="props.invitation.status === 'declined'" class="mt-2 text-xs text-muted-foreground">
+                    {{ t('invites.already_declined') }}
                 </p>
             </div>
-            <div class="flex gap-3" v-if="!props.invitation.expired && props.invitation.status === 'pending'">
+            <div v-else class="rounded-md border p-4 text-sm text-destructive">{{ t('invites.invalid') }}</div>
+            <div class="flex gap-3" v-if="props.invitation.status === 'pending' && props.invitation.can_accept">
                 <AlertDialog>
                     <AlertDialogTrigger as-child>
                         <button class="rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90">

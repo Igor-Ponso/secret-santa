@@ -10,6 +10,23 @@
         "decline_question": "Recusar convite?",
         "accept_desc": "Você entrará neste grupo e o dono verá você como participante. Continuar?",
         "decline_desc": "Você só pode aceitar enquanto for válido. Recusar significa que não participará a menos que seja reconvidado.",
-        "invitation_for": "Convite para:"
+        "invitation_for": "Convite para:",
+        "invitation_for_you": "Este convite é para a sua conta.",
+        "login_to_accept": "Você foi convidado para este grupo. Faça login ou crie uma conta para aceitar.",
+        "email_mismatch": "Você está logado com um e-mail diferente do convidado.",
+        "revoked": "Este convite foi revogado.",
+        "invalid": "Token de convite inválido.",
+        "already_accepted": "Convite já aceito.",
+        "already_declined": "Convite já recusado.",
+        "public": {
+            "heading": "Você foi convidado!",
+            "subheading": "Entre na diversão e troque presentes surpresa com um grupo privado.",
+            "benefits": {
+                "gifting": "Sorteio inteligente mantém os pares secretos e justos",
+                "surprise": "Lista de desejos com dicas sem estragar a surpresa",
+                "memory": "Crie uma tradição de fim de ano juntos"
+            },
+            "footer_note": "Plataforma de Amigo Secreto segura e focada em privacidade. Sem spam. Nunca."
+        }
     }
 }

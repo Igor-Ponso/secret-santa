@@ -14,10 +14,8 @@
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-// Bind our Laravel TestCase for Feature and Unit tests so Pest test closures
-// get the full HTTP testing API (get, post, actingAs, etc.) for static analysis.
-uses(TestCase::class)->in('Feature', 'Unit');
-// Apply RefreshDatabase only to Feature tests.
+// Bind Laravel TestCase so HTTP helpers are available.
+uses(TestCase::class)->in('Feature');
 uses(RefreshDatabase::class)->in('Feature');
 
 /*

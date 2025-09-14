@@ -10,6 +10,23 @@
         "decline_question": "Decline invitation?",
         "accept_desc": "You will join this group and the owner will see you as participant. Continue?",
         "decline_desc": "You can only accept while it's valid. Declining means you won't participate unless reinvited.",
-        "invitation_for": "Invitation for:"
+        "invitation_for": "Invitation for:",
+        "invitation_for_you": "This invitation is for your account.",
+        "login_to_accept": "You were invited to join this group. Sign in or create an account to accept.",
+        "email_mismatch": "You are signed in with a different email than the one invited.",
+        "revoked": "This invitation was revoked.",
+        "invalid": "Invalid invitation token.",
+        "already_accepted": "Invitation already accepted.",
+        "already_declined": "Invitation already declined.",
+        "public": {
+            "heading": "You've been invited!",
+            "subheading": "Join the fun and exchange surprise gifts with a private group.",
+            "benefits": {
+                "gifting": "Smart draw keeps pairs secret & fair",
+                "surprise": "Wishlist hints without spoiling surprises",
+                "memory": "Build a seasonal tradition together"
+            },
+            "footer_note": "Secure, privacy‑first Secret Santa platform. No spam. Ever."
+        }
     }
 }

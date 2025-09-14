@@ -72,7 +72,10 @@
             "pick_a_date": "Pick a date",
             "choose_draw_date": "Choose a draw date",
             "expires_on": "Expires on"
-        }
+        },
+        "copy": "Copy",
+        "copied": "Copied!",
+        "loading": "Loading..."
     },
     "landing": {
         "headline": "Welcome to Secret Santa",

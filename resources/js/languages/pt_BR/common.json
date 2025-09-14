@@ -72,7 +72,10 @@
             "pick_a_date": "Escolha uma data",
             "choose_draw_date": "Escolha a data do sorteio",
             "expires_on": "Expira em"
-        }
+        },
+        "copy": "Copiar",
+        "copied": "Copiado!",
+        "loading": "Carregando..."
     },
     "landing": {
         "headline": "Bem-vindo ao Amigo Secreto",

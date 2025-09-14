@@ -14,21 +14,36 @@ const { t } = useI18n();
 <template>
     <Head title="Welcome" />
 
-    <div
-        class="relative flex min-h-screen flex-col items-center justify-between overflow-hidden bg-gradient-to-b from-red-700 via-red-600 to-red-500 text-white"
-    >
+    <div class="relative flex min-h-screen flex-col overflow-hidden bg-gradient-to-br from-emerald-900 via-red-900 to-amber-800 text-white">
+        <!-- Decorative Background Layers -->
+        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_60%)]"></div>
+        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(255,255,255,0.07),transparent_65%)]"></div>
+        <div class="pointer-events-none absolute -top-40 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-white/10 blur-3xl"></div>
+
         <!-- Navbar -->
-        <header class="relative z-10 flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:gap-6 sm:px-6 sm:py-5">
-            <h1 class="flex shrink-0 items-center gap-2" aria-label="Secret Santa">
-                <Gift class="h-7 w-7 text-white sm:h-8 sm:w-8" />
-                <span class="hidden text-2xl font-bold tracking-wide sm:inline">{{ t('landing.brand') }}</span>
-            </h1>
-            <div class="flex min-w-0 flex-1 items-center justify-end gap-3 sm:gap-5">
-                <nav class="flex items-center gap-3 text-xs font-medium sm:gap-6 sm:text-sm">
-                    <Link v-if="page.props.auth?.user" :href="route('dashboard')" class="whitespace-nowrap hover:underline">Dashboard</Link>
+        <header class="relative z-20 flex w-full max-w-7xl items-center justify-between gap-3 px-5 py-4 sm:px-8">
+            <div class="flex items-center gap-3">
+                <div
+                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-400 to-red-500 shadow-md ring-2 ring-white/20"
+                >
+                    <Gift class="h-6 w-6 text-white" />
+                </div>
+                <h1
+                    class="bg-gradient-to-r from-amber-200 via-white to-emerald-100 bg-clip-text text-xl font-bold tracking-wide text-transparent drop-shadow sm:text-2xl"
+                >
+                    {{ t('landing.brand') }}
+                </h1>
+            </div>
+            <div class="flex items-center gap-5">
+                <nav class="hidden items-center gap-6 text-sm font-medium md:flex">
+                    <Link v-if="page.props.auth?.user" :href="route('dashboard')" class="whitespace-nowrap transition-colors hover:text-amber-200"
+                        >Dashboard</Link
+                    >
                     <template v-else>
-                        <Link :href="route('login')" class="whitespace-nowrap hover:underline">{{ t('landing.login') }}</Link>
-                        <Link :href="route('register')" class="whitespace-nowrap hover:underline">{{ t('landing.register') }}</Link>
+                        <Link :href="route('login')" class="whitespace-nowrap transition-colors hover:text-amber-200">{{ t('landing.login') }}</Link>
+                        <Link :href="route('register')" class="whitespace-nowrap transition-colors hover:text-amber-200">{{
+                            t('landing.register')
+                        }}</Link>
                     </template>
                 </nav>
                 <ThemeToggle />
@@ -36,42 +51,67 @@ const { t } = useI18n();
         </header>
 
         <!-- Hero Section -->
-        <section
-            class="relative z-10 grid w-full max-w-6xl items-center gap-8 px-5 py-8 sm:gap-10 sm:px-6 sm:py-10 lg:grid-cols-[1fr_1.2fr] lg:gap-12 lg:py-12"
-        >
-            <!-- Mascot with contrast background -->
-            <div class="flex justify-center lg:justify-start">
-                <div class="relative inline-block rounded-[36%] bg-[#fff8f3] p-3 drop-shadow-[0_12px_16px_rgba(0,0,0,0.25)] sm:p-4">
-                    <img
-                        :src="mascotUrl"
-                        alt="Santa Claus mascot"
-                        class="max-h-[40vh] w-full max-w-[260px] object-contain transition-transform duration-300 ease-in-out hover:scale-[1.01] sm:max-h-none sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl"
-                    />
+        <section class="relative z-10 w-full flex-1">
+            <div class="mx-auto grid h-full w-full max-w-7xl items-center gap-12 px-6 pb-24 pt-12 md:grid-cols-2 md:gap-16 lg:pt-20 xl:gap-24">
+                <!-- Text -->
+                <div class="max-w-xl space-y-6">
+                    <h2 class="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
+                        <span class="bg-gradient-to-r from-amber-200 via-white to-emerald-100 bg-clip-text text-transparent drop-shadow">{{
+                            t('landing.headline')
+                        }}</span>
+                    </h2>
+                    <p class="text-lg leading-relaxed text-amber-100/90">{{ t('landing.tagline') }}</p>
+                    <p class="text-sm leading-relaxed text-emerald-50/80">{{ t('landing.pitch') }}</p>
+                    <ul class="mt-4 space-y-2 text-sm text-emerald-50/85">
+                        <li class="flex gap-2">
+                            <span class="mt-1 h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_0_3px_rgba(253,230,138,0.25)]"></span
+                            ><span>{{ t('landing.benefit_secure', 'Secure & private by design') }}</span>
+                        </li>
+                        <li class="flex gap-2">
+                            <span class="mt-1 h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_0_3px_rgba(253,230,138,0.25)]"></span
+                            ><span>{{ t('landing.benefit_draw', 'Fair anonymous draw algorithm') }}</span>
+                        </li>
+                        <li class="flex gap-2">
+                            <span class="mt-1 h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_0_3px_rgba(253,230,138,0.25)]"></span
+                            ><span>{{ t('landing.benefit_wishlist', 'Smart wishlists & hints') }}</span>
+                        </li>
+                    </ul>
+                    <div class="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
+                        <Link
+                            :href="route('register')"
+                            class="group relative flex-1 overflow-hidden rounded-lg bg-gradient-to-r from-amber-300 via-amber-200 to-emerald-200 px-8 py-3 text-center text-base font-semibold text-emerald-900 shadow-lg transition hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-amber-300/70"
+                        >
+                            <span class="relative z-10">{{ t('landing.cta_create') }}</span>
+                            <span
+                                class="pointer-events-none absolute inset-0 opacity-0 transition group-hover:opacity-30"
+                                style="background: radial-gradient(circle at 30% 30%, #ffffff, transparent 60%)"
+                            ></span>
+                        </Link>
+                        <Link
+                            :href="route('login')"
+                            class="text-sm font-medium text-amber-100 underline decoration-amber-200/40 underline-offset-4 hover:text-white"
+                            >{{ t('landing.cta_have_account') }}</Link
+                        >
+                    </div>
                 </div>
-            </div>
-
-            <!-- Text -->
-            <div class="max-w-xl space-y-5 text-white">
-                <h2 class="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">{{ t('landing.headline') }}</h2>
-
-                <p class="text-xl leading-relaxed text-white/90">{{ t('landing.tagline') }}</p>
-
-                <p class="text-base leading-relaxed text-white/80">{{ t('landing.pitch') }}</p>
-
-                <div class="mt-4 flex flex-col items-start gap-3">
-                    <Link
-                        :href="route('register')"
-                        class="rounded-lg bg-[#ffeaea] px-8 py-3 text-lg font-semibold text-red-800 shadow-lg transition hover:bg-red-100"
-                    >
-                        {{ t('landing.cta_create') }}
-                    </Link>
-
-                    <Link :href="route('login')" class="text-sm text-white underline hover:text-red-200"> {{ t('landing.cta_have_account') }} </Link>
+                <!-- Mascot -->
+                <div class="relative mx-auto flex max-w-md items-center justify-center md:max-w-none">
+                    <div class="relative rounded-[40%] bg-white/10 p-3 shadow-2xl ring-1 ring-white/20 backdrop-blur-xl">
+                        <img
+                            :src="mascotUrl"
+                            alt="Santa Claus mascot"
+                            class="w-full max-w-sm rotate-[-2deg] drop-shadow-[0_12px_22px_rgba(0,0,0,0.35)] transition-transform duration-500 ease-out hover:rotate-0 hover:scale-[1.02]"
+                        />
+                        <div class="pointer-events-none absolute -left-6 -top-6 h-24 w-24 animate-pulse rounded-full bg-amber-300/20 blur-xl"></div>
+                        <div
+                            class="pointer-events-none absolute -bottom-6 -right-6 h-28 w-28 animate-pulse rounded-full bg-emerald-400/20 blur-2xl"
+                        ></div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <div class="absolute bottom-0 left-0 z-0 w-full overflow-hidden leading-[0]">
+        <div class="absolute bottom-0 left-0 z-0 w-full overflow-hidden leading-[0] mix-blend-screen">
             <svg
                 class="relative block h-48 w-full lg:h-64 xl:h-72"
                 xmlns="http://www.w3.org/2000/svg"
@@ -102,6 +142,8 @@ const { t } = useI18n();
         </div>
 
         <!-- Footer -->
-        <footer class="relative z-10 pb-6 text-sm text-black/70">Made with ❤️ for Christmas – Secret Santa © {{ new Date().getFullYear() }}</footer>
+        <footer class="relative z-20 pb-6 text-center text-[11px] text-emerald-50/60">
+            Made with ❤️ – Secret Santa © {{ new Date().getFullYear() }}
+        </footer>
     </div>
 </template>

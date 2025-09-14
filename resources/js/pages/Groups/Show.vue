@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import InviteLinkPanel from '@/components/groups/InviteLinkPanel.vue';
+import MetricsPanel from '@/components/groups/MetricsPanel.vue';
+import RecipientPanel from '@/components/groups/RecipientPanel.vue';
 import InfoTooltipLabel from '@/components/InfoTooltipLabel.vue';
 import {
     AlertDialog,
@@ -12,6 +15,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import Pagination from '@/components/ui/pagination/Pagination.vue';
+import { Recipient, GroupShowProps as ShowProps, WishlistItem } from '@/interfaces/group';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useDateFormat } from '@/lib/formatDate';
 import { Head, router } from '@inertiajs/vue3';
@@ -19,13 +23,7 @@ import { Check, Copy, Eye, EyeOff, LoaderCircle } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-interface Recipient {
-    id: number;
-    name: string;
-}
-interface ShowProps {
-    group: any; // simplified typing for brevity after adding meta
-}
+// Interfaces moved to '@/interfaces/group'
 
 const props = defineProps<ShowProps>();
 const { t } = useI18n();
@@ -43,11 +41,9 @@ const filteredParticipants = computed(() => {
     return list.filter((p: any) => p.name?.toLowerCase().includes(q));
 });
 
-function cap(v: string) {
-    return v ? v.charAt(0).toUpperCase() + v.slice(1) : v;
-}
+const cap = (v: string) => (v ? v.charAt(0).toUpperCase() + v.slice(1) : v);
 
-function statusBadgeClass(status: string) {
+const statusBadgeClass = (status: string) => {
     switch (status) {
         case 'accepted':
         case 'approved':
@@ -63,13 +59,15 @@ function statusBadgeClass(status: string) {
         default:
             return 'bg-secondary text-secondary-foreground';
     }
-}
+};
 
 // Invitation pagination/search state
 const inviteSearch = ref(group.value.invitations_meta?.search || '');
 const jrSearch = ref(group.value.join_requests_meta?.search || '');
 let inviteSearchTimeout: any = null;
 let jrSearchTimeout: any = null;
+
+// convite link logic moved into InviteLinkPanel component
 
 // Decide if we can do local filtering (only 1 page => we have full dataset client-side)
 const invitationsLocal = computed(() => (group.value.invitations_meta?.last_page || 1) === 1);
@@ -90,31 +88,31 @@ const filteredJoinRequests = computed(() => {
     );
 });
 
-function updateQuery(params: Record<string, any>) {
+const updateQuery = (params: Record<string, any>) => {
     router.get(route('groups.show', group.value.id), params, {
         only: ['group'],
         preserveState: true,
         preserveScroll: true,
         replace: true,
     });
-}
+};
 
-function onInvitePage(page: number) {
+const onInvitePage = (page: number) => {
     updateQuery({
         invite_page: page,
         invite_search: inviteSearch.value,
         jr_page: group.value.join_requests_meta?.current_page || 1,
         jr_search: jrSearch.value,
     });
-}
-function onJrPage(page: number) {
+};
+const onJrPage = (page: number) => {
     updateQuery({
         invite_page: group.value.invitations_meta?.current_page || 1,
         invite_search: inviteSearch.value,
         jr_page: page,
         jr_search: jrSearch.value,
     });
-}
+};
 
 // Debounced search for invitations
 watch(inviteSearch, () => {
@@ -133,15 +131,15 @@ watch(jrSearch, () => {
     }, 300);
 });
 
-function copyJoinCode() {
+const copyJoinCode = () => {
     if (!group.value.join_code) return;
     navigator.clipboard.writeText(group.value.join_code).then(() => {
         joinCodeCopied.value = true;
         setTimeout(() => (joinCodeCopied.value = false), 1600);
     });
-}
+};
 
-function approveJoin(id: number) {
+const approveJoin = (id: number) => {
     joinRequestActing.value = { id, action: 'approve' };
     router.post(
         route('groups.join_requests.approve', { group: group.value.id, joinRequest: id }),
@@ -151,8 +149,8 @@ function approveJoin(id: number) {
             onFinish: () => (joinRequestActing.value = { id: null, action: null }),
         },
     );
-}
-function denyJoin(id: number) {
+};
+const denyJoin = (id: number) => {
     joinRequestActing.value = { id, action: 'deny' };
     router.post(
         route('groups.join_requests.deny', { group: group.value.id, joinRequest: id }),
@@ -162,9 +160,9 @@ function denyJoin(id: number) {
             onFinish: () => (joinRequestActing.value = { id: null, action: null }),
         },
     );
-}
+};
 const recipient = ref<Recipient | null>(null);
-const recipientWishlist = ref<{ id: number; item: string; url?: string | null; note?: string | null }[]>([]);
+const recipientWishlist = ref<WishlistItem[]>([]);
 const loadingRecipient = ref(false);
 const drawing = ref(false);
 const actingOn = ref<number | null>(null);
@@ -184,22 +182,22 @@ const dialogMode = ref<'resend' | 'revoke' | null>(null);
 const dialogInvitationId = ref<number | null>(null);
 const dialogOpen = ref(false);
 
-function openDialog(mode: 'resend' | 'revoke', invId: number) {
+const openDialog = (mode: 'resend' | 'revoke', invId: number) => {
     dialogMode.value = mode;
     dialogInvitationId.value = invId;
     dialogOpen.value = true;
-}
+};
 
-function closeDialog() {
+const closeDialog = () => {
     dialogOpen.value = false;
     // small timeout to allow close animation before clearing
     setTimeout(() => {
         dialogMode.value = null;
         dialogInvitationId.value = null;
     }, 150);
-}
+};
 
-function performDialogAction() {
+const performDialogAction = () => {
     if (!dialogInvitationId.value || !dialogMode.value) return;
     actingOn.value = dialogInvitationId.value;
     const id = dialogInvitationId.value;
@@ -216,9 +214,9 @@ function performDialogAction() {
             },
         },
     );
-}
+};
 
-function fetchRecipient() {
+const fetchRecipient = () => {
     if (!props.group.has_draw) return;
     loadingRecipient.value = true;
     fetch(`/groups/${props.group.id}/recipient`, { headers: { Accept: 'application/json' } })
@@ -228,9 +226,9 @@ function fetchRecipient() {
             recipientWishlist.value = data.data?.wishlist || [];
         })
         .finally(() => (loadingRecipient.value = false));
-}
+};
 
-function runDraw() {
+const runDraw = () => {
     drawing.value = true;
     router.post(
         route('groups.draw.run', props.group.id),
@@ -244,9 +242,9 @@ function runDraw() {
             },
         },
     );
-}
+};
 
-function regenerateJoinCode() {
+const regenerateJoinCode = () => {
     if (joinCodeRegenerating.value) return;
     joinCodeRegenerating.value = true;
     router.post(
@@ -257,19 +255,19 @@ function regenerateJoinCode() {
             onFinish: () => (joinCodeRegenerating.value = false),
         },
     );
-}
+};
 
-function openRemoveParticipant(p: any) {
+const openRemoveParticipant = (p: any) => {
     removeTarget.value = p;
     removeDialogOpen.value = true;
-}
+};
 
-function openTransferOwnership(p: any) {
+const openTransferOwnership = (p: any) => {
     ownershipTarget.value = p;
     ownershipDialogOpen.value = true;
-}
+};
 
-function confirmTransferOwnership() {
+const confirmTransferOwnership = () => {
     if (!ownershipTarget.value) return;
     transferringOwnership.value = true;
     router.post(
@@ -292,9 +290,9 @@ function confirmTransferOwnership() {
             },
         },
     );
-}
+};
 
-function confirmRemoveParticipant() {
+const confirmRemoveParticipant = () => {
     if (!removeTarget.value) return;
     removingParticipant.value = removeTarget.value.id;
     router.delete(route('groups.participants.remove', { group: group.value.id, user: removeTarget.value.id }), {
@@ -313,7 +311,7 @@ function confirmRemoveParticipant() {
             removeTarget.value = null;
         },
     });
-}
+};
 
 onMounted(fetchRecipient);
 </script>
@@ -363,56 +361,12 @@ onMounted(fetchRecipient);
                         t('groups.draw_complete') || 'Sorteio concluído'
                     }}</span>
                 </div>
-                <div v-if="group.has_draw" class="space-y-2">
-                    <p class="text-xs text-muted-foreground">{{ t('groups.your_recipient') || 'Seu amigo secreto:' }}</p>
-                    <div v-if="loadingRecipient" class="text-xs">{{ t('groups.loading') || 'Carregando...' }}</div>
-                    <div v-else-if="recipient" class="flex flex-col gap-2 rounded bg-accent px-3 py-2 text-sm font-medium">
-                        <span>{{ recipient.name }}</span>
-                        <div v-if="recipientWishlist.length" class="rounded border bg-background/70 p-2">
-                            <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                {{ t('groups.wishlist') || 'Wishlist' }}
-                            </p>
-                            <ul class="max-h-40 space-y-1 overflow-auto pr-1">
-                                <li v-for="w in recipientWishlist" :key="w.id" class="rounded bg-accent/40 px-2 py-1 text-sm leading-tight">
-                                    <span class="font-medium">{{ w.item }}</span>
-                                    <a v-if="w.url" :href="w.url" target="_blank" rel="noopener" class="ml-2 text-xs underline hover:text-primary"
-                                        >link</a
-                                    >
-                                    <div v-if="w.note" class="mt-0.5 text-xs italic opacity-80">{{ w.note }}</div>
-                                </li>
-                            </ul>
-                        </div>
-                        <div v-else class="text-xs text-muted-foreground">{{ t('groups.empty_wishlist') || 'Sem itens na wishlist.' }}</div>
-                    </div>
-                    <div v-else class="text-xs text-muted-foreground">
-                        {{ t('groups.recipient_not_found') || 'Não encontrado (verifique se você participa do grupo).' }}
-                    </div>
-                </div>
-                <div v-else class="text-xs text-muted-foreground">{{ t('groups.not_drawn_yet') || 'Ainda não sorteado.' }}</div>
+                <RecipientPanel :recipient="recipient" :wishlist="recipientWishlist" :loading="loadingRecipient" :has-draw="group.has_draw" />
             </div>
 
-            <!-- Owner overview metrics -->
-            <div v-if="group.is_owner && group.metrics" class="rounded border p-4 text-sm">
-                <h2 class="mb-3 text-base font-semibold">{{ t('groups.overview') || 'Visão Geral' }}</h2>
-                <div class="grid gap-3 sm:grid-cols-4">
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs font-medium">{{ t('groups.metrics_pending') }}</span
-                        ><span class="text-lg font-bold">{{ group.metrics.pending }}</span>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs font-medium">{{ t('groups.metrics_accepted') }}</span
-                        ><span class="text-lg font-bold text-green-600">{{ group.metrics.accepted }}</span>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs font-medium">{{ t('groups.metrics_declined') }}</span
-                        ><span class="text-lg font-bold text-destructive">{{ group.metrics.declined }}</span>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs font-medium">{{ t('groups.metrics_revoked') }}</span
-                        ><span class="text-lg font-bold text-destructive">{{ group.metrics.revoked }}</span>
-                    </div>
-                </div>
-            </div>
+            <InviteLinkPanel :group-id="group.id" :is-owner="group.is_owner" />
+
+            <MetricsPanel :metrics="group.metrics" :is-owner="group.is_owner" />
 
             <!-- Tabs navigation -->
             <div class="flex gap-2 overflow-x-auto border-b pb-2 text-sm">

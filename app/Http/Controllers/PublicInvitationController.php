@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\GroupInvitation;
 use App\Services\InvitationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,22 +18,59 @@ class PublicInvitationController extends Controller
     {
     }
 
-    /** Display invitation landing page. */
+    /**
+     * Display invitation landing page returning a normalized status instead of hard HTTP aborts.
+     * This allows frontend to render context-specific i18n messages.
+     */
     public function show(string $plainToken): Response
     {
         $invitation = $this->service->findByPlainToken($plainToken);
-        if (!$invitation) {
-            abort(404);
-        }
-        abort_if($invitation->isExpired(), 410);
+        $user = request()->user();
+        $component = $user ? 'Invites/Show' : 'Invites/Public';
 
-        return Inertia::render('Invites/Show', [
+        if (!$invitation) {
+            return Inertia::render($component, [
+                'invitation' => [
+                    'group' => null,
+                    'email' => null,
+                    'status' => 'invalid',
+                    'expired' => false,
+                    'revoked' => false,
+                    'token' => $plainToken,
+                    'can_accept' => false,
+                    'authenticated' => (bool) $user,
+                ]
+            ]);
+        }
+
+        $expired = $invitation->isExpired();
+        $revoked = (bool) $invitation->revoked_at;
+        $status = 'pending';
+        if ($invitation->accepted_at) {
+            $status = 'accepted';
+        } elseif ($invitation->declined_at) {
+            $status = 'declined';
+        } elseif ($revoked) {
+            $status = 'revoked';
+        } elseif ($expired) {
+            $status = 'expired';
+        }
+
+        $matchingEmail = $user && strcasecmp($user->email, $invitation->email) === 0;
+        $canAccept = $status === 'pending' && $matchingEmail && !$expired && !$revoked;
+
+        return Inertia::render($component, [
             'invitation' => [
                 'group' => $invitation->group->only(['id', 'name', 'description']),
-                'email' => $invitation->email,
-                'status' => $invitation->accepted_at ? 'accepted' : ($invitation->declined_at ? 'declined' : 'pending'),
-                'expired' => $invitation->isExpired(),
+                // Only expose the invite email if authenticated *and* email matches; otherwise hide for privacy
+                'email' => $matchingEmail ? $invitation->email : null,
+                'status' => $status,
+                'expired' => $expired,
+                'revoked' => $revoked,
                 'token' => $plainToken,
+                'can_accept' => $canAccept,
+                'authenticated' => (bool) $user,
+                'email_mismatch' => $user ? (!$matchingEmail) : false,
             ]
         ]);
     }

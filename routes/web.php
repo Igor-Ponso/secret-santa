@@ -86,16 +86,17 @@ Route::middleware(['auth'])
         Route::post('/{group}/transfer-ownership', [\App\Http\Controllers\GroupOwnershipController::class, 'store'])->name('transfer_ownership');
         Route::delete('/{group}/participants/{user}', [\App\Http\Controllers\GroupParticipantController::class, 'destroy'])->name('participants.remove');
         Route::delete('/{group}', [\App\Http\Controllers\GroupController::class, 'destroy'])->name('destroy');
-        // Limite: 5 convites por minuto por usuário
-        Route::post('/{group}/invitations', [\App\Http\Controllers\GroupInvitationController::class, 'store'])
-            ->middleware('throttle:5,1')
-            ->name('invitations.store');
-        Route::post('/{group}/invitations/{invitation}/revoke', [\App\Http\Controllers\GroupInvitationController::class, 'revoke'])
-            ->middleware('throttle:10,1')
-            ->name('invitations.revoke');
-        Route::post('/{group}/invitations/{invitation}/resend', [\App\Http\Controllers\GroupInvitationController::class, 'resend'])
-            ->middleware('throttle:10,1')
-            ->name('invitations.resend');
+        // Invitation management (rate limited via named limiter defined in AppServiceProvider)
+        Route::middleware('throttle:group-invitations')->group(function () {
+            Route::post('/{group}/invitations', [\App\Http\Controllers\GroupInvitationController::class, 'store'])
+                ->name('invitations.store');
+            Route::post('/{group}/invitations/{invitation}/revoke', [\App\Http\Controllers\GroupInvitationController::class, 'revoke'])
+                ->name('invitations.revoke');
+            Route::post('/{group}/invitations/{invitation}/resend', [\App\Http\Controllers\GroupInvitationController::class, 'resend'])
+                ->name('invitations.resend');
+            Route::get('/{group}/invitation-link', [\App\Http\Controllers\GroupInvitationController::class, 'link'])
+                ->name('invitations.link');
+        });
         // Draw (Secret Santa assignment)
         Route::post('/{group}/draw', [\App\Http\Controllers\DrawController::class, 'run'])->name('draw.run');
         Route::get('/{group}/recipient', [\App\Http\Controllers\DrawController::class, 'recipient'])->name('draw.recipient');
@@ -105,8 +106,11 @@ Route::middleware(['auth'])
         Route::post('/{group}/join-requests/{joinRequest}/deny', [\App\Http\Controllers\GroupJoinRequestController::class, 'deny'])->name('join_requests.deny');
     });
 
+// Public (unauthenticated) landing page for invitations by token
+Route::get('/invites/{token}', [\App\Http\Controllers\PublicInvitationController::class, 'show'])->name('invites.show');
+
+// Authenticated actions on an invitation by token (accept / decline require a matching account email)
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/invites/{token}', [\App\Http\Controllers\PublicInvitationController::class, 'show'])->name('invites.show');
     Route::post('/invites/{token}/accept', [\App\Http\Controllers\PublicInvitationController::class, 'accept'])->name('invites.accept');
     Route::post('/invites/{token}/decline', [\App\Http\Controllers\PublicInvitationController::class, 'decline'])->name('invites.decline');
     // Authenticated direct actions by id (no plain token exposure)

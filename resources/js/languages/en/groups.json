@@ -66,6 +66,9 @@
         "denied": "Denied",
         "post_draw_hint": "After the draw each participant only sees their recipient and wishlist.",
         "gift_range": "Gift range",
-        "draw_date": "Draw date"
+        "draw_date": "Draw date",
+        "invite_link": "Group invite link",
+        "invite_link_placeholder": "Loading invite link...",
+        "generate_invite_link": "Generate new link"
     }
 }
