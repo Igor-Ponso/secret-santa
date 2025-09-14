@@ -45,9 +45,8 @@ class GroupController extends Controller
                 'id',
                 'name',
                 'description',
-                'min_gift_cents',
-                'max_gift_cents',
-                'currency',
+                'min_value',
+                'max_value',
                 'draw_at',
                 'created_at'
             ])
@@ -59,9 +58,8 @@ class GroupController extends Controller
                     'id' => $g->id,
                     'name' => $g->name,
                     'description' => $g->description,
-                    'min_gift_cents' => $g->min_gift_cents,
-                    'max_gift_cents' => $g->max_gift_cents,
-                    'currency' => $g->currency,
+                    'min_value' => $g->min_value,
+                    'max_value' => $g->max_value,
                     'draw_at' => $g->draw_at,
                     'created_at' => $g->created_at,
                     'wishlist_count' => (int) $g->wishlist_count,
@@ -82,9 +80,8 @@ class GroupController extends Controller
                 'id',
                 'name',
                 'description',
-                'min_gift_cents',
-                'max_gift_cents',
-                'currency',
+                'min_value',
+                'max_value',
                 'draw_at',
                 'created_at'
             ])
@@ -97,9 +94,8 @@ class GroupController extends Controller
                     'id' => $g->id,
                     'name' => $g->name,
                     'description' => $g->description,
-                    'min_gift_cents' => $g->min_gift_cents,
-                    'max_gift_cents' => $g->max_gift_cents,
-                    'currency' => $g->currency,
+                    'min_value' => $g->min_value,
+                    'max_value' => $g->max_value,
                     'draw_at' => $g->draw_at,
                     'created_at' => $g->created_at,
                     'wishlist_count' => (int) $wishlistCount,
@@ -132,7 +128,7 @@ class GroupController extends Controller
     {
         $this->authorize('update', $group);
         return Inertia::render('Groups/Edit', [
-            'group' => $group->only(['id', 'name', 'description', 'min_gift_cents', 'max_gift_cents', 'draw_at'])
+            'group' => $group->only(['id', 'name', 'description', 'min_value', 'max_value', 'draw_at'])
         ]);
     }
 
@@ -310,14 +306,6 @@ class GroupController extends Controller
                 'join_requests_meta' => $joinRequestsMeta,
                 'pending_join_requests_count' => $isOwner ? $group->joinRequests()->where('status', 'pending')->count() : 0,
                 'metrics' => $metrics,
-                'min_gift_cents' => $group->min_gift_cents,
-                'max_gift_cents' => $group->max_gift_cents,
-                'currency' => $group->currency,
-                'exclusions' => $isOwner ? $group->exclusions()->with(['user:id,name', 'excludedUser:id,name'])->get()->map(fn($e) => [
-                    'id' => $e->id,
-                    'user' => ['id' => $e->user_id, 'name' => $e->user?->name],
-                    'excluded_user' => ['id' => $e->excluded_user_id, 'name' => $e->excludedUser?->name],
-                ]) : [],
                 'activities' => \App\Models\Activity::where('group_id', $group->id)
                     ->latest('id')
                     ->limit(10)

@@ -7,18 +7,14 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        if (!Schema::hasColumn('groups', 'join_code')) {
-            Schema::table('groups', function (Blueprint $table) {
-                $table->string('join_code', 12)->nullable()->unique()->after('draw_at');
-            });
-        }
+        Schema::table('groups', function (Blueprint $table) {
+            $table->string('join_code', 12)->nullable()->unique()->after('draw_at');
+        });
     }
     public function down(): void
     {
-        if (Schema::hasColumn('groups', 'join_code')) {
-            Schema::table('groups', function (Blueprint $table) {
-                $table->dropColumn('join_code');
-            });
-        }
+        Schema::table('groups', function (Blueprint $table) {
+            $table->dropColumn('join_code');
+        });
     }
 };

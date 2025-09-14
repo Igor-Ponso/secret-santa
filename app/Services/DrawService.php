@@ -19,64 +19,59 @@ class DrawService
      *  - Perfect cycle permutation.
      *  - Existing assignments are replaced atomically.
      */
-    public function run(Group $group): array
+    public function run(Group $group): void
     {
-        return DB::transaction(function () use ($group) {
-            $participants = $group->participants()->get();
+        DB::transaction(function () use ($group) {
+            // Collect participants: owner + accepted invitations with invited_user_id
+            $participants = collect();
+            $owner = $group->owner()->first(['id']);
+            if (!$owner)
+                throw new RuntimeException('Group owner not found');
+            $participants->push($owner->id);
+
+            $accepted = GroupInvitation::where('group_id', $group->id)
+                ->whereNotNull('accepted_at')
+                ->whereNotNull('invited_user_id')
+                ->pluck('invited_user_id');
+            $participants = $participants->merge($accepted)->unique()->values();
+
             if ($participants->count() < 2) {
-                return ['success' => false, 'message' => 'Not enough participants'];
+                throw new RuntimeException('Not enough participants for draw');
             }
 
-            // Build exclusion map: giver_id => set of forbidden receiver_ids
-            $exclusions = $group->exclusions()->get()->groupBy('user_id')->map(function ($rows) {
-                return collect($rows)->pluck('excluded_user_id')->all();
-            });
-
-            $ids = $participants->pluck('id')->all();
-            $maxAttempts = 80; // higher because constraints may reduce solution space
-            $attempt = 0;
-            $assignments = [];
-
-            while ($attempt < $maxAttempts) {
-                $receivers = $ids;
-                shuffle($receivers);
+            // Shuffle until no one matches themselves (derangement). Simple retry strategy.
+            $giverIds = $participants->shuffle()->values();
+            $receiverIds = $giverIds->shuffle()->values();
+            $attempts = 0;
+            $maxAttempts = 50;
+            while ($attempts < $maxAttempts) {
                 $valid = true;
-                $assignments = [];
-                foreach ($ids as $idx => $giver) {
-                    $receiver = $receivers[$idx];
-                    if ($giver === $receiver) { // self match
+                for ($i = 0; $i < $giverIds->count(); $i++) {
+                    if ($giverIds[$i] === $receiverIds[$i]) {
                         $valid = false;
                         break;
                     }
-                    if (in_array($receiver, $exclusions->get($giver, []), true)) { // exclusion rule
-                        $valid = false;
-                        break;
-                    }
-                    $assignments[$giver] = $receiver;
                 }
                 if ($valid)
                     break;
-                $attempt++;
+                $receiverIds = $giverIds->shuffle()->values();
+                $attempts++;
+            }
+            if (!$valid) {
+                throw new RuntimeException('Unable to produce valid draw, try again');
             }
 
-            if (!$assignments || count($assignments) !== count($ids)) {
-                return ['success' => false, 'message' => 'Could not generate draw (constraints impossible?)'];
-            }
-
-            // Clear existing assignments before persisting
+            // Clear old assignments
             Assignment::where('group_id', $group->id)->delete();
-            foreach ($assignments as $giver => $receiver) {
+
+            // Persist assignments
+            for ($i = 0; $i < $giverIds->count(); $i++) {
                 Assignment::create([
                     'group_id' => $group->id,
-                    'giver_user_id' => $giver,
-                    'receiver_user_id' => $receiver,
+                    'giver_user_id' => $giverIds[$i],
+                    'receiver_user_id' => $receiverIds[$i],
                 ]);
             }
-
-            $group->has_draw = true;
-            $group->save();
-
-            return ['success' => true];
         });
     }
 

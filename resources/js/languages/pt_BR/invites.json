@@ -26,9 +26,7 @@
                 "surprise": "Lista de desejos com dicas sem estragar a surpresa",
                 "memory": "Crie uma tradição de fim de ano juntos"
             },
-            "footer_note": "Plataforma de Amigo Secreto segura e focada em privacidade. Sem spam. Nunca.",
-            "invited_sentence": "{user} te convidou para o grupo {group}",
-            "invited_you_to_group": "te convidou para o grupo"
+            "footer_note": "Plataforma de Amigo Secreto segura e focada em privacidade. Sem spam. Nunca."
         }
     }
 }

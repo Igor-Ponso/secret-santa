@@ -11,7 +11,6 @@ use Illuminate\Support\Carbon;
 Route::middleware(['auth', 'verified'])->prefix('groups/{group}/wishlist')->name('groups.wishlist.')->group(function () {
     Route::get('/', [WishlistController::class, 'index'])->name('index');
     Route::post('/', [WishlistController::class, 'store'])->name('store');
-    Route::post('/batch', [WishlistController::class, 'batchStore'])->name('store.batch');
     Route::put('/{wishlist}', [WishlistController::class, 'update'])->name('update');
     Route::delete('/{wishlist}', [WishlistController::class, 'destroy'])->name('destroy');
 });
@@ -87,10 +86,6 @@ Route::middleware(['auth'])
         Route::post('/{group}/transfer-ownership', [\App\Http\Controllers\GroupOwnershipController::class, 'store'])->name('transfer_ownership');
         Route::delete('/{group}/participants/{user}', [\App\Http\Controllers\GroupParticipantController::class, 'destroy'])->name('participants.remove');
         Route::delete('/{group}', [\App\Http\Controllers\GroupController::class, 'destroy'])->name('destroy');
-        // Onboarding (wishlist initial setup)
-        Route::get('/{group}/onboarding', [\App\Http\Controllers\OnboardingController::class, 'show'])->name('onboarding.show');
-        Route::post('/{group}/onboarding', [\App\Http\Controllers\OnboardingController::class, 'store'])->name('onboarding.store');
-        Route::post('/{group}/onboarding/skip', [\App\Http\Controllers\OnboardingController::class, 'skip'])->name('onboarding.skip');
         // Invitation management (rate limited via named limiter defined in AppServiceProvider)
         Route::middleware('throttle:group-invitations')->group(function () {
             Route::post('/{group}/invitations', [\App\Http\Controllers\GroupInvitationController::class, 'store'])
@@ -105,9 +100,6 @@ Route::middleware(['auth'])
         // Draw (Secret Santa assignment)
         Route::post('/{group}/draw', [\App\Http\Controllers\DrawController::class, 'run'])->name('draw.run');
         Route::get('/{group}/recipient', [\App\Http\Controllers\DrawController::class, 'recipient'])->name('draw.recipient');
-        // Exclusions
-        Route::post('/{group}/exclusions', [\App\Http\Controllers\GroupExclusionController::class, 'store'])->name('exclusions.store');
-        Route::delete('/{group}/exclusions/{exclusion}', [\App\Http\Controllers\GroupExclusionController::class, 'destroy'])->name('exclusions.destroy');
         // Join requests
         Route::post('/{group}/join-requests', [\App\Http\Controllers\GroupJoinRequestController::class, 'store'])->name('join_requests.store');
         Route::post('/{group}/join-requests/{joinRequest}/approve', [\App\Http\Controllers\GroupJoinRequestController::class, 'approve'])->name('join_requests.approve');

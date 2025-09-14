@@ -2,9 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 // Import hero illustration via Vite alias so the asset path is resolved correctly in all environments.
-import Bullet from '@/components/Bullet.vue';
-import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
-import inviteHero from '@assets/illustrations/invite-hero.png';
+import inviteHero from '@assets/illustrations/invite-hero.svg';
 
 interface InvitationPageProps {
     invitation: {
@@ -27,40 +25,36 @@ const benefits = ['invites.public.benefits.gifting', 'invites.public.benefits.su
 <template>
     <Head :title="t('invites.title')" />
     <div class="relative min-h-screen overflow-hidden bg-gradient-to-br from-red-800 via-red-600 to-red-500 text-white">
-        <div class="absolute right-4 top-4 z-30"><LanguageSwitcher /></div>
         <div class="relative mx-auto flex w-full max-w-6xl flex-col items-center gap-10 px-6 py-12 md:flex-row md:items-stretch md:gap-16 lg:py-14">
             <!-- Illustration -->
-            <div class="hidden w-full items-center justify-center md:flex md:w-1/2">
-                <!-- Illustration without glass / blur effect -->
-                <div class="relative">
-                    <img
-                        :src="inviteHero"
-                        alt="Presente Convite"
-                        class="h-auto w-[460px] max-w-full drop-shadow-[0_10px_28px_rgba(0,0,0,0.50)] md:w-[500px] lg:w-[540px]"
-                    />
+            <div class="flex w-full items-center justify-center md:w-1/2">
+                <div class="relative rounded-3xl bg-white/10 p-6 shadow-2xl shadow-black/30 ring-1 ring-white/25 backdrop-blur-xl">
+                    <img :src="inviteHero" alt="Presente Convite" class="h-auto w-[400px] max-w-full drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]" />
+                    <div class="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-white/30"></div>
                 </div>
             </div>
 
             <!-- Content Card -->
-            <div class="w-full max-w-lg md:w-1/2">
-                <div
-                    class="relative rounded-3xl border border-white/15 bg-white/5 p-8 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.45)] ring-1 ring-white/25 backdrop-blur-xl before:pointer-events-none before:absolute before:inset-0 before:rounded-3xl before:bg-gradient-to-br before:from-white/20 before:via-white/5 before:to-transparent before:opacity-95 before:mix-blend-overlay md:p-12"
-                >
-                    <div class="space-y-5 text-center md:text-left">
-                        <h1 class="text-4xl font-extrabold leading-tight tracking-tight text-white md:text-3xl lg:text-4xl">
+            <div class="w-full max-w-md md:w-1/2">
+                <div class="bg-white/10/50 rounded-3xl border border-white/15 p-8 shadow-2xl ring-1 ring-white/20 backdrop-blur-2xl md:p-10">
+                    <div class="space-y-4 text-center md:text-left">
+                        <div
+                            class="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/20 px-4 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/90 shadow-sm backdrop-blur md:text-xs"
+                        >
+                            <span class="inline-block h-2 w-2 rounded-full bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.35)]"></span>
+                            <span v-if="props.invitation.group" class="block text-base font-semibold tracking-wide text-red-200/90">
+                                {{ props.invitation.group.name }}
+                            </span>
+                        </div>
+                        <h1 class="text-4xl font-extrabold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl">
                             {{ t('invites.public.heading') }}
                         </h1>
-                        <div v-if="props.invitation.inviter && props.invitation.group" class="flex justify-center md:justify-start">
+                        <div v-if="props.invitation.inviter" class="flex justify-center md:justify-start">
                             <div
-                                class="inline-flex flex-wrap items-center gap-1.5 rounded-full px-4 py-2 font-bold tracking-wide text-white/90 md:gap-2 md:px-5"
+                                class="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-medium text-white/90 ring-1 ring-white/25 md:text-sm"
                             >
-                                <span class="inline-block rounded bg-green-600 px-2 py-0.5 font-semibold text-white shadow-sm backdrop-blur-sm">
-                                    {{ props.invitation.inviter.name }}
-                                </span>
-                                <span class="opacity-80">{{ t('invites.public.invited_you_to_group', 'te convidou para o grupo') }}</span>
-                                <span class="inline-block rounded bg-green-600 px-2 py-0.5 font-bold text-red-50 shadow-sm ring-1 ring-red-300/30">
-                                    {{ props.invitation.group.name }}
-                                </span>
+                                <span class="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_0_3px_rgba(52,211,153,0.25)]"></span>
+                                <span>{{ t('invites.public.invited_by', 'Convite enviado por') }} {{ props.invitation.inviter.name }}</span>
                             </div>
                         </div>
                         <div class="mx-auto h-1 w-24 rounded bg-red-400/80 md:mx-0"></div>
@@ -90,7 +84,7 @@ const benefits = ['invites.public.benefits.gifting', 'invites.public.benefits.su
                                         :key="b"
                                         class="flex items-start gap-3 text-base leading-snug text-white/95 md:text-[17px]"
                                     >
-                                        <Bullet class="mt-3" color="green-400" :size="8" :pulse="true" />
+                                        <span class="mt-2 h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_0_3px_rgba(16,185,129,0.25)]"></span>
                                         <span>{{ t(b) }}</span>
                                     </li>
                                 </ul>
@@ -115,7 +109,7 @@ const benefits = ['invites.public.benefits.gifting', 'invites.public.benefits.su
                         </div>
                     </div>
                 </div>
-                <p class="mt-10 text-center font-medium text-white/75 md:text-left">{{ t('footer.credit', { year: new Date().getFullYear() }) }}</p>
+                <p class="mt-10 text-center font-medium text-white/75 md:text-left">Criado com ❤️ – Secret Santa © {{ new Date().getFullYear() }}</p>
             </div>
         </div>
     </div>

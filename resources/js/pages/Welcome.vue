@@ -1,7 +1,5 @@
 <script setup lang="ts">
 // Image assets live in resources/assets, not under resources/js, so use the new @assets alias.
-import Bullet from '@/components/Bullet.vue';
-import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import mascotUrl from '@assets/illustrations/mascot-hero.png';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Gift } from 'lucide-vue-next';
@@ -16,8 +14,10 @@ const { t } = useI18n();
     <Head title="Welcome" />
 
     <div class="relative flex min-h-screen flex-col overflow-hidden bg-gradient-to-br from-red-800 via-red-600 to-red-500 text-white">
+        <!-- Decorative Background Layers -->
+
         <!-- Navbar -->
-        <header class="relative z-20 flex w-full items-center justify-between gap-3 px-5 py-4 sm:px-8">
+        <header class="relative z-20 flex w-full max-w-7xl items-center justify-between gap-3 px-5 py-4 sm:px-8">
             <div class="flex items-center gap-3">
                 <div
                     class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-red-400 to-red-600 shadow-md ring-2 ring-white/15"
@@ -30,28 +30,16 @@ const { t } = useI18n();
             </div>
             <div class="flex items-center gap-5">
                 <nav class="hidden items-center gap-6 text-sm font-medium md:flex">
-                    <Link
-                        v-if="page.props.auth?.user"
-                        :href="route('dashboard')"
-                        class="whitespace-nowrap rounded-full border border-white/30 bg-white/10 px-5 py-2 text-white/85 backdrop-blur transition hover:border-white/50 hover:bg-white/20 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40"
+                    <Link v-if="page.props.auth?.user" :href="route('dashboard')" class="whitespace-nowrap transition-colors hover:text-amber-200"
                         >Dashboard</Link
                     >
                     <template v-else>
-                        <Link
-                            :href="route('login')"
-                            class="whitespace-nowrap rounded-full border border-white/30 bg-white/10 px-5 py-2 text-white/85 backdrop-blur transition hover:border-white/50 hover:bg-white/20 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40"
-                        >
-                            {{ t('landing.login') }}
-                        </Link>
-                        <Link
-                            :href="route('register')"
-                            class="whitespace-nowrap rounded-full bg-white px-5 py-2 font-semibold text-red-600 shadow shadow-black/20 ring-1 ring-white/40 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-700/60 focus:ring-offset-2 focus:ring-offset-red-700"
-                        >
-                            {{ t('landing.register') }}
-                        </Link>
+                        <Link :href="route('login')" class="whitespace-nowrap transition-colors hover:text-amber-200">{{ t('landing.login') }}</Link>
+                        <Link :href="route('register')" class="whitespace-nowrap transition-colors hover:text-amber-200">{{
+                            t('landing.register')
+                        }}</Link>
                     </template>
                 </nav>
-                <LanguageSwitcher />
             </div>
         </header>
 
@@ -68,31 +56,30 @@ const { t } = useI18n();
                     <p class="text-base leading-relaxed text-white/85 md:text-lg">{{ t('landing.pitch') }}</p>
                     <ul class="mt-5 space-y-3 text-base text-white/90 md:text-[17px]">
                         <li class="flex gap-2">
-                            <Bullet class="mt-1" color="green-400" :size="8" :pulse="true" />
-                            <span>{{ t('landing.benefit_secure', 'Secure & private by design') }}</span>
+                            <span class="mt-1 h-2 w-2 rounded-full bg-red-400 shadow-[0_0_0_3px_rgba(248,113,113,0.25)]"></span
+                            ><span>{{ t('landing.benefit_secure', 'Secure & private by design') }}</span>
                         </li>
                         <li class="flex gap-2">
-                            <Bullet class="mt-1" color="green-400" :size="8" :pulse="true" />
-                            <span>{{ t('landing.benefit_draw', 'Fair anonymous draw algorithm') }}</span>
+                            <span class="mt-1 h-2 w-2 rounded-full bg-red-400 shadow-[0_0_0_3px_rgba(248,113,113,0.25)]"></span
+                            ><span>{{ t('landing.benefit_draw', 'Fair anonymous draw algorithm') }}</span>
                         </li>
                         <li class="flex gap-2">
-                            <Bullet class="mt-1" color="green-400" :size="8" :pulse="true" />
-                            <span>{{ t('landing.benefit_wishlist', 'Smart wishlists & hints') }}</span>
+                            <span class="mt-1 h-2 w-2 rounded-full bg-red-400 shadow-[0_0_0_3px_rgba(248,113,113,0.25)]"></span
+                            ><span>{{ t('landing.benefit_wishlist', 'Smart wishlists & hints') }}</span>
                         </li>
                     </ul>
-                    <div class="mt-12 flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <div class="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
                         <Link
                             :href="route('register')"
-                            class="group flex-1 rounded-2xl bg-white/95 px-9 py-4 text-center text-base font-semibold text-red-600 shadow-lg shadow-black/25 ring-1 ring-white/40 backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-red-700/60 focus:ring-offset-2 focus:ring-offset-red-700 md:text-lg"
+                            class="flex-1 rounded-xl bg-white px-9 py-4 text-center text-base font-semibold text-red-600 shadow-lg shadow-black/20 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-700/60 focus:ring-offset-2 focus:ring-offset-red-700 md:text-lg"
                         >
-                            <span class="inline-flex items-center justify-center gap-2">{{ t('landing.cta_create') }} </span>
+                            {{ t('landing.cta_create') }}
                         </Link>
                         <Link
                             :href="route('login')"
-                            class="flex-1 rounded-2xl border border-white/50 bg-white/10 px-9 py-4 text-center text-base font-semibold text-white/90 underline shadow-inner backdrop-blur transition hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/60 focus:ring-offset-2 focus:ring-offset-red-700 md:text-lg"
+                            class="text-sm font-medium text-white/85 underline decoration-white/30 underline-offset-4 hover:text-white md:text-base"
+                            >{{ t('landing.cta_have_account') }}</Link
                         >
-                            {{ t('landing.cta_have_account') }}
-                        </Link>
                     </div>
                 </div>
                 <!-- Mascot -->
@@ -144,18 +131,7 @@ const { t } = useI18n();
 
         <!-- Footer -->
         <footer class="relative z-20 pb-8 text-center font-medium text-black/80">
-            {{ t('footer.credit', { year: new Date().getFullYear() }) }}
+            Criado com ❤️ – Secret Santa © {{ new Date().getFullYear() }}
         </footer>
     </div>
 </template>
-
-<style scoped>
-@keyframes pulseGradient {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
-</style>

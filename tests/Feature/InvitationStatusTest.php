@@ -111,7 +111,7 @@ class InvitationStatusTest extends TestCase
         $user = User::factory()->create(['email' => $invitation->email]);
         $this->actingAs($user);
         $this->post(route('invites.accept', $plain))
-            ->assertRedirect(route('groups.onboarding.show', $group->id));
+            ->assertRedirect(route('groups.index'));
         $invitation->refresh();
         $this->assertNotNull($invitation->accepted_at);
     }

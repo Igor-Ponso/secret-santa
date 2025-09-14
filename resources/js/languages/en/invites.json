@@ -26,9 +26,7 @@
                 "surprise": "Wishlist hints without spoiling surprises",
                 "memory": "Build a seasonal tradition together"
             },
-            "footer_note": "Secure, privacy‑first Secret Santa platform. No spam. Ever.",
-            "invited_sentence": "{user} invited you to the group {group}",
-            "invited_you_to_group": "invited you to the group"
+            "footer_note": "Secure, privacy‑first Secret Santa platform. No spam. Ever."
         }
     }
 }

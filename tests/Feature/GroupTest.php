@@ -2,12 +2,9 @@
 
 use App\Models\User;
 use App\Models\Group;
-use function Pest\Laravel\actingAs;
-use function Pest\Laravel\get;
-use function Pest\Laravel\post;
 
 it('requires auth to access groups index', function () {
-    get('/groups')->assertRedirect('/login');
+    $this->get('/groups')->assertRedirect('/login');
 });
 
 it('lists only the authenticated user groups', function () {
@@ -17,8 +14,8 @@ it('lists only the authenticated user groups', function () {
     $userGroups = Group::factory()->count(2)->create(['owner_id' => $user->id]);
     $otherGroups = Group::factory()->count(3)->create(['owner_id' => $other->id]);
 
-    actingAs($user);
-    $response = get('/groups')->assertOk();
+    $this->actingAs($user);
+    $response = $this->get('/groups')->assertOk();
 
     $content = $response->getContent();
     // Count occurrences of opening <li for groups
@@ -29,51 +26,29 @@ it('lists only the authenticated user groups', function () {
     }
 });
 
-it('creates group with valid data (gift range optional)', function () {
+it('creates group with valid data', function () {
     $user = User::factory()->create();
-    actingAs($user);
+    $this->actingAs($user);
 
     $payload = [
         'name' => 'Team Secret 2025',
         'description' => 'End of year exchange',
-        'min_gift_cents' => 2000, // R$20,00
-        'max_gift_cents' => 10000, // R$100,00
+        'min_value' => 20,
+        'max_value' => 100,
         'draw_at' => now()->addWeek()->toDateTimeString(),
     ];
 
-    post('/groups', $payload)->assertRedirect('/groups');
+    $this->post('/groups', $payload)->assertRedirect('/groups');
 
-    $group = Group::where('name', 'Team Secret 2025')->first();
-    expect($group)->not->toBeNull();
-    expect($group->min_gift_cents)->toBe(2000);
-    expect($group->max_gift_cents)->toBe(10000);
+    expect(Group::where('name', 'Team Secret 2025')->exists())->toBeTrue();
 });
 
-it('validates group data (name required and max >= min)', function () {
+it('validates group data', function () {
     $user = User::factory()->create();
-    actingAs($user);
+    $this->actingAs($user);
 
-    $payload = [
-        'name' => '',
-        'min_gift_cents' => 5000,
-        'max_gift_cents' => 4000, // invalid: max < min
-    ];
+    $payload = ['name' => '', 'max_value' => 10, 'min_value' => 20];
 
-    post('/groups', $payload)
-        ->assertSessionHasErrors(['name', 'max_gift_cents']);
-});
-
-it('allows creating group without gift range', function () {
-    $user = User::factory()->create();
-    actingAs($user);
-
-    $payload = [
-        'name' => 'No Range Group',
-        'draw_at' => now()->addDays(3)->toDateTimeString(),
-    ];
-
-    post('/groups', $payload)->assertRedirect('/groups');
-    $group = Group::where('name', 'No Range Group')->first();
-    expect($group->min_gift_cents)->toBeNull();
-    expect($group->max_gift_cents)->toBeNull();
+    $this->post('/groups', $payload)
+        ->assertSessionHasErrors(['name', 'max_value']);
 });
