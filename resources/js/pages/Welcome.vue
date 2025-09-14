@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Image assets live in resources/assets, not under resources/js, so use the new @assets alias.
-import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import Bullet from '@/components/Bullet.vue';
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import mascotUrl from '@assets/illustrations/mascot-hero.png';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Gift } from 'lucide-vue-next';
@@ -68,15 +68,15 @@ const { t } = useI18n();
                     <p class="text-base leading-relaxed text-white/85 md:text-lg">{{ t('landing.pitch') }}</p>
                     <ul class="mt-5 space-y-3 text-base text-white/90 md:text-[17px]">
                         <li class="flex gap-2">
-                            <Bullet class="mt-1" color="red-400" :size="8" :pulse="true" />
+                            <Bullet class="mt-1" color="green-400" :size="8" :pulse="true" />
                             <span>{{ t('landing.benefit_secure', 'Secure & private by design') }}</span>
                         </li>
                         <li class="flex gap-2">
-                            <Bullet class="mt-1" color="red-400" :size="8" :pulse="true" />
+                            <Bullet class="mt-1" color="green-400" :size="8" :pulse="true" />
                             <span>{{ t('landing.benefit_draw', 'Fair anonymous draw algorithm') }}</span>
                         </li>
                         <li class="flex gap-2">
-                            <Bullet class="mt-1" color="red-400" :size="8" :pulse="true" />
+                            <Bullet class="mt-1" color="green-400" :size="8" :pulse="true" />
                             <span>{{ t('landing.benefit_wishlist', 'Smart wishlists & hints') }}</span>
                         </li>
                     </ul>

@@ -2,8 +2,8 @@
 import { Head } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 // Import hero illustration via Vite alias so the asset path is resolved correctly in all environments.
-import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import Bullet from '@/components/Bullet.vue';
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import inviteHero from '@assets/illustrations/invite-hero.png';
 
 interface InvitationPageProps {
@@ -90,7 +90,7 @@ const benefits = ['invites.public.benefits.gifting', 'invites.public.benefits.su
                                         :key="b"
                                         class="flex items-start gap-3 text-base leading-snug text-white/95 md:text-[17px]"
                                     >
-                                        <Bullet class="mt-2" color="emerald-400" :size="10" :pulse="true" />
+                                        <Bullet class="mt-3" color="green-400" :size="8" :pulse="true" />
                                         <span>{{ t(b) }}</span>
                                     </li>
                                 </ul>
