@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import GroupHeaderEditable from '@/components/groups/GroupHeaderEditable.vue';
 import InviteLinkPanel from '@/components/groups/InviteLinkPanel.vue';
 import MetricsPanel from '@/components/groups/MetricsPanel.vue';
 import RecipientPanel from '@/components/groups/RecipientPanel.vue';
@@ -57,30 +58,22 @@ const statusBadgeClass = (status: string) => {
         case 'expired':
             return 'bg-muted text-muted-foreground';
         default:
-            return 'bg-secondary text-secondary-foreground';
+            return 'bg-muted text-muted-foreground';
     }
 };
 
-// Invitation pagination/search state
-const inviteSearch = ref(group.value.invitations_meta?.search || '');
-const jrSearch = ref(group.value.join_requests_meta?.search || '');
+const jrSearch = ref('');
+const inviteSearch = ref('');
 let inviteSearchTimeout: any = null;
 let jrSearchTimeout: any = null;
-
-// convite link logic moved into InviteLinkPanel component
-
-// Decide if we can do local filtering (only 1 page => we have full dataset client-side)
-const invitationsLocal = computed(() => (group.value.invitations_meta?.last_page || 1) === 1);
-const joinRequestsLocal = computed(() => (group.value.join_requests_meta?.last_page || 1) === 1);
-
+const invitationsLocal = ref(false); // placeholder for future local filtering toggle
+const joinRequestsLocal = ref(false); // placeholder
 const filteredInvitations = computed(() => {
-    if (!invitationsLocal.value) return group.value.invitations || [];
     if (!inviteSearch.value.trim()) return group.value.invitations || [];
     const q = inviteSearch.value.toLowerCase();
-    return (group.value.invitations || []).filter((inv: any) => inv.email?.toLowerCase().includes(q));
+    return (group.value.invitations || []).filter((inv: any) => (inv.email || '').toLowerCase().includes(q));
 });
 const filteredJoinRequests = computed(() => {
-    if (!joinRequestsLocal.value) return group.value.join_requests || [];
     if (!jrSearch.value.trim()) return group.value.join_requests || [];
     const q = jrSearch.value.toLowerCase();
     return (group.value.join_requests || []).filter(
@@ -319,6 +312,38 @@ const confirmRemoveParticipant = () => {
     });
 };
 
+const exclusionForm = ref<{ user_id: number | null; excluded_user_id: number | null }>({ user_id: null, excluded_user_id: null });
+const exclusionSubmitting = ref(false);
+const exclusionError = ref('');
+
+function submitExclusion() {
+    exclusionError.value = '';
+    if (!exclusionForm.value.user_id || !exclusionForm.value.excluded_user_id) return;
+    if (exclusionForm.value.user_id === exclusionForm.value.excluded_user_id) {
+        exclusionError.value = t('groups.exclusion_same') || 'Participante não pode se excluir.';
+        return;
+    }
+    exclusionSubmitting.value = true;
+    router.post(
+        route('groups.exclusions.store', { group: group.value.id }),
+        { user_id: exclusionForm.value.user_id, excluded_user_id: exclusionForm.value.excluded_user_id },
+        {
+            only: ['group'],
+            preserveScroll: true,
+            onError: (errs: any) => {
+                exclusionError.value = errs?.user_id || errs?.excluded_user_id || t('groups.error_generic') || 'Erro.';
+            },
+            onSuccess: () => {
+                exclusionForm.value.user_id = null;
+                exclusionForm.value.excluded_user_id = null;
+            },
+            onFinish: () => {
+                exclusionSubmitting.value = false;
+            },
+        },
+    );
+}
+
 onMounted(fetchRecipient);
 </script>
 
@@ -331,19 +356,24 @@ onMounted(fetchRecipient);
         ]"
     >
         <div class="flex flex-col gap-6 p-4">
-            <div class="flex flex-col gap-2">
-                <div class="flex flex-wrap items-center gap-3">
-                    <h1 class="text-xl font-semibold">{{ group.name }}</h1>
-                    <button
-                        v-if="isParticipant"
-                        type="button"
-                        class="inline-flex items-center gap-1 rounded border px-3 py-1.5 text-xs font-medium hover:bg-accent"
-                        @click="router.visit(route('groups.wishlist.index', { group: group.id }))"
-                    >
-                        🎁 {{ t('groups.my_wishlist') }}
-                    </button>
-                </div>
-                <p v-if="group.description" class="max-w-prose text-sm text-muted-foreground">{{ group.description }}</p>
+            <GroupHeaderEditable
+                :group-id="group.id"
+                :name="group.name"
+                :description="group.description"
+                :min-gift-cents="group.min_gift_cents"
+                :max-gift-cents="group.max_gift_cents"
+                :currency="group.currency"
+                :is-owner="group.is_owner"
+            />
+            <div>
+                <button
+                    v-if="isParticipant"
+                    type="button"
+                    class="mt-2 inline-flex items-center gap-1 rounded border px-3 py-1.5 text-xs font-medium hover:bg-accent"
+                    @click="router.visit(route('groups.wishlist.index', { group: group.id }))"
+                >
+                    🎁 {{ t('groups.my_wishlist') }}
+                </button>
             </div>
 
             <div class="space-y-4 rounded border p-4">
@@ -386,6 +416,74 @@ onMounted(fetchRecipient);
             <InviteLinkPanel :group-id="group.id" :is-owner="group.is_owner" />
 
             <MetricsPanel :metrics="group.metrics" :is-owner="group.is_owner" />
+
+            <!-- Exclusions (initial simple list) -->
+            <div v-if="group.is_owner && group.exclusions" class="space-y-2 rounded border p-4">
+                <h2 class="flex items-center gap-2 text-sm font-semibold">
+                    {{ t('groups.exclusions') || 'Exclusões' }}
+                    <span class="text-[10px] font-normal text-muted-foreground">beta</span>
+                </h2>
+                <p v-if="!group.exclusions.length" class="text-xs text-muted-foreground">
+                    {{ t('groups.no_exclusions') || 'Nenhuma exclusão definida.' }}
+                </p>
+                <ul v-else class="space-y-1 text-xs">
+                    <li v-for="ex in group.exclusions" :key="ex.id" class="flex items-center justify-between rounded bg-accent/40 px-2 py-1">
+                        <span class="truncate">{{ ex.user.name }} → {{ ex.excluded_user.name }}</span>
+                        <form :action="route('groups.exclusions.destroy', { group: group.id, exclusion: ex.id })" method="post" class="ml-2">
+                            <input type="hidden" name="_method" value="DELETE" />
+                            <button
+                                class="rounded bg-destructive px-2 py-0.5 text-[10px] text-destructive-foreground hover:bg-destructive/90"
+                                type="submit"
+                            >
+                                {{ t('groups.remove') || 'Remover' }}
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+                <form
+                    v-if="group.participants && group.participants.length > 1"
+                    @submit.prevent="submitExclusion"
+                    class="mt-3 flex flex-col gap-2 rounded border-t pt-3 md:flex-row md:items-end"
+                >
+                    <div class="flex flex-1 flex-col gap-1">
+                        <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{{
+                            t('groups.exclusion_giver') || 'Quem não pode tirar'
+                        }}</label>
+                        <select v-model="exclusionForm.user_id" class="w-full rounded border bg-background px-2 py-1 text-sm">
+                            <option :value="null">-</option>
+                            <option
+                                v-for="p in group.participants"
+                                :key="p.id"
+                                :value="p.id"
+                                :disabled="p.id === group.owner_id && group.participants.length === 2"
+                            >
+                                {{ p.name }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="flex flex-1 flex-col gap-1">
+                        <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{{
+                            t('groups.exclusion_receiver') || 'Não pode receber'
+                        }}</label>
+                        <select v-model="exclusionForm.excluded_user_id" class="w-full rounded border bg-background px-2 py-1 text-sm">
+                            <option :value="null">-</option>
+                            <option v-for="p in group.participants" :key="p.id" :value="p.id" :disabled="p.id === exclusionForm.user_id">
+                                {{ p.name }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="flex items-end gap-2 md:pb-1">
+                        <button
+                            type="submit"
+                            :disabled="!exclusionForm.user_id || !exclusionForm.excluded_user_id || exclusionSubmitting"
+                            class="rounded bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow disabled:opacity-50"
+                        >
+                            {{ exclusionSubmitting ? t('groups.saving') || 'Salvando...' : t('groups.add_exclusion') || 'Adicionar' }}
+                        </button>
+                    </div>
+                </form>
+                <p v-if="exclusionError" class="text-xs text-destructive">{{ exclusionError }}</p>
+            </div>
 
             <!-- Tabs navigation -->
             <div class="flex gap-2 overflow-x-auto border-b pb-2 text-sm">

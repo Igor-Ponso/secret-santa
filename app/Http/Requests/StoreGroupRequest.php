@@ -24,8 +24,9 @@ class StoreGroupRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:120'],
             'description' => ['nullable', 'string', 'max:280'],
-            'min_value' => ['nullable', 'integer', 'min:0'],
-            'max_value' => ['nullable', 'integer', 'min:0', 'gte:min_value'],
+            'min_gift_cents' => ['nullable', 'integer', 'min:0', 'max:10000000'],
+            'max_gift_cents' => ['nullable', 'integer', 'min:0', 'max:10000000', 'gte:min_gift_cents'],
+            'currency' => ['nullable', 'string', 'size:3'],
             'draw_at' => ['required', 'date', 'after:now'],
         ];
     }

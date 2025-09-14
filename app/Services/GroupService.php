@@ -21,8 +21,8 @@ class GroupService
             'owner_id' => $owner->id,
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
-            'min_value' => $data['min_value'] ?? null,
-            'max_value' => $data['max_value'] ?? null,
+            'min_gift_cents' => $data['min_gift_cents'] ?? null,
+            'max_gift_cents' => $data['max_gift_cents'] ?? null,
             'draw_at' => $data['draw_at'] ?? null,
             'join_code' => $this->generateJoinCode(),
         ];
@@ -47,8 +47,8 @@ class GroupService
         $group->update([
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
-            'min_value' => $data['min_value'] ?? null,
-            'max_value' => $data['max_value'] ?? null,
+            'min_gift_cents' => $data['min_gift_cents'] ?? null,
+            'max_gift_cents' => $data['max_gift_cents'] ?? null,
             'draw_at' => $data['draw_at'] ?? null,
         ]);
 

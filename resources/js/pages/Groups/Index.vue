@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import GiftRangeBadge from '@/components/groups/GiftRangeBadge.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 // import type { BreadcrumbItem } from '@/types'; // breadcrumb now computed
 import { useDateFormat } from '@/lib/formatDate';
@@ -10,8 +11,8 @@ interface Group {
     id: number;
     name: string;
     description?: string | null;
-    min_value?: number | null;
-    max_value?: number | null;
+    min_gift_cents: number | null; // required nullable
+    max_gift_cents: number | null; // required nullable
     draw_at?: string | null;
     created_at: string;
     invitations?: Invitation[];
@@ -170,14 +171,19 @@ function submitInvite() {
                             </button>
                         </div>
                     </div>
-                    <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                        <span v-if="g.min_value !== null || g.max_value !== null"
-                            >{{ t('groups.gift_range') }}: {{ g.min_value ?? 0 }} - {{ g.max_value ?? '∞' }}</span
-                        >
+                    <div class="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                        <GiftRangeBadge
+                            v-if="g.min_gift_cents !== null || g.max_gift_cents !== null"
+                            :min-cents="g.min_gift_cents"
+                            :max-cents="g.max_gift_cents"
+                            currency="BRL"
+                            locale="pt-BR"
+                            dense
+                        />
                         <span v-if="g.draw_at">{{ t('groups.draw_date') }}: {{ formatDate(g.draw_at) }}</span>
                         <span
                             v-if="g.wishlist_count !== undefined"
-                            class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
+                            class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
                         >
                             🎁 {{ g.wishlist_count }}
                         </span>
@@ -229,7 +235,14 @@ function submitInvite() {
                         <h3 class="line-clamp-1 font-medium leading-tight">{{ g.name }}</h3>
                         <p v-if="g.description" class="mt-1 line-clamp-2 text-xs text-muted-foreground">{{ g.description }}</p>
                         <div class="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                            <span v-if="g.min_value !== null || g.max_value !== null">Gift: {{ g.min_value ?? 0 }} - {{ g.max_value ?? '∞' }}</span>
+                            <GiftRangeBadge
+                                v-if="g.min_gift_cents !== null || g.max_gift_cents !== null"
+                                :min-cents="g.min_gift_cents"
+                                :max-cents="g.max_gift_cents"
+                                currency="BRL"
+                                locale="pt-BR"
+                                dense
+                            />
                             <span v-if="g.draw_at">{{ t('groups.draw_date') }}: {{ formatDate(g.draw_at) }}</span>
                             <span
                                 v-if="g.wishlist_count !== undefined"

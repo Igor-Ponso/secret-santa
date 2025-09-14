@@ -3,17 +3,37 @@ import DateTimePicker from '@/components/DateTimePicker.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+// Form keeps values in cents for backend; we expose reais in the UI.
 const form = useForm({
     name: '',
     description: '',
-    min_value: null as number | null,
-    max_value: null as number | null,
+    min_gift_cents: null as number | null,
+    max_gift_cents: null as number | null,
     draw_at: null as string | null,
 });
 
+// UI fields (reais). Allows decimal; convert to cents on submit.
+const uiMin = ref<number | null>(null);
+const uiMax = ref<number | null>(null);
+
+function normalize(value: number | null): number | null {
+    if (value === null || Number.isNaN(value)) return null;
+    return Math.max(0, Math.round(value * 100)); // cents
+}
+
 function submit() {
+    // Simple client-side validation (max >= min when both provided)
+    if (uiMin.value !== null && uiMax.value !== null && uiMax.value < uiMin.value) {
+        // Inject pseudo errors (cleared on next submission attempt)
+        (form as any).errors.min_gift_cents = (form as any).errors.min_gift_cents || '';
+        (form as any).errors.max_gift_cents = 'Max ≥ Min';
+        return;
+    }
+    form.min_gift_cents = normalize(uiMin.value);
+    form.max_gift_cents = normalize(uiMax.value);
     form.post(route('groups.store'));
 }
 
@@ -60,36 +80,42 @@ const breadcrumbs: BreadcrumbItem[] = [
 
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div class="space-y-2">
-                        <label for="min_value" class="text-sm font-medium">{{ t('common.labels.min_value') }}</label>
+                        <label for="min_gift" class="text-sm font-medium">{{
+                            t('common.labels.min_gift_value') || t('common.labels.min_value') || 'Min'
+                        }}</label>
                         <div class="relative">
                             <input
-                                id="min_value"
-                                v-model.number="form.min_value"
+                                id="min_gift"
+                                v-model.number="uiMin"
                                 type="number"
                                 min="0"
+                                step="0.01"
                                 placeholder="Ex: 20"
                                 class="w-full rounded-md border bg-background px-3 py-2 pr-10 text-sm outline-none focus:ring-2 focus:ring-ring"
-                                :class="{ 'border-destructive': form.errors.min_value }"
+                                :class="{ 'border-destructive': form.errors.min_gift_cents }"
                             />
                             <span class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs text-muted-foreground">R$</span>
                         </div>
-                        <p v-if="form.errors.min_value" class="text-xs text-destructive">{{ form.errors.min_value }}</p>
+                        <p v-if="form.errors.min_gift_cents" class="text-xs text-destructive">{{ form.errors.min_gift_cents }}</p>
                     </div>
                     <div class="space-y-2">
-                        <label for="max_value" class="text-sm font-medium">{{ t('common.labels.max_value') }}</label>
+                        <label for="max_gift" class="text-sm font-medium">{{
+                            t('common.labels.max_gift_value') || t('common.labels.max_value') || 'Max'
+                        }}</label>
                         <div class="relative">
                             <input
-                                id="max_value"
-                                v-model.number="form.max_value"
+                                id="max_gift"
+                                v-model.number="uiMax"
                                 type="number"
                                 min="0"
+                                step="0.01"
                                 placeholder="Ex: 100"
                                 class="w-full rounded-md border bg-background px-3 py-2 pr-10 text-sm outline-none focus:ring-2 focus:ring-ring"
-                                :class="{ 'border-destructive': form.errors.max_value }"
+                                :class="{ 'border-destructive': form.errors.max_gift_cents }"
                             />
                             <span class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs text-muted-foreground">R$</span>
                         </div>
-                        <p v-if="form.errors.max_value" class="text-xs text-destructive">{{ form.errors.max_value }}</p>
+                        <p v-if="form.errors.max_gift_cents" class="text-xs text-destructive">{{ form.errors.max_gift_cents }}</p>
                     </div>
                 </div>
 

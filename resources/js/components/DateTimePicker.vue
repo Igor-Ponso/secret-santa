@@ -106,7 +106,7 @@ const displayValue = computed(() =>
 
 <template>
     <div class="space-y-2">
-        <label class="flex items-center gap-1 text-sm font-medium"> {{ label }}<span v-if="required" class="text-destructive">*</span> </label>
+        <label class="flex items-center gap-1 text-sm font-medium"> {{ label }} </label>
         <Popover v-model:open="open">
             <PopoverTrigger as-child>
                 <Button variant="outline" type="button" class="w-full justify-between px-3 py-2 text-left font-normal">

@@ -14,8 +14,8 @@ interface GroupPayload {
     id: number;
     name: string;
     description: string | null;
-    min_value: number | null;
-    max_value: number | null;
+    min_gift_cents: number | null;
+    max_gift_cents: number | null;
     draw_at: string | null;
 }
 
@@ -24,10 +24,18 @@ const props = defineProps<{ group: GroupPayload }>();
 const form = useForm({
     name: props.group.name,
     description: props.group.description ?? '',
-    min_value: props.group.min_value,
-    max_value: props.group.max_value,
+    min_gift_cents: props.group.min_gift_cents,
+    max_gift_cents: props.group.max_gift_cents,
     draw_at: props.group.draw_at ?? null,
 });
+
+const uiMin = ref<number | null>(form.min_gift_cents !== null && form.min_gift_cents !== undefined ? form.min_gift_cents / 100 : null);
+const uiMax = ref<number | null>(form.max_gift_cents !== null && form.max_gift_cents !== undefined ? form.max_gift_cents / 100 : null);
+
+function normalize(value: number | null): number | null {
+    if (value === null || Number.isNaN(value)) return null;
+    return Math.max(0, Math.round(value * 100));
+}
 
 // Date picker state (DateValue)
 const tz = getLocalTimeZone();
@@ -78,6 +86,12 @@ watch(
 );
 
 function submit() {
+    if (uiMin.value !== null && uiMax.value !== null && uiMax.value < uiMin.value) {
+        (form as any).errors.max_gift_cents = 'Max ≥ Min';
+        return;
+    }
+    form.min_gift_cents = normalize(uiMin.value);
+    form.max_gift_cents = normalize(uiMax.value);
     form.put(route('groups.update', props.group.id));
 }
 
@@ -121,36 +135,42 @@ const breadcrumbs: BreadcrumbItem[] = [
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div class="space-y-2">
-                        <label for="min_value" class="text-sm font-medium">{{ t('common.labels.min_value') }}</label>
+                        <label for="min_gift" class="text-sm font-medium">{{
+                            t('common.labels.min_gift_value') || t('common.labels.min_value')
+                        }}</label>
                         <div class="relative">
                             <input
-                                id="min_value"
-                                v-model.number="form.min_value"
+                                id="min_gift"
+                                v-model.number="uiMin"
                                 type="number"
                                 min="0"
+                                step="0.01"
                                 placeholder="Ex: 20"
                                 class="w-full rounded-md border bg-background px-3 py-2 pr-10 text-sm outline-none focus:ring-2 focus:ring-ring"
-                                :class="{ 'border-destructive': form.errors.min_value }"
+                                :class="{ 'border-destructive': form.errors.min_gift_cents }"
                             />
                             <span class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs text-muted-foreground">R$</span>
                         </div>
-                        <p v-if="form.errors.min_value" class="text-xs text-destructive">{{ form.errors.min_value }}</p>
+                        <p v-if="form.errors.min_gift_cents" class="text-xs text-destructive">{{ form.errors.min_gift_cents }}</p>
                     </div>
                     <div class="space-y-2">
-                        <label for="max_value" class="text-sm font-medium">{{ t('common.labels.max_value') }}</label>
+                        <label for="max_gift" class="text-sm font-medium">{{
+                            t('common.labels.max_gift_value') || t('common.labels.max_value')
+                        }}</label>
                         <div class="relative">
                             <input
-                                id="max_value"
-                                v-model.number="form.max_value"
+                                id="max_gift"
+                                v-model.number="uiMax"
                                 type="number"
                                 min="0"
+                                step="0.01"
                                 placeholder="Ex: 100"
                                 class="w-full rounded-md border bg-background px-3 py-2 pr-10 text-sm outline-none focus:ring-2 focus:ring-ring"
-                                :class="{ 'border-destructive': form.errors.max_value }"
+                                :class="{ 'border-destructive': form.errors.max_gift_cents }"
                             />
                             <span class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs text-muted-foreground">R$</span>
                         </div>
-                        <p v-if="form.errors.max_value" class="text-xs text-destructive">{{ form.errors.max_value }}</p>
+                        <p v-if="form.errors.max_gift_cents" class="text-xs text-destructive">{{ form.errors.max_gift_cents }}</p>
                     </div>
                 </div>
                 <div class="space-y-2">

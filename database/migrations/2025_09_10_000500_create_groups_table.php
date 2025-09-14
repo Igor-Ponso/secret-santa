@@ -12,9 +12,11 @@ return new class extends Migration {
             $table->foreignId('owner_id')->constrained('users')->cascadeOnDelete();
             $table->string('name');
             $table->string('description', 280)->nullable();
-            $table->unsignedInteger('min_value')->nullable();
-            $table->unsignedInteger('max_value')->nullable();
+            $table->unsignedInteger('min_gift_cents')->nullable();
+            $table->unsignedInteger('max_gift_cents')->nullable();
             $table->timestamp('draw_at')->nullable();
+            $table->boolean('has_draw')->default(false);
+            $table->string('join_code', 24)->nullable();
             $table->timestamps();
             $table->index(['owner_id']);
         });

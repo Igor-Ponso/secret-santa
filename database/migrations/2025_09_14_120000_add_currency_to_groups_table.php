@@ -7,17 +7,20 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        if (!Schema::hasColumn('groups', 'join_code')) {
+        if (!Schema::hasColumn('groups', 'currency')) {
             Schema::table('groups', function (Blueprint $table) {
-                $table->string('join_code', 12)->nullable()->unique()->after('draw_at');
+                $table->char('currency', 3)->default('BRL')->after('max_gift_cents');
+                $table->index('currency');
             });
         }
     }
+
     public function down(): void
     {
-        if (Schema::hasColumn('groups', 'join_code')) {
+        if (Schema::hasColumn('groups', 'currency')) {
             Schema::table('groups', function (Blueprint $table) {
-                $table->dropColumn('join_code');
+                $table->dropIndex(['currency']);
+                $table->dropColumn('currency');
             });
         }
     }

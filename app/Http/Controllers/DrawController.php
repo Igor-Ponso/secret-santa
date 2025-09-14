@@ -19,12 +19,10 @@ class DrawController extends Controller
             return back()->with('error', 'O sorteio já foi realizado.');
         }
 
-        try {
-            $service->run($group);
-        } catch (RuntimeException $e) {
-            return back()->with('error', $e->getMessage());
+        $result = $service->run($group);
+        if (!$result['success']) {
+            return back()->with('error', $result['message'] ?? 'Falha ao gerar sorteio');
         }
-
         return back()->with('success', 'Sorteio realizado com sucesso!');
     }
 

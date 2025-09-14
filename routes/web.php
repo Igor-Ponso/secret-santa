@@ -105,6 +105,9 @@ Route::middleware(['auth'])
         // Draw (Secret Santa assignment)
         Route::post('/{group}/draw', [\App\Http\Controllers\DrawController::class, 'run'])->name('draw.run');
         Route::get('/{group}/recipient', [\App\Http\Controllers\DrawController::class, 'recipient'])->name('draw.recipient');
+        // Exclusions
+        Route::post('/{group}/exclusions', [\App\Http\Controllers\GroupExclusionController::class, 'store'])->name('exclusions.store');
+        Route::delete('/{group}/exclusions/{exclusion}', [\App\Http\Controllers\GroupExclusionController::class, 'destroy'])->name('exclusions.destroy');
         // Join requests
         Route::post('/{group}/join-requests', [\App\Http\Controllers\GroupJoinRequestController::class, 'store'])->name('join_requests.store');
         Route::post('/{group}/join-requests/{joinRequest}/approve', [\App\Http\Controllers\GroupJoinRequestController::class, 'approve'])->name('join_requests.approve');

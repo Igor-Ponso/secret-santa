@@ -32,8 +32,9 @@ class Group extends Model
         'owner_id',
         'name',
         'description',
-        'min_value',
-        'max_value',
+        'min_gift_cents',
+        'max_gift_cents',
+        'currency',
         'draw_at',
         'join_code'
     ];
@@ -65,6 +66,16 @@ class Group extends Model
     public function invitations(): HasMany
     {
         return $this->hasMany(GroupInvitation::class);
+    }
+
+    /**
+     * Exclusion rules (user -> cannot gift -> excluded_user).
+     *
+     * @return HasMany<GroupExclusion>
+     */
+    public function exclusions(): HasMany
+    {
+        return $this->hasMany(GroupExclusion::class);
     }
 
     /**
