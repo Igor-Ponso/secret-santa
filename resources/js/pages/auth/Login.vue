@@ -78,11 +78,31 @@ const { t } = useI18n();
                     <InputError :message="form.errors.password" />
                 </div>
 
-                <div class="flex items-center justify-between" :tabindex="3">
-                    <Label for="remember" class="flex items-center space-x-3">
-                        <Checkbox id="remember" v-model:checked="form.remember" :tabindex="4" />
-                        <span>{{ t('auth.remember', 'Remember me') }}</span>
+                <div
+                    class="group relative rounded-md border border-neutral-200/70 bg-neutral-50/70 px-4 py-3 shadow-sm ring-0 transition focus-within:border-red-500 focus-within:bg-white focus-within:shadow-md hover:bg-white hover:shadow dark:border-neutral-700/70 dark:bg-neutral-800/60 dark:focus-within:border-red-400 dark:hover:bg-neutral-800/80"
+                    :tabindex="3"
+                >
+                    <Label
+                        for="remember"
+                        class="flex cursor-pointer select-none items-center gap-3 text-sm font-medium text-neutral-700 dark:text-neutral-200"
+                    >
+                        <Checkbox
+                            id="remember"
+                            v-model:checked="form.remember"
+                            :tabindex="4"
+                            class="h-5 w-5 rounded-sm border-neutral-400 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white data-[state=checked]:border-red-600 data-[state=checked]:bg-red-600 dark:border-neutral-500 dark:focus-visible:ring-offset-neutral-900 dark:data-[state=checked]:border-red-500 dark:data-[state=checked]:bg-red-500"
+                        />
+                        <span class="leading-tight">
+                            {{ t('auth.remember', 'Remember me') }}
+                            <span class="block text-[11px] font-normal text-neutral-500 dark:text-neutral-400">
+                                {{ t('auth.remember_hint', 'Keep me signed in on this device') }}
+                            </span>
+                        </span>
                     </Label>
+                    <span
+                        class="pointer-events-none absolute inset-0 rounded-md ring-2 ring-transparent transition group-focus-within:ring-red-500/60 group-hover:ring-red-500/30"
+                        aria-hidden="true"
+                    />
                 </div>
 
                 <Button type="submit" class="mt-4 w-full" :tabindex="4" :disabled="form.processing">

@@ -130,5 +130,8 @@
         "settings": "Configurações",
         "logout": "Sair",
         "search": "Buscar"
+    },
+    "footer": {
+        "credit": "Criado com ❤️ – Amigo Secreto © {year}"
     }
 }

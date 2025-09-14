@@ -130,5 +130,8 @@
         "settings": "Settings",
         "logout": "Log out",
         "search": "Search"
+    },
+    "footer": {
+        "credit": "Made with ❤️ – Secret Santa © {year}"
     }
 }

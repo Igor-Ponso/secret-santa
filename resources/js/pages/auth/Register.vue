@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import SocialLoginButtons from '@/components/auth/SocialLoginButtons.vue';
 import InputError from '@/components/InputError.vue';
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,7 @@ const submit = () => {
     >
         <Head :title="t('auth.register', 'Register')" />
 
+        <div class="mb-4 flex justify-end"><LanguageSwitcher /></div>
         <form @submit.prevent="submit" class="flex flex-col gap-6">
             <div class="grid gap-6">
                 <div class="grid gap-2">

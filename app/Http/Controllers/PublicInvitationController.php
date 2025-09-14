@@ -59,9 +59,12 @@ class PublicInvitationController extends Controller
         $matchingEmail = $user && strcasecmp($user->email, $invitation->email) === 0;
         $canAccept = $status === 'pending' && $matchingEmail && !$expired && !$revoked;
 
+        $invitation->loadMissing(['inviter:id,name']);
+
         return Inertia::render($component, [
             'invitation' => [
                 'group' => $invitation->group->only(['id', 'name', 'description']),
+                'inviter' => $invitation->inviter ? $invitation->inviter->only(['id', 'name']) : null,
                 // Only expose the invite email if authenticated *and* email matches; otherwise hide for privacy
                 'email' => $matchingEmail ? $invitation->email : null,
                 'status' => $status,

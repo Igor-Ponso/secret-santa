@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
@@ -32,6 +33,11 @@ const visual = computed(() => {
     };
 });
 
+const showTopBar = computed(() => {
+    const routeName = page.component as string;
+    return /Login|Register/.test(routeName);
+});
+
 defineProps<{
     title?: string;
     description?: string;
@@ -40,34 +46,32 @@ defineProps<{
 
 <template>
     <div class="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
+        <div v-if="showTopBar" class="absolute right-4 top-4 z-30 flex items-center gap-3">
+            <ThemeToggle />
+            <LanguageSwitcher />
+        </div>
         <!-- Left visual panel (hidden on small screens) -->
-        <div class="relative hidden h-full flex-col bg-gradient-to-b from-red-800 via-red-600 to-red-500 p-10 text-white dark:border-r lg:flex">
-            <div class="absolute right-4 top-4">
-                <ThemeToggle />
+        <div
+            class="relative hidden h-full flex-col bg-gradient-to-br from-red-800 via-red-600 to-red-500 px-12 pb-12 pt-20 text-white dark:border-r lg:flex"
+        >
+            <div class="relative z-10 flex h-full w-full flex-col items-center justify-center gap-10 text-center">
+                <img :src="visual.image" alt="Auth Visual" class="w-[420px] max-w-full drop-shadow-[0_12px_32px_rgba(0,0,0,0.45)]" />
+                <p class="max-w-md text-xl font-medium italic leading-snug text-white/95 md:text-2xl">{{ visual.caption }}</p>
             </div>
-            <div class="relative z-20 flex h-full w-full flex-col items-center justify-center text-center">
-                <!-- Centered illustration and caption -->
-                <div class="flex flex-col items-center justify-center gap-6">
-                    <img :src="visual.image" alt="Auth Visual" class="w-3/4 max-w-md drop-shadow-lg" />
-                    <p class="text-lg italic text-white/95">{{ visual.caption }}</p>
-                </div>
-
-                <!-- Back to home link (bottom fixed) -->
-                <Link
-                    :href="route('home')"
-                    class="text-md absolute bottom-10 font-extrabold text-white/90 underline underline-offset-4 hover:text-white"
-                >
-                    ← Back to home
-                </Link>
-            </div>
+            <Link
+                :href="route('home')"
+                class="absolute left-8 top-6 rounded-full bg-white/20 px-4 py-1.5 text-sm font-semibold text-white/90 backdrop-blur transition hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white/50"
+            >
+                ← {{ 'Home' }}
+            </Link>
         </div>
 
         <!-- Right side (form slot) -->
         <div class="lg:p-8">
-            <div class="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-                <div class="flex flex-col space-y-2 text-center">
-                    <h1 class="text-xl font-medium tracking-tight" v-if="title">{{ title }}</h1>
-                    <p class="text-sm text-muted-foreground" v-if="description">{{ description }}</p>
+            <div class="mx-auto flex w-full flex-col justify-center space-y-7 sm:w-[380px]">
+                <div class="flex flex-col space-y-3 text-center">
+                    <h1 class="text-2xl font-semibold tracking-tight md:text-3xl" v-if="title">{{ title }}</h1>
+                    <p class="text-base text-muted-foreground md:text-lg" v-if="description">{{ description }}</p>
                 </div>
                 <slot />
             </div>
