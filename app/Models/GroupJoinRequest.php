@@ -15,7 +15,8 @@ class GroupJoinRequest extends Model
         'user_id',
         'status',
         'approved_at',
-        'denied_at'
+        'denied_at',
+        'share_link_id'
     ];
 
     protected $casts = [

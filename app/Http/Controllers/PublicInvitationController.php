@@ -50,6 +50,54 @@ class PublicInvitationController extends Controller
         };
 
         if (!$invitation) {
+            // Tentar resolver como share link
+            $shareGroup = app(\App\Services\ShareLinkService::class)->findGroupByPlainToken($plainToken);
+            if ($shareGroup) {
+                $shareGroup->loadMissing('owner:id,name');
+                if ($user && $shareGroup->isParticipant($user)) {
+                    return redirect()->route('groups.show', $shareGroup->id)
+                        ->with('flash', ['info' => 'Você já participa deste grupo.']);
+                }
+                if (!$user) {
+                    session(['pending_share_token' => $plainToken]);
+                }
+                $joinRequested = false;
+                if ($user) {
+                    $joinRequested = \App\Models\GroupJoinRequest::where('group_id', $shareGroup->id)
+                        ->where('user_id', $user->id)
+                        ->exists();
+                }
+                $canRequestJoin = $user
+                    ? (!$shareGroup->isParticipant($user) && $shareGroup->owner_id !== $user->id && !$joinRequested)
+                    : false;
+                return $respond([
+                    'invitation' => [
+                        'group' => [
+                            'id' => $shareGroup->id,
+                            'name' => $shareGroup->name,
+                            'owner' => [
+                                'id' => $shareGroup->owner->id,
+                                'name' => $shareGroup->owner->name,
+                            ],
+                        ],
+                        'inviter' => null,
+                        'email' => null,
+                        'status' => 'share_link',
+                        'expired' => false,
+                        'revoked' => false,
+                        'token' => $plainToken,
+                        'viewer' => [
+                            'authenticated' => (bool) $user,
+                            'participates' => $user ? $shareGroup->isParticipant($user) : false,
+                            'is_owner' => $user ? $shareGroup->owner_id === $user->id : false,
+                            'email_mismatch' => false,
+                            'can_accept' => false,
+                            'can_request_join' => $canRequestJoin,
+                            'join_requested' => $joinRequested,
+                        ],
+                    ],
+                ]);
+            }
             return $respond([
                 'invitation' => [
                     'group' => null,

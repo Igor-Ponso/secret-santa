@@ -183,6 +183,18 @@ class GroupController extends Controller
 
         $canDraw = !$hasDraw && $participantCount >= 2; // minimum 2 participants required
 
+        // Draw date semantics: draw_at is stored as date (Y-m-d). Owner is allowed to manually trigger
+        // even before the date (business rule) but we still expose how many days remain for UI messaging.
+        $today = now()->startOfDay();
+        $drawDate = $group->draw_at ? \Carbon\Carbon::parse($group->draw_at) : null; // ensure Carbon instance
+        $daysUntilDraw = null;
+        if ($drawDate) {
+            $daysUntilDraw = $today->diffInDays($drawDate, false); // negative if past
+        }
+        // Manual draw policy (business rule per conversation): owner may draw early as long as not already drawn and min participants reached
+        $canManualDraw = $canDraw; // base rule uses participant threshold & not drawn yet
+        $canManualDrawTodayOnly = false; // set true if we ever restrict to same-day in future
+
         // Participants (owner + accepted) - expose only id & name for privacy
         // Build participants (owner + accepted invitation users) with accepted_at when available.
         $acceptedParticipants = $group->invitations()
@@ -302,6 +314,11 @@ class GroupController extends Controller
                 'has_draw' => $hasDraw,
                 'participant_count' => $participantCount,
                 'can_draw' => $canDraw,
+                'draw_date' => $drawDate?->toDateString(),
+                'days_until_draw' => $daysUntilDraw,
+                // Frontend flags for manual draw button enablement / messaging
+                'can_manual_draw' => $canManualDraw,
+                'can_manual_draw_today_only' => $canManualDrawTodayOnly,
                 'participants' => $participants,
                 'invitations' => $invitationsSummary,
                 'invitations_meta' => $invitationsMeta,

@@ -45,7 +45,8 @@ class Group extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'draw_at' => 'datetime',
+        'draw_at' => 'date', // store & retrieve as date-only (no time component)
+        'has_draw' => 'boolean',
     ];
 
     /**

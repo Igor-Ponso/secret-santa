@@ -7,6 +7,7 @@ use App\Models\Group;
 use App\Models\GroupInvitation;
 use App\Notifications\GroupInvitationNotification;
 use App\Services\InvitationService;
+use App\Services\ShareLinkService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 
@@ -38,41 +39,12 @@ class GroupInvitationController extends Controller
      * @param Group $group
      * @return JsonResponse
      */
-    public function link(Group $group): JsonResponse
+    public function link(Group $group, ShareLinkService $shareLinkService): JsonResponse
     {
         $this->authorize('update', $group);
-
-        $invitation = $group->invitations()
-            ->whereNull('accepted_at')
-            ->whereNull('declined_at')
-            ->whereNull('revoked_at')
-            ->where(function ($q) {
-                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
-            })
-            ->latest('id')
-            ->first();
-
-        if (!$invitation) {
-            // Prior behaviour created an invitation addressed to the owner email purely to obtain a share link.
-            // This polluted the pending invitations list (showing the owner as if invited) and later appeared
-            // as a spurious "owner pending" entry in the UI. We now avoid creating an email-targeted invitation
-            // for the owner. Instead we create a technical invitation addressed to a non-deliverable marker address
-            // so that normal participant invitation lists (filtered by real emails) can exclude it if desired.
-            // Using an obvious marker simplifies future cleanup / potential migration to a dedicated share_tokens table.
-            $owner = auth()->user();
-            $invitation = $this->service->create($group, $owner, $owner->email . '.share-link');
-        } elseif (!$invitation->getAttribute('plain_token')) {
-            // We have a pending invitation but no transient plain token: regenerate a new one.
-            $invitation = $this->service->resend($invitation) ?: $this->service->create($group, auth()->user(), auth()->user()->email);
-        }
-
-        $plain = $invitation->getAttribute('plain_token');
-        if (!$plain) {
-            return response()->json(['error' => 'Could not generate invitation link.'], 400);
-        }
-
+        $result = $shareLinkService->getOrCreate($group, auth()->user());
         return response()->json([
-            'link' => route('invites.show', $plain), // use GET show route so it can be opened directly
+            'link' => route('invites.show', $result['plain'])
         ]);
     }
 

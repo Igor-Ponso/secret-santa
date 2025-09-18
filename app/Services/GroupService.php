@@ -23,7 +23,7 @@ class GroupService
             'description' => $data['description'] ?? null,
             'min_gift_cents' => $data['min_gift_cents'] ?? null,
             'max_gift_cents' => $data['max_gift_cents'] ?? null,
-            'draw_at' => $data['draw_at'] ?? null,
+            'draw_at' => isset($data['draw_at']) ? date('Y-m-d', strtotime($data['draw_at'])) : null,
             'join_code' => $this->generateJoinCode(),
         ];
 
@@ -49,7 +49,7 @@ class GroupService
             'description' => $data['description'] ?? null,
             'min_gift_cents' => $data['min_gift_cents'] ?? null,
             'max_gift_cents' => $data['max_gift_cents'] ?? null,
-            'draw_at' => $data['draw_at'] ?? null,
+            'draw_at' => isset($data['draw_at']) ? date('Y-m-d', strtotime($data['draw_at'])) : null,
         ]);
 
         return $group;

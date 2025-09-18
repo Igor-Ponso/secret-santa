@@ -26,6 +26,15 @@ class GroupPolicy
      */
     public function update(User $user, Group $group): bool
     {
+        if ($group->has_draw) {
+            return false; // immutable after draw
+        }
+        return $group->owner_id === $user->id;
+    }
+
+    /** Owner can always attempt to run draw (controller will guard idempotency). */
+    public function runDraw(User $user, Group $group): bool
+    {
         return $group->owner_id === $user->id;
     }
 

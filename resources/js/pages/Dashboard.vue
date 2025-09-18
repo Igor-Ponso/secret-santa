@@ -29,6 +29,7 @@ interface DashboardProps {
     upcomingDraws: GroupSummary[];
     pendingInvitations: InvitationSummary[];
     recentActivities: ActivityItem[];
+    pendingJoinRequests: { id: number; group: { id: number; name: string }; requested_at: string }[];
 }
 
 const props = defineProps<DashboardProps>();
@@ -163,6 +164,24 @@ const breadcrumbs = computed(() => [
                         </li>
                     </ul>
                     <div v-else class="text-xs text-muted-foreground">{{ t('common.misc.no_pending_invitations') }}</div>
+                </div>
+                <!-- Pedidos de Entrada Pendentes -->
+                <div class="rounded-xl border bg-card p-4">
+                    <h2 class="mb-2 text-sm font-semibold">{{ t('common.misc.pending_join_requests') || 'Pedidos de Entrada Pendentes' }}</h2>
+                    <ul v-if="props.pendingJoinRequests.length" class="space-y-2 text-xs">
+                        <li v-for="jr in props.pendingJoinRequests" :key="jr.id" class="flex flex-col gap-1 rounded border p-2">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <div>
+                                    <span class="font-medium">{{ jr.group.name }}</span>
+                                    <span class="ml-1 text-muted-foreground">— {{ formatDate(jr.requested_at) }}</span>
+                                </div>
+                                <Link :href="route('groups.show', jr.group.id)" class="rounded border px-2 py-1 text-xs hover:bg-accent">{{
+                                    t('common.actions.view')
+                                }}</Link>
+                            </div>
+                        </li>
+                    </ul>
+                    <div v-else class="text-xs text-muted-foreground">{{ t('common.misc.none') }}</div>
                 </div>
             </div>
             <!-- Atividades Recentes -->

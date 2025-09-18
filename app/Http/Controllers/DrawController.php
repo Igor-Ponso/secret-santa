@@ -13,7 +13,7 @@ class DrawController extends Controller
 {
     public function run(Request $request, Group $group, DrawService $service)
     {
-        Gate::authorize('update', $group); // owner
+        Gate::authorize('runDraw', $group); // owner (separate from update so post-draw edit lock doesn't block banner/draw attempts)
 
         if ($group->assignments()->exists()) {
             return back()->with('error', 'O sorteio já foi realizado.');

@@ -10,7 +10,7 @@ interface InvitationPageProps {
     invitation: {
         group: { id: number; name: string; description?: string | null } | null;
         inviter?: { id: number; name: string } | null;
-        status: 'pending' | 'accepted' | 'declined' | 'revoked' | 'expired' | 'invalid';
+        status: 'pending' | 'accepted' | 'declined' | 'revoked' | 'expired' | 'invalid' | 'share_link';
         expired: boolean;
         revoked?: boolean;
         token: string;
@@ -84,6 +84,12 @@ const benefits = ['invites.public.benefits.gifting', 'invites.public.benefits.su
                                 {{ t('invites.already_declined') }}
                             </p>
                             <template v-else>
+                                <p v-if="props.invitation.status === 'share_link'" class="mt-2 text-sm font-medium text-white/80">
+                                    {{
+                                        t('invites.share_link_intro_public') ||
+                                        'Este é um link público de participação. Crie ou acesse sua conta para pedir entrada.'
+                                    }}
+                                </p>
                                 <ul class="mt-8 space-y-4 text-left">
                                     <li
                                         v-for="b in benefits"

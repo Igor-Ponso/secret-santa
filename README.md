@@ -24,7 +24,6 @@ This project was built with a focus on great user experience, security, and soli
 ## 🔧 Tech Stack
 
 - [Laravel 12](https://laravel.com/docs/12.x) with [Inertia.js 2](https://inertiajs.com/)
-- [Vue.js 3](https://vuejs.org/) with Composition API + [TypeScript](https://www.typescriptlang.org/)
 - [Vite](https://vitejs.dev/)
 - [ShadCN Vue](https://vue.shadcn.dev/) (UI components, accessible by default)
 - [PEST](https://pestphp.com/) for backend testing
@@ -37,7 +36,6 @@ This project was built with a focus on great user experience, security, and soli
 ## 🎯 Key Features (Current)
 
 - Authentication (register, login, password reset, email verification)
-- Group creation & ownership transfer
 - Invitation system with: accept / decline, revoke, resend, expiration handling
 - Privacy: invite email hidden unless authenticated matching user
 - Invitation onboarding flow (first-time wishlist setup or skip) with redirect logic
@@ -47,9 +45,6 @@ This project was built with a focus on great user experience, security, and soli
 - Join code generation & regeneration
 - Secret Santa draw with validation (single execution, recipient retrieval, basic metrics)
 - Recipient wishlist visibility post-draw
-- Basic metrics panel (placeholder / evolving)
-- Internationalization (i18n) scaffolding (EN + pt_BR keys for Groups, Wishlist, Onboarding)
-- UI polish using ShadCN Vue + Tailwind (Switch, Dialogs, Badges, etc.)
 
 ## 🗺️ Upcoming / Planned
 
@@ -208,20 +203,54 @@ Behavior:
 3. `join_requested` disables the join button client-side.
 4. Email is omitted unless the authenticated viewer matches the invitation email.
 
-## ⏰ Draw Date (draw_at) Rules
+## ⏰ Draw Date (`draw_at`) Rules
 
-Business constraint: must be today or a future date (never past). Enforced by validation rule `after_or_equal:today` in both create & update requests.
+`draw_at` agora é somente DATA (formato `YYYY-MM-DD`, sem hora/minuto). Motivações:
 
-Tests:
+1. Simplifica a regra de negócio – o sorteio é um evento do dia, não de horário.
+2. Evita discrepâncias de fuso / DST.
+3. Permite batch noturno simples (`groups:run-due-draws`) sem preocupações de granularidade.
+
+Validação: `required | date_format:Y-m-d | after_or_equal:today` nas requests de create/update.
+
+Persistência: Cast como `date` no model `Group`. O service normaliza qualquer entrada para `Y-m-d`.
+
+Execução Automática:
+
+- Comando agendado diário (`00:05`) roda sorteios vencidos (grupos com `draw_at <= hoje` e ainda sem draw).
+- Dono pode rodar manualmente antes via UI (futuro) ou esperar o batch.
+
+### Sorteio Manual e Banner de Status
+
+O dono pode executar manualmente o sorteio assim que houver pelo menos 2 participantes (dono + 1 aceito), mesmo antes da data configurada. A página do grupo mostra um banner com:
+
+- Dias restantes até a data (`days_until_draw`)
+- Mensagem se é hoje ou se a data já passou
+- Botão "Executar sorteio manual" (somente dono, enquanto não houver sorteio)
+
+### Imutabilidade Pós-Sorteio
+
+Após `has_draw = true`:
+
+- Política (`GroupPolicy@update`) bloqueia qualquer edição → respostas 403.
+- UI remove botão de editar cabeçalho e mostra selo de bloqueio.
+- Mantém consistência das regras do jogo para todos os participantes.
+
+Testes:
 
 - `GroupDrawDateValidationTest` (create)
 - `GroupDrawDateUpdateValidationTest` (update)
+- Ajustes no `GroupTest` para usar `toDateString()`.
 
 Frontend:
 
-- `DateTimePicker` accepts a `min` prop (ISO) and clamps selection below it.
-- Create page passes `:min="new Date().toISOString()"`.
-- Edit page calendar uses computed `todayMin` bound to `:min`.
+- `DateTimePicker` substituído por calendário simples (date-only) nos formulários de criação/edição.
+- Seleção inferior à data atual desabilitada visualmente (cells `data-disabled`).
+
+Impacto de Migração:
+
+- Se havia valores com horário previamente, apenas a parte da data é relevante agora.
+- Qualquer lógica futura baseada em horário deve ser reprojetada.
 
 ## 🤝 Join Requests via Invite Page
 

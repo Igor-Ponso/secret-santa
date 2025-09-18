@@ -37,9 +37,9 @@ function normalize(value: number | null): number | null {
     return Math.max(0, Math.round(value * 100));
 }
 
-// Date picker state (DateValue)
-const tz = getLocalTimeZone();
+// Date picker state (DateValue) - date only
 const df = new DateFormatter('en-US', { dateStyle: 'long' });
+const tz = getLocalTimeZone();
 const dateValue = ref<DateValue | undefined>(
     form.draw_at
         ? (new CalendarDate(
@@ -74,8 +74,8 @@ watch(dateValue, (v) => {
         return;
     }
     const d = v.toDate(tz);
-    d.setHours(12, 0, 0, 0); // normalize to noon local to avoid TZ shift
-    form.draw_at = d.toISOString();
+    // Persist as date-only (Y-m-d)
+    form.draw_at = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 });
 
 // Sync form.draw_at -> dateValue (in case server returns new value or is reset)

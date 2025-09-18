@@ -19,7 +19,7 @@ interface InvitationPageProps {
         group: { id: number; name: string; description?: string | null } | null;
         inviter?: { id: number; name: string } | null;
         email: string | null;
-        status: 'pending' | 'accepted' | 'declined' | 'revoked' | 'expired' | 'invalid';
+        status: 'pending' | 'accepted' | 'declined' | 'revoked' | 'expired' | 'invalid' | 'share_link';
         expired: boolean;
         revoked?: boolean;
         token: string;
@@ -77,6 +77,9 @@ const requestJoin = () => {
                 <p v-else-if="props.invitation.status === 'declined'" class="mt-2 text-xs text-muted-foreground">
                     {{ t('invites.already_declined') }}
                 </p>
+                <p v-else-if="props.invitation.status === 'share_link'" class="mt-2 text-xs text-muted-foreground">
+                    {{ t('invites.share_link_intro') || 'Convite aberto via link compartilhado. Peça para ingressar no grupo.' }}
+                </p>
             </div>
             <div v-else class="rounded-md border p-4 text-sm text-destructive">{{ t('invites.invalid') }}</div>
             <!-- Accept / decline buttons when pending and viewer can accept -->
@@ -130,6 +133,9 @@ const requestJoin = () => {
                     <span v-if="!props.invitation.viewer.join_requested">{{ t('invites.request_join') || 'Pedir para ingressar' }}</span>
                     <span v-else>{{ t('invites.join_requested') || 'Pedido enviado' }}</span>
                 </button>
+                <p v-if="props.invitation.viewer.join_requested" class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    {{ t('invites.join_pending_review') || 'Aguardando aprovação do dono.' }}
+                </p>
             </div>
         </div>
     </AppLayout>

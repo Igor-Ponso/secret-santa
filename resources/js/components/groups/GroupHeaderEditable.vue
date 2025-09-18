@@ -11,6 +11,7 @@ interface Props {
     maxGiftCents: number | null;
     currency: string | null;
     isOwner: boolean;
+    hasDraw?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -47,7 +48,7 @@ const toCents = (v: string): number | null => {
 };
 
 const startEdit = () => {
-    if (props.isOwner) editing.value = true;
+    if (props.isOwner && !props.hasDraw) editing.value = true;
 };
 const cancel = () => {
     editing.value = false;
@@ -85,11 +86,14 @@ const submit = () => {
                 <div v-else class="grid w-full gap-2 md:grid-cols-2">
                     <div class="flex flex-col gap-1">
                         <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Nome</label>
-                        <input v-model="form.name" class="rounded border px-2 py-1 text-sm" />
+                        <input v-model="form.name" class="rounded border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-ring" />
                     </div>
                     <div class="flex flex-col gap-1">
                         <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Moeda</label>
-                        <select v-model="form.currency" class="rounded border px-2 py-1 text-sm">
+                        <select
+                            v-model="form.currency"
+                            class="rounded border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-ring"
+                        >
                             <option value="BRL">BRL</option>
                             <option value="USD">USD</option>
                             <option value="EUR">EUR</option>
@@ -98,22 +102,49 @@ const submit = () => {
                     </div>
                     <div class="flex flex-col gap-1 md:col-span-2">
                         <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Descrição</label>
-                        <textarea v-model="form.description" rows="2" class="w-full resize-y rounded border px-2 py-1 text-sm" />
+                        <textarea
+                            v-model="form.description"
+                            rows="2"
+                            class="w-full resize-y rounded border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-ring"
+                        />
                     </div>
                     <div class="flex flex-col gap-1">
                         <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Mínimo</label>
-                        <input v-model="form.min" type="text" inputmode="decimal" class="rounded border px-2 py-1 text-sm" placeholder="0,00" />
+                        <input
+                            v-model="form.min"
+                            type="text"
+                            inputmode="decimal"
+                            class="rounded border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-ring"
+                            placeholder="0,00"
+                        />
                     </div>
                     <div class="flex flex-col gap-1">
                         <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Máximo</label>
-                        <input v-model="form.max" type="text" inputmode="decimal" class="rounded border px-2 py-1 text-sm" placeholder="0,00" />
+                        <input
+                            v-model="form.max"
+                            type="text"
+                            inputmode="decimal"
+                            class="rounded border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-ring"
+                            placeholder="0,00"
+                        />
                     </div>
                 </div>
                 <p v-if="!editing && description" class="max-w-prose text-sm text-muted-foreground">{{ description }}</p>
                 <p v-else-if="!editing && !description" class="text-xs italic text-muted-foreground">(sem descrição)</p>
             </div>
             <div v-if="isOwner" class="flex items-center gap-2">
-                <button v-if="!editing" @click="startEdit" class="rounded bg-accent px-3 py-1 text-xs font-medium hover:bg-accent/70">Editar</button>
+                <button
+                    v-if="!editing && !props.hasDraw"
+                    @click="startEdit"
+                    class="rounded bg-accent px-3 py-1 text-xs font-medium hover:bg-accent/70"
+                >
+                    Editar
+                </button>
+                <span
+                    v-else-if="props.hasDraw && !editing"
+                    class="rounded border px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+                    >Bloqueado após sorteio</span
+                >
                 <div v-else class="flex items-center gap-2">
                     <button
                         @click="submit"

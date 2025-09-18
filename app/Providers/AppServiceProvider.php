@@ -49,9 +49,11 @@ class AppServiceProvider extends ServiceProvider
         // After auth (login/register), process pending invite token if present
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, function ($event) {
             $this->consumePendingInvite($event->user);
+            $this->consumePendingShareLink($event->user);
         });
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Registered::class, function ($event) {
             $this->consumePendingInvite($event->user);
+            $this->consumePendingShareLink($event->user);
         });
     }
 
@@ -75,5 +77,39 @@ class AppServiceProvider extends ServiceProvider
             // Mark a session key so redirect logic in auth controllers can send user to onboarding
             session(['just_accepted_group_id' => $invitation->group_id]);
         }
+    }
+
+    protected function consumePendingShareLink($user): void
+    {
+        $token = session('pending_share_token');
+        if (!$token)
+            return;
+        session()->forget('pending_share_token');
+        $shareService = app(\App\Services\ShareLinkService::class);
+        $group = $shareService->findGroupByPlainToken($token);
+        if (!$group)
+            return; // invalid/rotated
+        if ($group->owner_id === $user->id)
+            return; // owner não cria join request
+        if ($group->isParticipant($user))
+            return; // já participa
+        // Evitar duplicidade
+        $existing = \App\Models\GroupJoinRequest::where('group_id', $group->id)->where('user_id', $user->id)->first();
+        if ($existing)
+            return;
+        // Precisamos do id do share link para attribution
+        $hashed = hash('sha256', $token);
+        $shareLink = $shareService->findLinkByPlainToken($token);
+        $jr = \App\Models\GroupJoinRequest::create([
+            'group_id' => $group->id,
+            'user_id' => $user->id,
+            'status' => 'pending',
+            'share_link_id' => optional($shareLink)->id,
+        ]);
+        // Armazena para feedback (lista de IDs) e flash
+        $pending = session('just_requested_join_groups', []);
+        $pending[] = $group->id;
+        session(['just_requested_join_groups' => $pending]);
+        session(['flash.success' => 'Pedido de entrada enviado para o grupo: ' . $group->name]);
     }
 }

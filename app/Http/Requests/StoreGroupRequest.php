@@ -28,7 +28,7 @@ class StoreGroupRequest extends FormRequest
             'max_gift_cents' => ['nullable', 'integer', 'min:0', 'max:10000000', 'gte:min_gift_cents'],
             'currency' => ['nullable', 'string', 'size:3'],
             // Allow draw to be scheduled for today (any time) or future
-            'draw_at' => ['required', 'date', 'after_or_equal:today'],
+            'draw_at' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
         ];
     }
 }

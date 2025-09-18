@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import DateTimePicker from '@/components/DateTimePicker.vue';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { CalendarDate, DateFormatter, getLocalTimeZone, type DateValue } from '@internationalized/date';
+import { Calendar as CalendarIcon } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 // Form keeps values in cents for backend; we expose reais in the UI.
@@ -18,6 +22,24 @@ const form = useForm({
 // UI fields (reais). Allows decimal; convert to cents on submit.
 const uiMin = ref<number | null>(null);
 const uiMax = ref<number | null>(null);
+
+// Date only picker state
+const df = new DateFormatter('en-US', { dateStyle: 'long' });
+const dateValue = ref<DateValue | undefined>(undefined);
+const tz = getLocalTimeZone();
+const todayMin = computed(() => {
+    const now = new Date();
+    return new CalendarDate(now.getFullYear(), now.getMonth() + 1, now.getDate());
+});
+
+watch(dateValue, (v) => {
+    if (!v) {
+        form.draw_at = null;
+        return;
+    }
+    const d = v.toDate(tz);
+    form.draw_at = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+});
 
 function normalize(value: number | null): number | null {
     if (value === null || Number.isNaN(value)) return null;
@@ -119,13 +141,40 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </div>
                 </div>
 
-                <DateTimePicker
-                    v-model="form.draw_at"
-                    :label="t('common.labels.draw_date') + ' *'"
-                    :required="true"
-                    :min="new Date().toISOString()"
-                    :placeholder="t('common.misc.choose_draw_date')"
-                />
+                <div class="space-y-2">
+                    <label class="text-sm font-medium">{{ t('common.labels.draw_date') }} *</label>
+                    <Popover>
+                        <PopoverTrigger as-child>
+                            <button
+                                type="button"
+                                :class="
+                                    cn(
+                                        'flex w-full items-center justify-start gap-2 rounded-md border bg-background px-3 py-2 text-left text-sm font-normal ring-offset-background transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring',
+                                        !dateValue && 'text-muted-foreground',
+                                    )
+                                "
+                            >
+                                <CalendarIcon class="h-4 w-4" />
+                                <span class="truncate">{{ dateValue ? df.format(dateValue.toDate(tz)) : t('common.misc.pick_a_date') }}</span>
+                            </button>
+                        </PopoverTrigger>
+                        <PopoverContent class="w-auto p-0" align="start">
+                            <Calendar
+                                :model-value="dateValue as any"
+                                :min="todayMin"
+                                @update:model-value="
+                                    (val: any) => {
+                                        if (!val) dateValue = undefined as any;
+                                        else if (Array.isArray(val)) dateValue = val[0] as any;
+                                        else dateValue = val as any;
+                                    }
+                                "
+                                initial-focus
+                                class="rounded-md border"
+                            />
+                        </PopoverContent>
+                    </Popover>
+                </div>
                 <p v-if="form.errors.draw_at" class="text-xs text-destructive">{{ form.errors.draw_at }}</p>
 
                 <div class="flex items-center gap-3">

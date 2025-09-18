@@ -38,7 +38,7 @@ it('creates group with valid data (gift range optional)', function () {
         'description' => 'End of year exchange',
         'min_gift_cents' => 2000, // R$20,00
         'max_gift_cents' => 10000, // R$100,00
-        'draw_at' => now()->addWeek()->toDateTimeString(),
+        'draw_at' => now()->addWeek()->toDateString(),
     ];
 
     post('/groups', $payload)->assertRedirect('/groups');
@@ -69,7 +69,7 @@ it('allows creating group without gift range', function () {
 
     $payload = [
         'name' => 'No Range Group',
-        'draw_at' => now()->addDays(3)->toDateTimeString(),
+        'draw_at' => now()->addDays(3)->toDateString(),
     ];
 
     post('/groups', $payload)->assertRedirect('/groups');

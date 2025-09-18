@@ -60,12 +60,25 @@ Route::get('dashboard', function () {
     // Atividades recentes (mock)
     $recentActivities = [];
 
+    // Pending join requests (user perspective)
+    $pendingJoinRequests = \App\Models\GroupJoinRequest::where('user_id', $user->id)
+        ->where('status', 'pending')
+        ->with('group:id,name')
+        ->orderByDesc('created_at')
+        ->get()
+        ->map(fn($jr) => [
+            'id' => $jr->id,
+            'group' => ['id' => $jr->group->id, 'name' => $jr->group->name],
+            'requested_at' => $jr->created_at->toISOString(),
+        ]);
+
     return Inertia::render('Dashboard', [
         'groupsCount' => $groups->count(),
         'pendingInvitationsCount' => $pendingInvitations->count(),
         'upcomingDraws' => $upcomingDraws ?? [],
         'pendingInvitations' => $pendingInvitations ?? [],
         'recentActivities' => $recentActivities,
+        'pendingJoinRequests' => $pendingJoinRequests,
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 

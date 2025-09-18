@@ -316,6 +316,7 @@ onMounted(fetchRecipient);
                 :max-gift-cents="group.max_gift_cents"
                 :currency="group.currency"
                 :is-owner="group.is_owner"
+                :has-draw="group.has_draw"
             />
             <div>
                 <button
@@ -326,6 +327,32 @@ onMounted(fetchRecipient);
                 >
                     🎁 {{ t('groups.my_wishlist') }}
                 </button>
+            </div>
+
+            <!-- Draw Status Banner -->
+            <div v-if="group.draw_date && !group.has_draw" class="flex flex-col gap-1 rounded-md border bg-muted/40 px-4 py-3 text-sm">
+                <div v-if="group.days_until_draw > 0">
+                    <strong>Sorteio em {{ group.days_until_draw }} dia<span v-if="group.days_until_draw !== 1">s</span></strong>
+                    <span class="text-muted-foreground">(previsto para {{ group.draw_date }})</span>
+                </div>
+                <div v-else-if="group.days_until_draw === 0">
+                    <strong>O sorteio é hoje.</strong>
+                </div>
+                <div v-else>
+                    <strong class="text-yellow-700">Data planejada já passou.</strong>
+                </div>
+                <div v-if="group.is_owner && group.can_manual_draw" class="pt-1">
+                    <button
+                        type="button"
+                        :disabled="drawing"
+                        @click="runDraw"
+                        class="inline-flex items-center gap-1 rounded bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                    >
+                        <span v-if="!drawing">⚡ Executar sorteio manual agora</span>
+                        <span v-else>Processando...</span>
+                    </button>
+                    <p class="mt-1 text-xs text-muted-foreground">Você pode realizar manualmente antes do agendamento automático diário.</p>
+                </div>
             </div>
 
             <GroupDrawPanel
