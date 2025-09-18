@@ -10,32 +10,39 @@ const props = defineProps<Props>();
 
 const threshold = computed(() => (props.metrics?.readiness_threshold !== undefined ? props.metrics!.readiness_threshold! : 50));
 
-const badges = computed(() => {
-    if (!props.metrics) return [] as { label: string; kind: 'ok' | 'warn' | 'neutral'; hint?: string }[];
-    const arr: { label: string; kind: 'ok' | 'warn' | 'neutral'; hint?: string }[] = [];
-    if (props.metrics.min_participants_met !== undefined) {
-        arr.push({
-            label: props.metrics.min_participants_met ? 'Participantes mínimos ✅' : 'Mínimo de participantes insuficiente',
-            kind: props.metrics.min_participants_met ? 'ok' : 'warn',
-            hint: 'É necessário pelo menos 2 participantes para o sorteio.',
-        });
+// Revised badge strategy:
+// - Always show wishlist coverage badge (neutral/informational if below threshold; success if above)
+// - Show participant minimum badge only when unmet
+// - When ready, show a success badge and keep wishlist badge (so user still sees %)
+interface Badge {
+    label: string;
+    kind: 'ok' | 'info' | 'warn';
+    hint?: string;
+}
+const badges = computed<Badge[]>(() => {
+    const m = props.metrics;
+    if (!m) return [];
+    const list: Badge[] = [];
+    const minOk = m.min_participants_met === true;
+    const cov = m.wishlist_coverage_percent ?? 0;
+    const covOk = cov >= threshold.value;
+    const ready = m.ready_for_draw === true;
+
+    if (!minOk) {
+        list.push({ label: 'Mínimo de 2 participantes é obrigatório', kind: 'warn', hint: 'Adicione mais participantes para poder sortear.' });
     }
-    if (props.metrics.wishlist_coverage_percent !== undefined) {
-        const pct = props.metrics.wishlist_coverage_percent || 0;
-        arr.push({
-            label: `Wishlists: ${pct}%`,
-            kind: pct >= threshold.value ? 'ok' : 'warn',
-            hint: `Percentual de participantes com ao menos 1 item. Limite para prontidão: ${threshold.value}%.`,
-        });
+
+    // Wishlist informational badge (optional nature conveyed in hint)
+    list.push({
+        label: `Wishlist: ${cov}%`,
+        kind: covOk ? 'ok' : 'info',
+        hint: 'Wishlist não é obrigatória para o sorteio, mas ajuda seu amigo secreto a escolher melhor.',
+    });
+
+    if (ready) {
+        list.unshift({ label: 'Pronto para sorteio', kind: 'ok', hint: `Requisitos atendidos (>=2 participantes). Wishlist é opcional.` });
     }
-    if (props.metrics.ready_for_draw !== undefined) {
-        arr.push({
-            label: props.metrics.ready_for_draw ? 'Pronto para sorteio' : 'Ainda não pronto',
-            kind: props.metrics.ready_for_draw ? 'ok' : 'neutral',
-            hint: `Heurística: participantes mínimos + >=${threshold.value}% com wishlist.`,
-        });
-    }
-    return arr;
+    return list;
 });
 </script>
 
@@ -45,10 +52,9 @@ const badges = computed(() => {
             v-for="b in badges"
             :key="b.label"
             class="inline-flex items-center gap-1 rounded-full border text-[11px] font-medium"
-            :class="
-                [
-                  compact ? 'px-2 py-0.5' : 'px-3 py-1',
-                  b.kind === 'ok'
+            :class="[
+                compact ? 'px-2 py-0.5' : 'px-3 py-1',
+                b.kind === 'ok'
                     ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-200'
                     : b.kind === 'warn'
                       ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-200'
@@ -58,13 +64,10 @@ const badges = computed(() => {
         >
             {{ b.label }}
         </span>
-        <div
-            v-if="(props.metrics?.wishlist_coverage_percent ?? 0) > 0"
-            :class="['w-full', compact ? 'max-w-xs' : 'max-w-sm']"
-        >
+        <div v-if="props.metrics && (props.metrics.wishlist_coverage_percent || 0) > 0" :class="['w-full', compact ? 'max-w-xs' : 'max-w-sm']">
             <div class="mb-1 flex items-center justify-between text-[11px] font-medium text-muted-foreground">
                 <span>Cobertura de wishlist</span>
-                <span>{{ props.metrics!.wishlist_coverage_percent }}%</span>
+                <span>{{ props.metrics!.wishlist_coverage_percent || 0 }}%</span>
             </div>
             <div class="h-2 w-full overflow-hidden rounded bg-neutral-200 dark:bg-neutral-700">
                 <div

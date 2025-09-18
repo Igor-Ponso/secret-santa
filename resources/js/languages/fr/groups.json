@@ -66,6 +66,22 @@
         "denied": "Refusé",
         "post_draw_hint": "Après le tirage, chaque participant ne voit que son destinataire et la wishlist associée.",
         "gift_range": "Fourchette cadeau",
-        "draw_date": "Date du tirage"
+        "draw_date": "Date du tirage",
+        "exclusions": "Exclusions",
+        "exclusions_help": "Définir des paires interdites dans le tirage.",
+        "exclusions_who": "Qui",
+        "exclusions_cannot_draw": "Ne peut tirer",
+        "exclusions_add_inverse": "Inclure exclusion inverse",
+        "exclusions_add": "Ajouter",
+        "exclusions_exists": "Cette exclusion existe déjà.",
+        "exclusions_none": "Aucune exclusion définie.",
+        "exclusions_rules": "Règles",
+        "exclusions_remove_confirm": "Retirer cette exclusion ?",
+        "exclusions_remove": "Retirer exclusion",
+        "exclusions_impossible_offender": "Un participant exclut tous les autres — tirage impossible avec ces contraintes.",
+        "exclusions_dense_warning": "Beaucoup d'exclusions — le tirage peut devenir impossible.",
+        "exclusions_offender_item": "{name} (exclut {count} participant(s))",
+        "exclusions_error_impossible": "Cette combinaison rend le tirage impossible.",
+        "error_generic": "Une erreur est survenue."
     }
 }

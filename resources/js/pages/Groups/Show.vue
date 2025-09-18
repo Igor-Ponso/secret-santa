@@ -1,34 +1,31 @@
 <script setup lang="ts">
 import GroupActivitiesPanel from '@/components/groups/GroupActivitiesPanel.vue';
 import GroupDrawPanel from '@/components/groups/GroupDrawPanel.vue';
-import GroupExclusionsPanel from '@/components/groups/GroupExclusionsPanel.vue';
+import GroupExclusionsTab from '@/components/groups/GroupExclusionsTab.vue';
 import GroupHeaderEditable from '@/components/groups/GroupHeaderEditable.vue';
 import GroupTabsNav from '@/components/groups/GroupTabsNav.vue';
-import InvitationsList from '@/components/groups/InvitationsList.vue';
 import InviteLinkPanel from '@/components/groups/InviteLinkPanel.vue';
-import JoinRequestsList from '@/components/groups/JoinRequestsList.vue';
 import MetricsPanel from '@/components/groups/MetricsPanel.vue';
 import ParticipantsList from '@/components/groups/ParticipantsList.vue';
 import InvitationActionDialog from '@/components/groups/dialogs/InvitationActionDialog.vue';
 import RemoveParticipantDialog from '@/components/groups/dialogs/RemoveParticipantDialog.vue';
 import TransferOwnershipDialog from '@/components/groups/dialogs/TransferOwnershipDialog.vue';
-import Pagination from '@/components/ui/pagination/Pagination.vue';
+import GroupInvitationsTab from '@/components/groups/tabs/GroupInvitationsTab.vue';
+import GroupJoinRequestsTab from '@/components/groups/tabs/GroupJoinRequestsTab.vue';
 import { Recipient, GroupShowProps as ShowProps, WishlistItem } from '@/interfaces/group';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { useDateFormat } from '@/lib/formatDate';
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 // Interfaces moved to '@/interfaces/group'
 
 const props = defineProps<ShowProps>();
 const { t } = useI18n();
-const { formatDate } = useDateFormat();
 // Computed wrapper so when Inertia replaces props the template reacts
 const group = computed(() => props.group);
 // Tabs (backend-sanitized)
-const activeTab = ref<'participants' | 'invitations' | 'join_requests'>(props.group.initial_tab || 'participants');
+const activeTab = ref<'participants' | 'invitations' | 'join_requests' | 'exclusions'>(props.group.initial_tab || 'participants');
 // Local participant client-side search (backend now guarantees no duplicate/owner phantom invites)
 const participantSearch = ref('');
 const filteredParticipants = computed(() => {
@@ -37,100 +34,10 @@ const filteredParticipants = computed(() => {
     return (group.value.participants || []).filter((p: any) => p.name?.toLowerCase().includes(q));
 });
 
-const jrSearch = ref('');
-const inviteSearch = ref('');
-let inviteSearchTimeout: any = null;
-let jrSearchTimeout: any = null;
-// Invitations simple filter (backend now blocks owner/self + duplicates)
-// Optimistic invitation handling
-const optimisticInvites = ref<any[]>([]);
-const invitationsCombined = computed(() => {
-    const base = group.value.invitations || [];
-    // Exclude optimistic entries that already arrived from backend (by email)
-    const optimisticFiltered = optimisticInvites.value.filter(
-        (o) => !base.some((b: any) => (b.email || '').toLowerCase() === (o.email || '').toLowerCase()),
-    );
-    return [...optimisticFiltered, ...base];
-});
-const filteredInvitations = computed(() => {
-    const list = invitationsCombined.value;
-    if (!inviteSearch.value.trim()) return list;
-    const q = inviteSearch.value.toLowerCase();
-    return list.filter((inv: any) => (inv.email || '').toLowerCase().includes(q));
-});
-const filteredJoinRequests = computed(() => {
-    if (!jrSearch.value.trim()) return group.value.join_requests || [];
-    const q = jrSearch.value.toLowerCase();
-    return (group.value.join_requests || []).filter(
-        (jr: any) => (jr.user?.name || '').toLowerCase().includes(q) || (jr.user?.email || '').toLowerCase().includes(q),
-    );
-});
-
-const updateQuery = (params: Record<string, any>) => {
-    router.get(route('groups.show', group.value.id), params, {
-        only: ['group'],
-        preserveState: true,
-        preserveScroll: true,
-        replace: true,
-    });
-};
-
-const onInvitePage = (page: number) => {
-    updateQuery({
-        invite_page: page,
-        invite_search: inviteSearch.value,
-        jr_page: group.value.join_requests_meta?.current_page || 1,
-        jr_search: jrSearch.value,
-    });
-};
-const onJrPage = (page: number) => {
-    updateQuery({
-        invite_page: group.value.invitations_meta?.current_page || 1,
-        invite_search: inviteSearch.value,
-        jr_page: page,
-        jr_search: jrSearch.value,
-    });
-};
-
-// Debounced search for invitations
-watch(inviteSearch, () => {
-    clearTimeout(inviteSearchTimeout);
-    inviteSearchTimeout = setTimeout(() => {
-        onInvitePage(1);
-    }, 300);
-});
-// Debounced search for join requests
-watch(jrSearch, () => {
-    clearTimeout(jrSearchTimeout);
-    jrSearchTimeout = setTimeout(() => {
-        onJrPage(1);
-    }, 300);
-});
+// Invitation & join request logic moved into dedicated tab components
 
 // join code copy moved into GroupJoinCodePanel via emitted event
 
-const approveJoin = (id: number) => {
-    joinRequestActing.value = { id, action: 'approve' };
-    router.post(
-        route('groups.join_requests.approve', { group: group.value.id, joinRequest: id }),
-        {},
-        {
-            preserveScroll: true,
-            onFinish: () => (joinRequestActing.value = { id: null, action: null }),
-        },
-    );
-};
-const denyJoin = (id: number) => {
-    joinRequestActing.value = { id, action: 'deny' };
-    router.post(
-        route('groups.join_requests.deny', { group: group.value.id, joinRequest: id }),
-        {},
-        {
-            preserveScroll: true,
-            onFinish: () => (joinRequestActing.value = { id: null, action: null }),
-        },
-    );
-};
 const recipient = ref<Recipient | null>(null);
 const recipientWishlist = ref<WishlistItem[]>([]);
 const loadingRecipient = ref(false);
@@ -289,58 +196,11 @@ const confirmRemoveParticipant = () => {
 
 // exclusions logic moved into GroupExclusionsPanel (emit driven)
 
-const handleExclusionCreate = (payload: { user_id: number; excluded_user_id: number; onDone: () => void; onError: (msg: string) => void }) => {
-    router.post(
-        route('groups.exclusions.store', { group: group.value.id }),
-        { user_id: payload.user_id, excluded_user_id: payload.excluded_user_id },
-        {
-            only: ['group'],
-            preserveScroll: true,
-            onError: (errs: any) => {
-                payload.onError(errs?.user_id || errs?.excluded_user_id || (t('groups.error_generic') as string) || 'Erro.');
-            },
-            onSuccess: () => payload.onDone(),
-        },
-    );
-};
-const handleExclusionDelete = (exclusionId: number) => {
-    router.delete(route('groups.exclusions.destroy', { group: group.value.id, exclusion: exclusionId }), { preserveScroll: true, only: ['group'] });
-};
+// Obsolete exclusion handlers removed (handled inside GroupExclusionsTab)
 
-const inviteForm = useForm({ email: '' });
-const sendingInvite = computed(() => inviteForm.processing);
-const inviteEmailInput = ref<HTMLInputElement | null>(null);
-function submitInvite() {
-    if (!inviteForm.email) return;
-    const email = inviteForm.email.trim().toLowerCase();
-    // Prevent submitting duplicate optimistic if already there
-    if (!optimisticInvites.value.some((o) => o.email === email)) {
-        optimisticInvites.value.unshift({
-            id: Date.now() * -1,
-            email,
-            created_at: new Date().toISOString(),
-            accepted_at: null,
-            declined_at: null,
-            revoked_at: null,
-            expires_at: null,
-            is_optimistic: true,
-        });
-    }
-    inviteForm.post(route('groups.invitations.store', group.value.id), {
-        preserveScroll: true,
-        onSuccess: () => {
-            // Remove optimistic version (real one will appear via Inertia prop replacement)
-            optimisticInvites.value = optimisticInvites.value.filter((o) => o.email !== email);
-            inviteForm.reset('email');
-            nextTick(() => inviteEmailInput.value?.focus());
-        },
-        onError: () => {
-            optimisticInvites.value = optimisticInvites.value.filter((o) => o.email !== email);
-        },
-    });
-}
+// Invitation form logic extracted
 
-function setTab(tab: 'participants' | 'invitations' | 'join_requests') {
+function setTab(tab: 'participants' | 'invitations' | 'join_requests' | 'exclusions') {
     activeTab.value = tab;
     const url = new URL(window.location.href);
     url.searchParams.set('tab', tab);
@@ -348,28 +208,12 @@ function setTab(tab: 'participants' | 'invitations' | 'join_requests') {
 }
 
 // Auto-focus invitation email input when switching to invitations tab
-watch(
-    () => activeTab.value,
-    (val) => {
-        if (val === 'invitations') {
-            nextTick(() => inviteEmailInput.value?.focus());
-        }
-    },
-    { immediate: true },
-);
+// Invitation field autofocus now handled in tab component (if desired)
 
 onMounted(fetchRecipient);
 
 // When server sends updated invitations list, remove any optimistic entries now present in real data
-watch(
-    () => group.value.invitations,
-    (latest) => {
-        if (!latest || !optimisticInvites.value.length) return;
-        const latestEmails = latest.map((i: any) => (i.email || '').toLowerCase());
-        optimisticInvites.value = optimisticInvites.value.filter((o) => !latestEmails.includes((o.email || '').toLowerCase()));
-    },
-    { deep: true },
-);
+// Optimistic invitation reconciliation now handled inside GroupInvitationsTab
 </script>
 
 <template>
@@ -417,7 +261,7 @@ watch(
             <MetricsPanel :metrics="group.metrics || null" :is-owner="group.is_owner" />
             <!-- Removed standalone GroupReadinessBadges -->
 
-            <GroupExclusionsPanel v-if="group.is_owner" :group="group" @create="handleExclusionCreate" @delete="handleExclusionDelete" />
+            <!-- Exclusions moved into dedicated tab -->
 
             <GroupTabsNav
                 :group="group"
@@ -447,81 +291,25 @@ watch(
             />
 
             <!-- Invitations Tab -->
-            <div v-if="group.is_owner" v-show="activeTab === 'invitations'">
-                <form @submit.prevent="submitInvite" class="mb-4 flex flex-col gap-2 rounded border bg-muted/40 p-3">
-                    <label class="text-xs font-medium" for="invite-email">Adicionar convite (email)</label>
-                    <div class="flex gap-2">
-                        <input
-                            id="invite-email"
-                            ref="inviteEmailInput"
-                            v-model="inviteForm.email"
-                            type="email"
-                            required
-                            placeholder="email@exemplo.com"
-                            class="flex-1 rounded border px-2 py-1 text-sm"
-                        />
-                        <button
-                            :disabled="sendingInvite || !inviteForm.email"
-                            type="submit"
-                            class="inline-flex items-center rounded bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
-                        >
-                            <span v-if="!sendingInvite">Convidar</span>
-                            <span v-else>Enviando...</span>
-                        </button>
-                    </div>
-                    <p v-if="inviteForm.errors.email" class="text-xs text-red-600">{{ inviteForm.errors.email }}</p>
-                </form>
-                <InvitationsList
-                    :invitations="filteredInvitations"
-                    :invite-search="inviteSearch"
-                    :acting-on="actingOn"
-                    :format-date="formatDate"
-                    :can-paginate="!!(group.invitations_meta && group.invitations_meta.last_page > 1)"
-                    @update:inviteSearch="(v) => (inviteSearch = v)"
-                    @resend="(id) => openDialog('resend', id)"
-                    @revoke="(id) => openDialog('revoke', id)"
-                >
-                    <template #pagination>
-                        <div v-if="group.invitations_meta && group.invitations_meta.last_page > 1" class="pt-2">
-                            <Pagination
-                                :page="group.invitations_meta.current_page"
-                                :items-per-page="group.invitations_meta.per_page"
-                                :total="group.invitations_meta.total"
-                                @update:page="onInvitePage"
-                            />
-                        </div>
-                    </template>
-                </InvitationsList>
-                <p v-if="inviteSearch && !filteredInvitations.length" class="text-xs text-muted-foreground">
-                    {{ t('groups.no_results').replace(':query', inviteSearch) }}
-                </p>
-            </div>
+            <GroupInvitationsTab
+                v-if="group.is_owner"
+                v-show="activeTab === 'invitations'"
+                :group="group"
+                :acting-on="actingOn"
+                :on-open-dialog="openDialog"
+            />
 
             <!-- Join Requests Tab -->
-            <div v-if="group.is_owner" v-show="activeTab === 'join_requests'">
-                <JoinRequestsList
-                    :join-requests="filteredJoinRequests"
-                    :jr-search="jrSearch"
-                    :join-request-acting="joinRequestActing"
-                    :format-date="formatDate"
-                    @update:jrSearch="(v) => (jrSearch = v)"
-                    @approve="approveJoin"
-                    @deny="denyJoin"
-                >
-                    <template #pagination>
-                        <div v-if="group.join_requests_meta && group.join_requests_meta.last_page > 1" class="pt-2">
-                            <Pagination
-                                :page="group.join_requests_meta.current_page"
-                                :items-per-page="group.join_requests_meta.per_page"
-                                :total="group.join_requests_meta.total"
-                                @update:page="onJrPage"
-                            />
-                        </div>
-                    </template>
-                </JoinRequestsList>
-                <p v-if="jrSearch && !filteredJoinRequests.length" class="text-xs text-muted-foreground">
-                    {{ t('groups.no_results').replace(':query', jrSearch) }}
-                </p>
+            <GroupJoinRequestsTab
+                v-if="group.is_owner"
+                v-show="activeTab === 'join_requests'"
+                :group="group"
+                :join-request-acting="joinRequestActing"
+            />
+
+            <!-- Exclusions Tab -->
+            <div v-if="group.is_owner" v-show="activeTab === 'exclusions'">
+                <GroupExclusionsTab :group="group" />
             </div>
 
             <p class="mt-4 text-sm text-muted-foreground">

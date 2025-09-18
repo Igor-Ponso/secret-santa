@@ -71,6 +71,22 @@
         "invite_link_placeholder": "Loading invite link...",
         "generate_invite_link": "Generate new link",
         "my_wishlist": "My wishlist",
-        "view_my_wishlist": "View my wishlist"
+        "view_my_wishlist": "View my wishlist",
+        "exclusions": "Exclusions",
+        "exclusions_help": "Define pairs that cannot happen in the draw.",
+        "exclusions_who": "Who",
+        "exclusions_cannot_draw": "Cannot draw",
+        "exclusions_add_inverse": "Include inverse exclusion",
+        "exclusions_add": "Add",
+        "exclusions_exists": "This exclusion already exists.",
+        "exclusions_none": "No exclusions defined.",
+        "exclusions_rules": "Rules",
+        "exclusions_remove_confirm": "Remove this exclusion?",
+        "exclusions_remove": "Remove exclusion",
+        "exclusions_impossible_offender": "A participant excludes all others — draw impossible with current constraints.",
+        "exclusions_dense_warning": "Many exclusions defined — draw may become impossible.",
+        "exclusions_offender_item": "{name} (excludes {count} participant(s))",
+        "exclusions_error_impossible": "This combination makes the draw impossible.",
+        "error_generic": "An error occurred."
     }
 }

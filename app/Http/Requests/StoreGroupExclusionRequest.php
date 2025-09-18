@@ -19,6 +19,7 @@ class StoreGroupExclusionRequest extends FormRequest
         return [
             'user_id' => ['required', 'integer', 'exists:users,id', 'different:excluded_user_id'],
             'excluded_user_id' => ['required', 'integer', 'exists:users,id', 'different:user_id'],
+            'reciprocal' => ['sometimes', 'boolean'],
         ];
     }
 }

@@ -71,6 +71,22 @@
         "invite_link_placeholder": "Carregando link de convite...",
         "generate_invite_link": "Gerar novo link",
         "my_wishlist": "Minha wishlist",
-        "view_my_wishlist": "Ver minha wishlist"
+        "view_my_wishlist": "Ver minha wishlist",
+        "exclusions": "Exclusões",
+        "exclusions_help": "Defina pares que não podem ocorrer no sorteio.",
+        "exclusions_who": "Quem",
+        "exclusions_cannot_draw": "Não pode tirar",
+        "exclusions_add_inverse": "Incluir exclusão inversa",
+        "exclusions_add": "Adicionar",
+        "exclusions_exists": "Essa exclusão já existe.",
+        "exclusions_none": "Nenhuma exclusão definida.",
+        "exclusions_rules": "Regras",
+        "exclusions_remove_confirm": "Remover esta exclusão?",
+        "exclusions_remove": "Remover exclusão",
+        "exclusions_impossible_offender": "Algum participante exclui todos os outros — sorteio impossível nas condições atuais.",
+        "exclusions_dense_warning": "Muitas exclusões definidas — pode se tornar impossível gerar o sorteio.",
+        "exclusions_offender_item": "{name} (exclui {count} participante(s))",
+        "exclusions_error_impossible": "Essa combinação torna o sorteio impossível.",
+        "error_generic": "Ocorreu um erro."
     }
 }

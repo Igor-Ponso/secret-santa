@@ -24,17 +24,28 @@ const readinessThreshold = computed(() => readiness.value?.readiness_threshold ?
 
 const canManualDraw = computed(() => props.group.is_owner && !props.group.has_draw);
 
+// Show readiness badges? (owner, metrics available, before draw)
+const showBadges = computed(() => props.group.is_owner && readiness.value && !props.group.has_draw);
+
 const drawCountdownLabel = computed(() => {
     if (!props.group.draw_date || props.group.has_draw) return '';
     const d = props.group.days_until_draw;
-    if (d > 0)
-        return t('groups.draw_in_days', {
+    const fallbackPlural = `${d} dia${d === 1 ? '' : 's'}`;
+    if (d > 0) {
+        const label = t('groups.draw_in_days', {
             count: d,
-            days: t('common.days', { count: d }) || `${d} dia${d === 1 ? '' : 's'}`,
+            days: t('common.days', { count: d }) || fallbackPlural,
             date: props.group.draw_date,
-        }) || `${d} dias`;
-    if (d === 0) return t('groups.draw_today') || 'O sorteio é hoje.';
-    return t('groups.draw_date_passed') || 'Data planejada já passou.';
+        });
+        // Avoid leaking raw key if translation missing
+        return label === 'groups.draw_in_days' ? fallbackPlural : label;
+    }
+    if (d === 0) {
+        const today = t('groups.draw_today');
+        return today === 'groups.draw_today' ? 'O sorteio é hoje.' : today;
+    }
+    const past = t('groups.draw_date_passed');
+    return past === 'groups.draw_date_passed' ? 'Data planejada já passou.' : past;
 });
 
 const actionLabel = computed(() => {
@@ -43,27 +54,11 @@ const actionLabel = computed(() => {
     return t('groups.waiting_participants') || 'Aguardando Participantes';
 });
 
-const showCoverageMiniBar = computed(
-    () => canManualDraw.value && readiness.value && !readiness.value.ready_for_draw && readiness.value.wishlist_coverage_percent !== undefined,
-);
+// Mini coverage bar removed to avoid duplication with badges component
 
-const coverageTooltip = computed(
-    () =>
-        t('groups.wishlist_coverage_tooltip', {
-            coverage: coveragePct.value,
-            threshold: readinessThreshold.value,
-        }) || `Cobertura: ${coveragePct.value}% / ${readinessThreshold.value}%`,
-);
-
-const insufficientParticipants = computed(
-    () => !props.group.has_draw && readiness.value && readiness.value.min_participants_met === false,
-);
+const insufficientParticipants = computed(() => !props.group.has_draw && readiness.value && readiness.value.min_participants_met === false);
 const insufficientWishlist = computed(
-    () =>
-        !props.group.has_draw &&
-        readiness.value &&
-        readiness.value.min_participants_met &&
-        coveragePct.value < readinessThreshold.value,
+    () => !props.group.has_draw && readiness.value && readiness.value.min_participants_met && coveragePct.value < readinessThreshold.value,
 );
 </script>
 
@@ -75,17 +70,12 @@ const insufficientWishlist = computed(
                 <div v-if="drawCountdownLabel" class="text-xs" :class="{ 'text-yellow-700': props.group.days_until_draw < 0 }">
                     <strong>{{ drawCountdownLabel }}</strong>
                 </div>
-                <GroupReadinessBadges
-                    v-if="props.group.is_owner && readiness && !props.group.has_draw"
-                    :metrics="readiness"
-                    compact
-                    class="mt-1"
-                />
+                <GroupReadinessBadges v-if="showBadges" :metrics="readiness" compact class="mt-1" />
                 <div v-else-if="props.group.has_draw" class="mt-1 text-xs font-medium text-green-600 dark:text-green-400">
                     {{ t('groups.draw_complete') || 'Sorteio concluído' }}
                 </div>
             </div>
-            <div class="ml-auto flex flex-col items-end gap-2 min-w-[160px]">
+            <div class="ml-auto flex min-w-[160px] flex-col items-end gap-2">
                 <div v-if="canManualDraw" class="w-full">
                     <button
                         @click="emit('run-draw')"
@@ -95,24 +85,11 @@ const insufficientWishlist = computed(
                         <LoaderCircle v-if="drawing" class="h-4 w-4 animate-spin" />
                         {{ actionLabel }}
                     </button>
-                    <div v-if="showCoverageMiniBar" class="mt-2" :title="coverageTooltip">
-                        <div class="mb-0.5 flex items-center justify-between text-[10px] font-medium text-muted-foreground">
-                            <span>{{ t('groups.wishlist_short') || 'Wishlist' }}</span>
-                            <span>{{ coveragePct }}%</span>
-                        </div>
-                        <div class="h-1.5 w-full overflow-hidden rounded bg-neutral-200 dark:bg-neutral-700">
-                            <div
-                                class="h-full transition-all"
-                                :class="coveragePct >= readinessThreshold ? 'bg-green-600' : 'bg-primary'"
-                                :style="{ width: Math.min(100, coveragePct) + '%' }"
-                            />
-                        </div>
-                    </div>
                 </div>
                 <div v-else-if="props.group.has_draw" class="text-xs text-muted-foreground">{{ t('groups.draw_complete') }}</div>
             </div>
         </div>
-        <div class="flex flex-wrap gap-3 text-xs text-muted-foreground">
+        <div v-if="!showBadges" class="flex flex-wrap gap-3 text-xs text-muted-foreground">
             <span class="inline-flex items-center gap-1 rounded bg-accent/50 px-2 py-0.5">
                 {{ (t('groups.participants') || 'Participantes') + ': ' + props.group.participant_count }}
             </span>
@@ -123,7 +100,10 @@ const insufficientWishlist = computed(
                 {{ t('groups.min_participants_hint') || 'Mínimo 2 participantes para sortear.' }}
             </span>
             <span v-else-if="insufficientWishlist" class="text-amber-600 dark:text-amber-400">
-                {{ t('groups.wishlist_coverage_shortfall', { coverage: coveragePct, threshold: readinessThreshold }) || `Wishlists: ${coveragePct}% / ${readinessThreshold}%` }}
+                {{
+                    t('groups.wishlist_coverage_shortfall', { coverage: coveragePct, threshold: readinessThreshold }) ||
+                    `Wishlists: ${coveragePct}% / ${readinessThreshold}%`
+                }}
             </span>
         </div>
         <RecipientPanel :recipient="recipient" :wishlist="recipientWishlist" :loading="loadingRecipient" :has-draw="props.group.has_draw" />

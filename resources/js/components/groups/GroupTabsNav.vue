@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n';
 
 interface Props {
     group: any;
-    activeTab: 'participants' | 'invitations' | 'join_requests';
+    activeTab: 'participants' | 'invitations' | 'join_requests' | 'exclusions';
     joinCodeVisible: boolean;
     joinCodeCopied: boolean;
     joinCodeRegenerating: boolean;
@@ -13,7 +13,7 @@ interface Props {
 
 defineProps<Props>();
 const emit = defineEmits<{
-    (e: 'update:tab', value: 'participants' | 'invitations' | 'join_requests'): void;
+    (e: 'update:tab', value: 'participants' | 'invitations' | 'join_requests' | 'exclusions'): void;
     (e: 'toggle-join-code'): void;
     (e: 'copy-join-code'): void;
     (e: 'regenerate-code'): void;
@@ -45,6 +45,19 @@ const { t } = useI18n();
             <span v-if="group.pending_join_requests_count" class="ml-1 rounded bg-destructive px-1 text-xs text-destructive-foreground">{{
                 group.pending_join_requests_count
             }}</span>
+        </button>
+        <button
+            v-if="group.is_owner"
+            :class="['rounded px-3 py-1', activeTab === 'exclusions' ? 'bg-primary text-primary-foreground' : 'bg-accent']"
+            @click="emit('update:tab', 'exclusions')"
+        >
+            {{ t('groups.exclusions') || 'Exclusões' }}
+            <span
+                v-if="group.exclusions && group.exclusions.length"
+                class="ml-1 rounded bg-neutral-800 px-1 text-xs font-medium text-white dark:bg-neutral-200 dark:text-neutral-900"
+            >
+                {{ group.exclusions.length }}
+            </span>
         </button>
         <div v-if="group.is_owner" class="ml-auto flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-4">
             <InfoTooltipLabel
