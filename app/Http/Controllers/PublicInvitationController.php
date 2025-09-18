@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Services\InvitationService;
+use App\Http\Resources\InvitationResource;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\JsonResponse;
 
 /**
  * Public (token-based) invitation endpoints.
@@ -22,64 +24,64 @@ class PublicInvitationController extends Controller
      * Display invitation landing page returning a normalized status instead of hard HTTP aborts.
      * This allows frontend to render context-specific i18n messages.
      */
-    public function show(string $plainToken): Response
+    // Returns Inertia/JSON invite landing or redirects if viewer already participates
+    public function show(Request $request, string $plainToken): Response|JsonResponse|RedirectResponse
     {
         $invitation = $this->service->findByPlainToken($plainToken);
-        $user = request()->user();
+        $user = $request->user();
         $component = $user ? 'Invites/Show' : 'Invites/Public';
 
-        // If not authenticated, remember token to continue flow post login/registration
         if (!$user) {
+            // Persist token so after auth we can continue the flow.
             session(['pending_invite_token' => $plainToken]);
         }
 
+        // Helper closure to standardize JSON/Inertia response emission
+        $respond = function (array $payload) use ($request, $component) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'component' => $component,
+                    'props' => $payload,
+                    'url' => $request->getRequestUri(),
+                    'version' => method_exists(\Inertia\Inertia::class, 'version') ? \Inertia\Inertia::getVersion() : null,
+                ]);
+            }
+            return Inertia::render($component, $payload);
+        };
+
         if (!$invitation) {
-            return Inertia::render($component, [
+            return $respond([
                 'invitation' => [
                     'group' => null,
+                    'inviter' => null,
                     'email' => null,
                     'status' => 'invalid',
                     'expired' => false,
                     'revoked' => false,
                     'token' => $plainToken,
-                    'can_accept' => false,
-                    'authenticated' => (bool) $user,
-                ]
+                    'viewer' => [
+                        'authenticated' => (bool) $user,
+                        'participates' => false,
+                        'is_owner' => false,
+                        'email_mismatch' => false,
+                        'can_accept' => false,
+                        'can_request_join' => false,
+                        'join_requested' => false,
+                    ],
+                ],
             ]);
         }
 
-        $expired = $invitation->isExpired();
-        $revoked = (bool) $invitation->revoked_at;
-        $status = 'pending';
-        if ($invitation->accepted_at) {
-            $status = 'accepted';
-        } elseif ($invitation->declined_at) {
-            $status = 'declined';
-        } elseif ($revoked) {
-            $status = 'revoked';
-        } elseif ($expired) {
-            $status = 'expired';
+        $invitation->loadMissing(['inviter:id,name', 'group.owner:id', 'group.invitations:group_id,invited_user_id,accepted_at']);
+
+        if ($user && $invitation->group->isParticipant($user)) {
+            return redirect()->route('groups.show', $invitation->group_id)
+                ->with('flash', ['info' => 'Você já participa deste grupo.']);
         }
 
-        $matchingEmail = $user && strcasecmp($user->email, $invitation->email) === 0;
-        $canAccept = $status === 'pending' && $matchingEmail && !$expired && !$revoked;
-
-        $invitation->loadMissing(['inviter:id,name']);
-
-        return Inertia::render($component, [
-            'invitation' => [
-                'group' => $invitation->group->only(['id', 'name', 'description']),
-                'inviter' => $invitation->inviter ? $invitation->inviter->only(['id', 'name']) : null,
-                // Only expose the invite email if authenticated *and* email matches; otherwise hide for privacy
-                'email' => $matchingEmail ? $invitation->email : null,
-                'status' => $status,
-                'expired' => $expired,
-                'revoked' => $revoked,
-                'token' => $plainToken,
-                'can_accept' => $canAccept,
-                'authenticated' => (bool) $user,
-                'email_mismatch' => $user ? (!$matchingEmail) : false,
-            ]
+        $resource = new InvitationResource($invitation);
+        return $respond([
+            'invitation' => $resource->toArray($request),
         ]);
     }
 

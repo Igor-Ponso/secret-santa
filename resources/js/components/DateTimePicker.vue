@@ -43,11 +43,30 @@ watch(
     },
 );
 
-// Minimum date (as DateValue) if provided
-const minValue = computed<DateValue | undefined>(() => {
+// Minimum date (as JS Date) if provided (Calendar also accepts string | Date)
+const minValue = computed<Date | undefined>(() => {
     if (!props.min) return undefined;
     const d = new Date(props.min);
-    return new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate());
+    d.setHours(0, 0, 0, 0);
+    return d;
+});
+
+// Prevent selecting a past date by clamping calendar selection to min (if provided)
+watch(dateValue, (val) => {
+    if (val && minValue.value) {
+        // Compare by y-m-d
+        const minYear = minValue.value.getFullYear();
+        const minMonth = minValue.value.getMonth() + 1;
+        const minDay = minValue.value.getDate();
+        if (
+            val.year < minYear ||
+            (val.year === minYear && val.month < minMonth) ||
+            (val.year === minYear && val.month === minMonth && val.day < minDay)
+        ) {
+            // Revert to min if attempted earlier selection
+            dateValue.value = new CalendarDate(minYear, minMonth, minDay);
+        }
+    }
 });
 
 const hours = ref<string>(internal.value ? String(internal.value.getHours()).padStart(2, '0') : '12');

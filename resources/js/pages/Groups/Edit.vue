@@ -7,7 +7,7 @@ import type { BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { CalendarDate, DateFormatter, getLocalTimeZone, type DateValue } from '@internationalized/date';
 import { Calendar as CalendarIcon } from 'lucide-vue-next';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 interface GroupPayload {
@@ -49,6 +49,12 @@ const dateValue = ref<DateValue | undefined>(
           ) as DateValue)
         : undefined,
 );
+
+// Min date = today (can't move draw date to past or set into the past)
+const todayMin = computed(() => {
+    const now = new Date();
+    return new CalendarDate(now.getFullYear(), now.getMonth() + 1, now.getDate());
+});
 
 function onCalendarUpdate(val: unknown) {
     // Reka UI may emit complex date objects. We only care if it has toDate.
@@ -196,6 +202,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             <Calendar
                                 :model-value="dateValue as any"
                                 @update:model-value="onCalendarUpdate"
+                                :min="todayMin"
                                 initial-focus
                                 class="rounded-md border"
                             />

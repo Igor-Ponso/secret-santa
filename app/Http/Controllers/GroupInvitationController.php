@@ -53,8 +53,14 @@ class GroupInvitationController extends Controller
             ->first();
 
         if (!$invitation) {
-            // Create a fresh invitation using owner email context (self-link for sharing)
-            $invitation = $this->service->create($group, auth()->user(), auth()->user()->email);
+            // Prior behaviour created an invitation addressed to the owner email purely to obtain a share link.
+            // This polluted the pending invitations list (showing the owner as if invited) and later appeared
+            // as a spurious "owner pending" entry in the UI. We now avoid creating an email-targeted invitation
+            // for the owner. Instead we create a technical invitation addressed to a non-deliverable marker address
+            // so that normal participant invitation lists (filtered by real emails) can exclude it if desired.
+            // Using an obvious marker simplifies future cleanup / potential migration to a dedicated share_tokens table.
+            $owner = auth()->user();
+            $invitation = $this->service->create($group, $owner, $owner->email . '.share-link');
         } elseif (!$invitation->getAttribute('plain_token')) {
             // We have a pending invitation but no transient plain token: regenerate a new one.
             $invitation = $this->service->resend($invitation) ?: $this->service->create($group, auth()->user(), auth()->user()->email);
@@ -87,6 +93,24 @@ class GroupInvitationController extends Controller
         $this->authorize('update', $group);
         $data = $request->validated();
         $email = $data['email'];
+
+        // Guard: prevent inviting the group owner (already a participant)
+        if ($email === $group->owner->email) {
+            return back()->with('flash', [
+                'error' => 'Você já é o dono deste grupo; não é necessário convidar o próprio dono.'
+            ]);
+        }
+
+        // Guard: prevent inviting an email that already belongs to an accepted participant
+        $acceptedParticipantEmailExists = $group->invitations()
+            ->whereNotNull('accepted_at')
+            ->where('email', $email)
+            ->exists();
+        if ($acceptedParticipantEmailExists) {
+            return back()->with('flash', [
+                'error' => 'Este participante já está no grupo.'
+            ]);
+        }
 
         $declinedExists = $group->invitations()
             ->where('email', $email)

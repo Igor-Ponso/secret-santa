@@ -176,7 +176,64 @@ PRs welcome. Please include or update tests for any behavior changes. Prefer sma
 
 ---
 
-## 🙌 Contributions
+## � Invitation Payload (Viewer Refactor)
+
+The invitation landing endpoint (`/invites/{token}`) now returns a normalized structure:
+
+```
+invitation: {
+   group: { id, name, description } | null,
+   inviter: { id, name } | null,
+   email: string|null,            // Only if viewer email matches invite
+   status: 'pending'|'accepted'|'declined'|'revoked'|'expired'|'invalid',
+   expired: boolean,
+   revoked: boolean,
+   token: string|null,
+   viewer: {
+      authenticated: boolean,
+      participates: boolean,       // If true user is redirected to group.show
+      is_owner: boolean,
+      email_mismatch: boolean,
+      can_accept: boolean,
+      can_request_join: boolean,
+      join_requested: boolean
+   }
+}
+```
+
+Behavior:
+
+1. If viewer already participates (owner or accepted) server issues a 302 redirect → `groups.show`.
+2. `can_accept` and `can_request_join` are mutually exclusive.
+3. `join_requested` disables the join button client-side.
+4. Email is omitted unless the authenticated viewer matches the invitation email.
+
+## ⏰ Draw Date (draw_at) Rules
+
+Business constraint: must be today or a future date (never past). Enforced by validation rule `after_or_equal:today` in both create & update requests.
+
+Tests:
+
+- `GroupDrawDateValidationTest` (create)
+- `GroupDrawDateUpdateValidationTest` (update)
+
+Frontend:
+
+- `DateTimePicker` accepts a `min` prop (ISO) and clamps selection below it.
+- Create page passes `:min="new Date().toISOString()"`.
+- Edit page calendar uses computed `todayMin` bound to `:min`.
+
+## 🤝 Join Requests via Invite Page
+
+If the invitation cannot be accepted by the authenticated user (email mismatch / expired / revoked) but the group is valid and user not a participant, `viewer.can_request_join` becomes true. A join request button appears and afterwards `join_requested` flips to true, disabling the button.
+
+## 🧱 Resource Layer
+
+`InvitationResource` centralizes serialization and viewer flag logic, reducing duplication and making future changes (e.g. adding analytics counters) safer.
+
+---
+
+## �🙌 Contributions
 
 Contributions are welcome!  
 Feel free to open Issues or Pull Requests with improvements, bug fixes, or suggestions.

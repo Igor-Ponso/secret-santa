@@ -27,7 +27,7 @@ class UpdateGroupRequest extends FormRequest
             'min_gift_cents' => ['nullable', 'integer', 'min:0', 'max:10000000'],
             'max_gift_cents' => ['nullable', 'integer', 'min:0', 'max:10000000', 'gte:min_gift_cents'],
             'currency' => ['nullable', 'string', 'size:3'],
-            'draw_at' => ['required', 'date', 'after:now'],
+            'draw_at' => ['required', 'date', 'after_or_equal:today'],
         ];
     }
 }

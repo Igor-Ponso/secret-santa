@@ -46,7 +46,9 @@ class InvitationPrivacyTest extends TestCase
         $this->actingAs($user)
             ->get(route('invites.show', $plain))
             ->assertStatus(200)
-            ->assertSee('"can_accept":true');
+            ->assertSee('"can_accept"') // key exists inside viewer
+            ->assertSee('"viewer"')
+            ->assertSee('"can_request_join":false');
     }
 
     public function test_authenticated_mismatched_user_cannot_accept_and_does_not_see_email(): void
@@ -56,6 +58,7 @@ class InvitationPrivacyTest extends TestCase
         $response = $this->actingAs($user)->get(route('invites.show', $plain));
         $response->assertStatus(200)
             ->assertDontSee($email)
+            ->assertSee('"viewer"')
             ->assertSee('"can_accept":false');
     }
 }

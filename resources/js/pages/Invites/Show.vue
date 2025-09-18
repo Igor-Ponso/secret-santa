@@ -17,12 +17,21 @@ import { useI18n } from 'vue-i18n';
 interface InvitationPageProps {
     invitation: {
         group: { id: number; name: string; description?: string | null } | null;
-        email: string | null; // only present if authenticated user matches invite
+        inviter?: { id: number; name: string } | null;
+        email: string | null;
         status: 'pending' | 'accepted' | 'declined' | 'revoked' | 'expired' | 'invalid';
         expired: boolean;
         revoked?: boolean;
         token: string;
-        can_accept?: boolean;
+        viewer: {
+            authenticated: boolean;
+            participates: boolean; // always false here (redirect happens server-side if true)
+            is_owner: boolean;
+            email_mismatch: boolean;
+            can_accept: boolean;
+            can_request_join: boolean;
+            join_requested: boolean;
+        };
     };
 }
 
@@ -30,13 +39,18 @@ const props = defineProps<InvitationPageProps>();
 const { t } = useI18n();
 
 const accept = () => {
-    if (props.invitation.status !== 'pending') return;
+    if (props.invitation.status !== 'pending' || !props.invitation.viewer.can_accept) return;
     router.post(route('invites.accept', props.invitation.token));
 };
 
 const decline = () => {
-    if (props.invitation.status !== 'pending') return;
+    if (props.invitation.status !== 'pending' || !props.invitation.viewer.can_accept) return;
     router.post(route('invites.decline', props.invitation.token));
+};
+
+const requestJoin = () => {
+    if (!props.invitation.group || !props.invitation.viewer.can_request_join || props.invitation.viewer.join_requested) return;
+    router.post(route('groups.join_requests.store', props.invitation.group.id));
 };
 </script>
 
@@ -65,7 +79,8 @@ const decline = () => {
                 </p>
             </div>
             <div v-else class="rounded-md border p-4 text-sm text-destructive">{{ t('invites.invalid') }}</div>
-            <div class="flex gap-3" v-if="props.invitation.status === 'pending' && props.invitation.can_accept">
+            <!-- Accept / decline buttons when pending and viewer can accept -->
+            <div class="flex flex-wrap gap-3" v-if="props.invitation.status === 'pending' && props.invitation.viewer.can_accept">
                 <AlertDialog>
                     <AlertDialogTrigger as-child>
                         <button class="rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90">
@@ -102,6 +117,19 @@ const decline = () => {
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
+            </div>
+
+            <!-- Already participant (owner or accepted) but not relevant accept buttons -->
+            <!-- Request join button when viewer cannot accept but can request join -->
+            <div v-else-if="props.invitation.viewer.can_request_join" class="flex gap-3">
+                <button
+                    class="rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                    @click="requestJoin"
+                    :disabled="props.invitation.viewer.join_requested"
+                >
+                    <span v-if="!props.invitation.viewer.join_requested">{{ t('invites.request_join') || 'Pedir para ingressar' }}</span>
+                    <span v-else>{{ t('invites.join_requested') || 'Pedido enviado' }}</span>
+                </button>
             </div>
         </div>
     </AppLayout>
