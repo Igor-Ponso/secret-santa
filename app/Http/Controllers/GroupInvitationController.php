@@ -112,7 +112,7 @@ class GroupInvitationController extends Controller
             $invitation->notify(new GroupInvitationNotification($group, $plain));
         }
 
-        return redirect()->route('groups.index')->with('flash', [
+        return redirect()->route('groups.show', [$group->id, 'tab' => 'invitations'])->with('flash', [
             'success' => 'Invitation created and email sent.'
         ]);
     }

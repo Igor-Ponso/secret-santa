@@ -20,8 +20,25 @@ export interface GroupMetrics {
     revoked?: number;
     participants?: number;
     invited?: number;
+    min_participants_met?: boolean;
+    wishlist_coverage_percent?: number;
+    ready_for_draw?: boolean;
+    readiness_threshold?: number; // added to align with backend exposure
 }
 
 export interface GroupShowProps {
-    group: any; // TODO: tighten typing incrementally (participants, invitations, etc.)
+    group: {
+        id: number;
+        name: string;
+        description?: string | null;
+        is_owner: boolean;
+        participants?: any[];
+        invitations?: any[];
+        join_requests?: any[];
+        invitations_meta?: any;
+        join_requests_meta?: any;
+        metrics?: GroupMetrics;
+        initial_tab?: 'participants' | 'invitations' | 'join_requests';
+        [key: string]: any; // allow forward compatibility
+    };
 }

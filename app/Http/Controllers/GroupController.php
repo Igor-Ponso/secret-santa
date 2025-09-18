@@ -295,12 +295,42 @@ class GroupController extends Controller
             $accepted = $all->filter(fn($i) => $i->accepted_at)->count();
             $declined = $all->filter(fn($i) => $i->declined_at)->count();
             $revoked = $all->filter(fn($i) => $i->revoked_at)->count();
+            // Minimum participants rule (>=2) already used for draw enablement
+            $minParticipantsMet = $participantCount >= 2;
+            // Wishlist coverage: participants (excluding owner?) -> consider all participants
+            $participantIds = $participants->pluck('id')->all();
+            $withWishlist = \App\Models\Wishlist::whereIn('user_id', $participantIds)->where('group_id', $group->id)->distinct('user_id')->count('user_id');
+            $coveragePercent = $participantCount > 0 ? round(($withWishlist / $participantCount) * 100) : 0;
+            $threshold = (int) config('groups.readiness_wishlist_threshold', 50);
+            $readyForDraw = $minParticipantsMet && $coveragePercent >= $threshold; // configurable heuristic
             $metrics = [
                 'pending' => $pending,
                 'accepted' => $accepted,
                 'declined' => $declined,
                 'revoked' => $revoked,
+                'min_participants_met' => $minParticipantsMet,
+                'wishlist_coverage_percent' => $coveragePercent,
+                'ready_for_draw' => $readyForDraw,
+                'readiness_threshold' => $threshold,
             ];
+        }
+
+        // Sanitize requested tab param
+        $requestedTab = (string) $request->query('tab', 'participants');
+        $validTabs = ['participants', 'invitations', 'join_requests'];
+        $initialTab = in_array($requestedTab, $validTabs, true) ? $requestedTab : 'participants';
+        if ($requestedTab && $requestedTab !== $initialTab) {
+            if (app()->environment('local', 'development')) {
+                \Log::warning('Invalid tab param on group.show', [
+                    'requested' => $requestedTab,
+                    'group_id' => $group->id,
+                    'user_id' => auth()->id(),
+                ]);
+            }
+            // Provide a flash warning only once in this request cycle
+            session()->flash('flash', [
+                'warning' => 'Aba inválida solicitada. Redirecionado para participantes.'
+            ]);
         }
 
         return Inertia::render('Groups/Show', [
@@ -346,6 +376,7 @@ class GroupController extends Controller
                         'target_user_id' => $a->target_user_id,
                         'created_at' => $a->created_at?->toISOString(),
                     ]),
+                'initial_tab' => $initialTab,
             ]
         ]);
     }

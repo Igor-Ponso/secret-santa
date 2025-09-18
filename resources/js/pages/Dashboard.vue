@@ -23,6 +23,15 @@ interface ActivityItem {
     date: string;
 }
 
+interface ReadinessItem {
+    id: number;
+    name: string;
+    coverage: number; // percent
+    participants: number;
+    ready: boolean;
+    threshold: number;
+}
+
 interface DashboardProps {
     groupsCount: number;
     pendingInvitationsCount: number;
@@ -30,6 +39,7 @@ interface DashboardProps {
     pendingInvitations: InvitationSummary[];
     recentActivities: ActivityItem[];
     pendingJoinRequests: { id: number; group: { id: number; name: string }; requested_at: string }[];
+    readiness: ReadinessItem[];
 }
 
 const props = defineProps<DashboardProps>();
@@ -82,6 +92,10 @@ const breadcrumbs = computed(() => [
         href: '/dashboard',
     },
 ]);
+
+const readinessSorted = computed(() => {
+    return [...props.readiness].sort((a, b) => Number(b.ready) - Number(a.ready) || b.coverage - a.coverage);
+});
 </script>
 
 <template>
@@ -182,6 +196,57 @@ const breadcrumbs = computed(() => [
                         </li>
                     </ul>
                     <div v-else class="text-xs text-muted-foreground">{{ t('common.misc.none') }}</div>
+                </div>
+                <!-- Readiness Overview -->
+                <div v-if="props.readiness.length" class="rounded-xl border bg-card p-4 md:col-span-3">
+                    <h2 class="mb-3 text-sm font-semibold">{{ t('common.misc.readiness_overview') || 'Readiness Overview' }}</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[500px] border-collapse text-xs">
+                            <thead>
+                                <tr class="border-b text-left">
+                                    <th class="py-1 pr-2 font-medium">{{ t('common.misc.group') || 'Group' }}</th>
+                                    <th class="py-1 pr-2 font-medium">{{ t('common.misc.participants') || 'Participants' }}</th>
+                                    <th class="py-1 pr-2 font-medium">{{ t('common.misc.wishlist_coverage') || 'Wishlist %' }}</th>
+                                    <th class="py-1 pr-2 font-medium">{{ t('common.misc.status') || 'Status' }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="g in readinessSorted" :key="g.id" class="border-b last:border-b-0 hover:bg-accent/40">
+                                    <td class="py-1 pr-2">
+                                        <Link :href="route('groups.show', g.id)" class="font-medium hover:underline">{{ g.name }}</Link>
+                                    </td>
+                                    <td class="py-1 pr-2">{{ g.participants }}</td>
+                                    <td class="py-1 pr-2">
+                                        <div class="flex items-center gap-2">
+                                            <div class="h-2 w-32 overflow-hidden rounded bg-muted">
+                                                <div
+                                                    class="h-full bg-primary transition-all"
+                                                    :class="g.coverage >= g.threshold ? 'bg-green-600' : 'bg-primary'"
+                                                    :style="{ width: g.coverage + '%' }"
+                                                />
+                                            </div>
+                                            <span>{{ g.coverage }}%</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-1 pr-2">
+                                        <span
+                                            class="inline-flex items-center rounded px-2 py-0.5"
+                                            :class="[
+                                                g.ready
+                                                    ? 'bg-green-100 text-green-800 dark:bg-green-500/15 dark:text-green-300'
+                                                    : 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300',
+                                            ]"
+                                        >
+                                            {{ g.ready ? t('common.misc.ready') || 'Ready' : t('common.misc.not_ready') || 'Not Ready' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="mt-2 text-[10px] text-muted-foreground">
+                        {{ t('common.misc.readiness_threshold_hint') || 'Ready when at least 2 participants and wishlist coverage meets threshold.' }}
+                    </p>
                 </div>
             </div>
             <!-- Atividades Recentes -->

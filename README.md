@@ -171,6 +171,74 @@ PRs welcome. Please include or update tests for any behavior changes. Prefer sma
 
 ---
 
+## 🔗 Share Links & Join Requests Flow
+
+To broaden group growth beyond direct emailed invitations, the platform now supports persistent share links with automatic join request attribution.
+
+### Generation & Rotation
+
+Owner requests a share link (endpoint: `groups/{group}/invitation-link`). Service returns a fresh plain token every call (rotates previous) and stores only the SHA-256 hash in `group_share_links`.
+
+### Public Landing Behavior
+
+Visiting `/invites/{token}` resolves in this order:
+
+1. Standard invitation (email-based) lookup.
+2. Fallback to share link lookup.
+
+If token maps to a share link:
+
+- Status returned: `share_link` (instead of `invalid`).
+- Authenticated non-participants see a “request join” button.
+- Guests have the token persisted in session as `pending_share_token`.
+
+### Session Persistence & Post-Registration Flow
+
+When a guest registers or logs in later:
+
+1. `pending_share_token` is consumed.
+2. If user is neither owner nor participant and no existing join request exists → a `GroupJoinRequest` is created (`status = pending`).
+3. Attribution recorded via `share_link_id` (FK) on the join request for conversion metrics.
+4. Flash success message (“Pedido de entrada enviado…”) is injected.
+
+### Dashboard & History
+
+- Dashboard panel now lists the user’s pending join requests (quick visibility).
+- Dedicated history page: `/join-requests` (filter by status) shows origin (share link vs manual) and resolution timestamps.
+
+### Data Model Additions
+
+| Table                 | Column                        | Purpose                                     |
+| --------------------- | ----------------------------- | ------------------------------------------- |
+| `group_share_links`   | `token` (hashed)              | Secure storage of share link token (sha256) |
+| `group_join_requests` | `share_link_id` (nullable FK) | Attribution of conversion source            |
+
+### Origin Semantics
+
+`origin = share_link` if `share_link_id` present, otherwise treated as manual (code entry or owner-initiated approval flow).
+
+### Security & Privacy
+
+- Same hashing strategy as invitations (plain token never stored).
+- Rotation invalidates previous plain token (no reuse after regeneration).
+- Join request prevents duplicate spam (unique `group_id` + `user_id`).
+
+### Testing Coverage
+
+- `ShareLinkInvitationTest` ensures no phantom invitation rows are created.
+- `ShareLinkRegistrationFlowTest` ensures post-registration attribution and pending request creation.
+
+### Future Enhancements (Ideas)
+
+- Revocation / disable share link endpoint (soft delete + UI indicator).
+- Conversion analytics: per share link accepted vs pending vs denied funnel.
+- Multi-share links (segmented campaigns per owner).
+- Expirable share links (`expires_at`).
+
+---
+
+---
+
 ## � Invitation Payload (Viewer Refactor)
 
 The invitation landing endpoint (`/invites/{token}`) now returns a normalized structure:

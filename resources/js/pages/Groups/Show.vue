@@ -16,8 +16,8 @@ import Pagination from '@/components/ui/pagination/Pagination.vue';
 import { Recipient, GroupShowProps as ShowProps, WishlistItem } from '@/interfaces/group';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useDateFormat } from '@/lib/formatDate';
-import { Head, router, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, ref, watch } from 'vue';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 // Interfaces moved to '@/interfaces/group'
@@ -27,8 +27,8 @@ const { t } = useI18n();
 const { formatDate } = useDateFormat();
 // Computed wrapper so when Inertia replaces props the template reacts
 const group = computed(() => props.group);
-// Tabs
-const activeTab = ref<'participants' | 'invitations' | 'join_requests'>('participants');
+// Tabs (backend-sanitized)
+const activeTab = ref<'participants' | 'invitations' | 'join_requests'>(props.group.initial_tab || 'participants');
 // Local participant client-side search (backend now guarantees no duplicate/owner phantom invites)
 const participantSearch = ref('');
 const filteredParticipants = computed(() => {
@@ -42,10 +42,21 @@ const inviteSearch = ref('');
 let inviteSearchTimeout: any = null;
 let jrSearchTimeout: any = null;
 // Invitations simple filter (backend now blocks owner/self + duplicates)
+// Optimistic invitation handling
+const optimisticInvites = ref<any[]>([]);
+const invitationsCombined = computed(() => {
+    const base = group.value.invitations || [];
+    // Exclude optimistic entries that already arrived from backend (by email)
+    const optimisticFiltered = optimisticInvites.value.filter(
+        (o) => !base.some((b: any) => (b.email || '').toLowerCase() === (o.email || '').toLowerCase()),
+    );
+    return [...optimisticFiltered, ...base];
+});
 const filteredInvitations = computed(() => {
-    if (!inviteSearch.value.trim()) return group.value.invitations || [];
+    const list = invitationsCombined.value;
+    if (!inviteSearch.value.trim()) return list;
     const q = inviteSearch.value.toLowerCase();
-    return (group.value.invitations || []).filter((inv: any) => (inv.email || '').toLowerCase().includes(q));
+    return list.filter((inv: any) => (inv.email || '').toLowerCase().includes(q));
 });
 const filteredJoinRequests = computed(() => {
     if (!jrSearch.value.trim()) return group.value.join_requests || [];
@@ -296,7 +307,69 @@ const handleExclusionDelete = (exclusionId: number) => {
     router.delete(route('groups.exclusions.destroy', { group: group.value.id, exclusion: exclusionId }), { preserveScroll: true, only: ['group'] });
 };
 
+const inviteForm = useForm({ email: '' });
+const sendingInvite = computed(() => inviteForm.processing);
+const inviteEmailInput = ref<HTMLInputElement | null>(null);
+function submitInvite() {
+    if (!inviteForm.email) return;
+    const email = inviteForm.email.trim().toLowerCase();
+    // Prevent submitting duplicate optimistic if already there
+    if (!optimisticInvites.value.some((o) => o.email === email)) {
+        optimisticInvites.value.unshift({
+            id: Date.now() * -1,
+            email,
+            created_at: new Date().toISOString(),
+            accepted_at: null,
+            declined_at: null,
+            revoked_at: null,
+            expires_at: null,
+            is_optimistic: true,
+        });
+    }
+    inviteForm.post(route('groups.invitations.store', group.value.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            // Remove optimistic version (real one will appear via Inertia prop replacement)
+            optimisticInvites.value = optimisticInvites.value.filter((o) => o.email !== email);
+            inviteForm.reset('email');
+            nextTick(() => inviteEmailInput.value?.focus());
+        },
+        onError: () => {
+            optimisticInvites.value = optimisticInvites.value.filter((o) => o.email !== email);
+        },
+    });
+}
+
+function setTab(tab: 'participants' | 'invitations' | 'join_requests') {
+    activeTab.value = tab;
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    window.history.replaceState({}, '', url.toString());
+}
+
+// Auto-focus invitation email input when switching to invitations tab
+watch(
+    () => activeTab.value,
+    (val) => {
+        if (val === 'invitations') {
+            nextTick(() => inviteEmailInput.value?.focus());
+        }
+    },
+    { immediate: true },
+);
+
 onMounted(fetchRecipient);
+
+// When server sends updated invitations list, remove any optimistic entries now present in real data
+watch(
+    () => group.value.invitations,
+    (latest) => {
+        if (!latest || !optimisticInvites.value.length) return;
+        const latestEmails = latest.map((i: any) => (i.email || '').toLowerCase());
+        optimisticInvites.value = optimisticInvites.value.filter((o) => !latestEmails.includes((o.email || '').toLowerCase()));
+    },
+    { deep: true },
+);
 </script>
 
 <template>
@@ -311,7 +384,7 @@ onMounted(fetchRecipient);
             <GroupHeaderEditable
                 :group-id="group.id"
                 :name="group.name"
-                :description="group.description"
+                :description="group.description ?? null"
                 :min-gift-cents="group.min_gift_cents"
                 :max-gift-cents="group.max_gift_cents"
                 :currency="group.currency"
@@ -329,32 +402,7 @@ onMounted(fetchRecipient);
                 </button>
             </div>
 
-            <!-- Draw Status Banner -->
-            <div v-if="group.draw_date && !group.has_draw" class="flex flex-col gap-1 rounded-md border bg-muted/40 px-4 py-3 text-sm">
-                <div v-if="group.days_until_draw > 0">
-                    <strong>Sorteio em {{ group.days_until_draw }} dia<span v-if="group.days_until_draw !== 1">s</span></strong>
-                    <span class="text-muted-foreground">(previsto para {{ group.draw_date }})</span>
-                </div>
-                <div v-else-if="group.days_until_draw === 0">
-                    <strong>O sorteio é hoje.</strong>
-                </div>
-                <div v-else>
-                    <strong class="text-yellow-700">Data planejada já passou.</strong>
-                </div>
-                <div v-if="group.is_owner && group.can_manual_draw" class="pt-1">
-                    <button
-                        type="button"
-                        :disabled="drawing"
-                        @click="runDraw"
-                        class="inline-flex items-center gap-1 rounded bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
-                    >
-                        <span v-if="!drawing">⚡ Executar sorteio manual agora</span>
-                        <span v-else>Processando...</span>
-                    </button>
-                    <p class="mt-1 text-xs text-muted-foreground">Você pode realizar manualmente antes do agendamento automático diário.</p>
-                </div>
-            </div>
-
+            <!-- Consolidated draw panel (status + readiness moved inside component) -->
             <GroupDrawPanel
                 :group="group"
                 :drawing="drawing"
@@ -366,7 +414,8 @@ onMounted(fetchRecipient);
 
             <InviteLinkPanel :group-id="group.id" :is-owner="group.is_owner" />
 
-            <MetricsPanel :metrics="group.metrics" :is-owner="group.is_owner" />
+            <MetricsPanel :metrics="group.metrics || null" :is-owner="group.is_owner" />
+            <!-- Removed standalone GroupReadinessBadges -->
 
             <GroupExclusionsPanel v-if="group.is_owner" :group="group" @create="handleExclusionCreate" @delete="handleExclusionDelete" />
 
@@ -376,7 +425,7 @@ onMounted(fetchRecipient);
                 :join-code-visible="joinCodeVisible"
                 :join-code-copied="joinCodeCopied"
                 :join-code-regenerating="joinCodeRegenerating"
-                @update:tab="(v: any) => (activeTab = v)"
+                @update:tab="(v: any) => setTab(v)"
                 @toggle-join-code="() => (joinCodeVisible = !joinCodeVisible)"
                 @copy-join-code="markJoinCodeCopied"
                 @regenerate-code="regenerateJoinCode"
@@ -399,6 +448,29 @@ onMounted(fetchRecipient);
 
             <!-- Invitations Tab -->
             <div v-if="group.is_owner" v-show="activeTab === 'invitations'">
+                <form @submit.prevent="submitInvite" class="mb-4 flex flex-col gap-2 rounded border bg-muted/40 p-3">
+                    <label class="text-xs font-medium" for="invite-email">Adicionar convite (email)</label>
+                    <div class="flex gap-2">
+                        <input
+                            id="invite-email"
+                            ref="inviteEmailInput"
+                            v-model="inviteForm.email"
+                            type="email"
+                            required
+                            placeholder="email@exemplo.com"
+                            class="flex-1 rounded border px-2 py-1 text-sm"
+                        />
+                        <button
+                            :disabled="sendingInvite || !inviteForm.email"
+                            type="submit"
+                            class="inline-flex items-center rounded bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                        >
+                            <span v-if="!sendingInvite">Convidar</span>
+                            <span v-else>Enviando...</span>
+                        </button>
+                    </div>
+                    <p v-if="inviteForm.errors.email" class="text-xs text-red-600">{{ inviteForm.errors.email }}</p>
+                </form>
                 <InvitationsList
                     :invitations="filteredInvitations"
                     :invite-search="inviteSearch"

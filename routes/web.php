@@ -72,6 +72,28 @@ Route::get('dashboard', function () {
             'requested_at' => $jr->created_at->toISOString(),
         ]);
 
+    // Readiness summary for owned groups
+    $readiness = $groups->map(function ($g) {
+        $groupModel = \App\Models\Group::find($g->id);
+        $participantCount = 1 + $groupModel->invitations()->whereNotNull('accepted_at')->whereNotNull('invited_user_id')->count();
+        $participantIds = collect([$groupModel->owner_id])->merge(
+            $groupModel->invitations()->whereNotNull('accepted_at')->whereNotNull('invited_user_id')->pluck('invited_user_id')
+        );
+        $withWishlist = \App\Models\Wishlist::where('group_id', $g->id)->whereIn('user_id', $participantIds)->distinct('user_id')->count('user_id');
+        $coverage = $participantCount > 0 ? round(($withWishlist / $participantCount) * 100) : 0;
+        $threshold = (int) config('groups.readiness_wishlist_threshold', 50);
+        $minMet = $participantCount >= 2;
+        $ready = $minMet && $coverage >= $threshold;
+        return [
+            'id' => $g->id,
+            'name' => $g->name,
+            'coverage' => $coverage,
+            'participants' => $participantCount,
+            'ready' => $ready,
+            'threshold' => $threshold,
+        ];
+    });
+
     return Inertia::render('Dashboard', [
         'groupsCount' => $groups->count(),
         'pendingInvitationsCount' => $pendingInvitations->count(),
@@ -79,6 +101,7 @@ Route::get('dashboard', function () {
         'pendingInvitations' => $pendingInvitations ?? [],
         'recentActivities' => $recentActivities,
         'pendingJoinRequests' => $pendingJoinRequests,
+        'readiness' => $readiness,
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -126,6 +149,9 @@ Route::middleware(['auth'])
         Route::post('/{group}/join-requests/{joinRequest}/approve', [\App\Http\Controllers\GroupJoinRequestController::class, 'approve'])->name('join_requests.approve');
         Route::post('/{group}/join-requests/{joinRequest}/deny', [\App\Http\Controllers\GroupJoinRequestController::class, 'deny'])->name('join_requests.deny');
     });
+
+// User join requests history
+
 
 // Public (unauthenticated) landing page for invitations by token
 Route::get('/invites/{token}', [\App\Http\Controllers\PublicInvitationController::class, 'show'])->name('invites.show');
