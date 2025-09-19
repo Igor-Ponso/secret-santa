@@ -12,9 +12,17 @@ use Illuminate\Support\Facades\Notification;
 
 class RunDueDrawsCommand extends Command
 {
-    protected $signature = 'groups:run-due-draws {--dry-run : Apenas mostra o que seria executado}';
+    protected $signature = 'groups:run-due-draws {--dry-run : placeholder}';
 
-    protected $description = 'Executa o sorteio automaticamente para grupos cuja data draw_at venceu e ainda não foram sorteados.';
+    protected $description = 'placeholder';
+
+    public function __construct()
+    {
+        parent::__construct();
+        // Late binding of localized signature/description (Laravel doesn't localize these by default)
+        $this->signature = 'groups:run-due-draws {--dry-run : ' . __('messages.console.run_due_draws.option_dry') . '}';
+        $this->description = __('messages.console.run_due_draws.description');
+    }
 
     public function handle(DrawService $drawService): int
     {
@@ -30,7 +38,7 @@ class RunDueDrawsCommand extends Command
 
         $groups = $query->get();
         if ($groups->isEmpty()) {
-            $this->info('Nenhum grupo elegível.');
+            $this->info(__('messages.console.run_due_draws.none_eligible'));
             return self::SUCCESS;
         }
 
@@ -47,12 +55,19 @@ class RunDueDrawsCommand extends Command
             $participantCount = $group->participants()->count();
             if ($participantCount < 2) {
                 $summary['skipped_participants']++;
-                $this->line("[skip] Grupo #{$group->id} ({$group->name}) - participantes insuficientes ({$participantCount})");
+                $this->line(strtr(__('messages.console.run_due_draws.skip_insufficient'), [
+                    ':id' => $group->id,
+                    ':name' => $group->name,
+                    ':count' => $participantCount,
+                ]));
                 continue;
             }
 
             if ($dry) {
-                $this->line("[dry-run] Sorteio seria executado para grupo #{$group->id} ({$group->name})");
+                $this->line(strtr(__('messages.console.run_due_draws.dry_run'), [
+                    ':id' => $group->id,
+                    ':name' => $group->name,
+                ]));
                 continue;
             }
 
@@ -70,12 +85,18 @@ class RunDueDrawsCommand extends Command
             });
 
             if ($result['skipped']) {
-                $this->line("[race] Grupo #{$group->id} já processado.");
+                $this->line(strtr(__('messages.console.run_due_draws.race'), [
+                    ':id' => $group->id,
+                    ':name' => $group->name,
+                ]));
                 continue;
             }
             if (!$result['success']) {
                 $summary['failed_draw']++;
-                $this->error("[fail] Sorteio falhou para grupo #{$group->id} ({$group->name})");
+                $this->error(strtr(__('messages.console.run_due_draws.fail'), [
+                    ':id' => $group->id,
+                    ':name' => $group->name,
+                ]));
                 continue;
             }
 
@@ -85,11 +106,25 @@ class RunDueDrawsCommand extends Command
             $participants = $group->participants()->get();
             Notification::send($participants, new ParticipantDrawResultNotification($group));
             $summary['notified'] += $participants->count();
-            $this->info("[ok] Grupo #{$group->id} ({$group->name}) sorteado. Notificados: {$participants->count()}");
+            $this->info(strtr(__('messages.console.run_due_draws.ok'), [
+                ':id' => $group->id,
+                ':name' => $group->name,
+                ':notified' => $participants->count(),
+            ]));
         }
 
-        $this->table(['Elegíveis', 'Executados', 'Sem participantes', 'Falhas', 'Notificações'], [
-            [$summary['eligible'], $summary['executed'], $summary['skipped_participants'], $summary['failed_draw'], $summary['notified']]
+        $headers = __('messages.console.run_due_draws.table_headers');
+        if (!is_array($headers)) {
+            $headers = ['Eligible', 'Executed', 'Insufficient participants', 'Fails', 'Notified'];
+        }
+        $this->table($headers, [
+            [
+                $summary['eligible'],
+                $summary['executed'],
+                $summary['skipped_participants'],
+                $summary['failed_draw'],
+                $summary['notified'],
+            ]
         ]);
 
         return self::SUCCESS;

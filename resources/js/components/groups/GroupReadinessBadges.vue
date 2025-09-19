@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { GroupMetrics } from '@/interfaces/group';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface Props {
     metrics: GroupMetrics | null;
@@ -19,6 +20,8 @@ interface Badge {
     kind: 'ok' | 'info' | 'warn';
     hint?: string;
 }
+const { t } = useI18n();
+
 const badges = computed<Badge[]>(() => {
     const m = props.metrics;
     if (!m) return [];
@@ -29,18 +32,25 @@ const badges = computed<Badge[]>(() => {
     const ready = m.ready_for_draw === true;
 
     if (!minOk) {
-        list.push({ label: 'Mínimo de 2 participantes é obrigatório', kind: 'warn', hint: 'Adicione mais participantes para poder sortear.' });
+        list.push({
+            label: t('groups.min_participants_badge'),
+            kind: 'warn',
+            hint: t('groups.min_participants_badge_hint'),
+        });
     }
 
-    // Wishlist informational badge (optional nature conveyed in hint)
     list.push({
-        label: `Wishlist: ${cov}%`,
+        label: `${t('common.misc.wishlist') || 'Wishlist'}: ${cov}%`,
         kind: covOk ? 'ok' : 'info',
-        hint: 'Wishlist não é obrigatória para o sorteio, mas ajuda seu amigo secreto a escolher melhor.',
+        hint: t('groups.wishlist_badge_hint'),
     });
 
     if (ready) {
-        list.unshift({ label: 'Pronto para sorteio', kind: 'ok', hint: `Requisitos atendidos (>=2 participantes). Wishlist é opcional.` });
+        list.unshift({
+            label: t('groups.ready_for_draw_badge'),
+            kind: 'ok',
+            hint: t('groups.ready_for_draw_badge_hint'),
+        });
     }
     return list;
 });
@@ -66,7 +76,7 @@ const badges = computed<Badge[]>(() => {
         </span>
         <div v-if="props.metrics && (props.metrics.wishlist_coverage_percent || 0) > 0" :class="['w-full', compact ? 'max-w-xs' : 'max-w-sm']">
             <div class="mb-1 flex items-center justify-between text-[11px] font-medium text-muted-foreground">
-                <span>Cobertura de wishlist</span>
+                <span>{{ t('groups.wishlist_coverage_label') || 'Cobertura de wishlist' }}</span>
                 <span>{{ props.metrics!.wishlist_coverage_percent || 0 }}%</span>
             </div>
             <div class="h-2 w-full overflow-hidden rounded bg-neutral-200 dark:bg-neutral-700">

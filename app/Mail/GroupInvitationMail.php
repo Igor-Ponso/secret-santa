@@ -19,7 +19,7 @@ class GroupInvitationMail extends Mailable
 
     public function build(): self
     {
-        return $this->subject('Convite para participar do grupo: ' . $this->group->name)
-            ->view('emails.invitation');
+        return $this->subject(__('messages.emails.invitation.subject', ['group' => $this->group->name]))
+            ->view('emails.group_invitation');
     }
 }

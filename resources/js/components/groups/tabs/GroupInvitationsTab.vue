@@ -109,7 +109,7 @@ function openRevoke(id: number) {
 <template>
     <div>
         <form @submit.prevent="submitInvite" class="mb-4 flex flex-col gap-2 rounded border bg-muted/40 p-3">
-            <label class="text-xs font-medium" for="invite-email">Adicionar convite (email)</label>
+            <label class="text-xs font-medium" for="invite-email">{{ t('groups.invite_add_label') }}</label>
             <div class="flex gap-2">
                 <input
                     id="invite-email"
@@ -117,7 +117,7 @@ function openRevoke(id: number) {
                     v-model="inviteFormEmail"
                     type="email"
                     required
-                    placeholder="email@exemplo.com"
+                    :placeholder="t('groups.invite_email_placeholder')"
                     class="flex-1 rounded border px-2 py-1 text-sm"
                 />
                 <button
@@ -125,7 +125,7 @@ function openRevoke(id: number) {
                     type="submit"
                     class="inline-flex items-center rounded bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
                 >
-                    Convidar
+                    {{ t('groups.invite_submit') }}
                 </button>
             </div>
         </form>

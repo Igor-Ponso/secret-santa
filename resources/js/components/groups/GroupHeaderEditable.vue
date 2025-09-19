@@ -85,11 +85,11 @@ const submit = () => {
                 </div>
                 <div v-else class="grid w-full gap-2 md:grid-cols-2">
                     <div class="flex flex-col gap-1">
-                        <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Nome</label>
+                        <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Name</label>
                         <input v-model="form.name" class="rounded border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-ring" />
                     </div>
                     <div class="flex flex-col gap-1">
-                        <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Moeda</label>
+                        <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Currency</label>
                         <select
                             v-model="form.currency"
                             class="rounded border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-ring"
@@ -101,7 +101,7 @@ const submit = () => {
                         </select>
                     </div>
                     <div class="flex flex-col gap-1 md:col-span-2">
-                        <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Descrição</label>
+                        <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Description</label>
                         <textarea
                             v-model="form.description"
                             rows="2"
@@ -109,7 +109,7 @@ const submit = () => {
                         />
                     </div>
                     <div class="flex flex-col gap-1">
-                        <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Mínimo</label>
+                        <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Min</label>
                         <input
                             v-model="form.min"
                             type="text"
@@ -119,7 +119,7 @@ const submit = () => {
                         />
                     </div>
                     <div class="flex flex-col gap-1">
-                        <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Máximo</label>
+                        <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Max</label>
                         <input
                             v-model="form.max"
                             type="text"
@@ -143,7 +143,7 @@ const submit = () => {
                 <span
                     v-else-if="props.hasDraw && !editing"
                     class="rounded border px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
-                    >Bloqueado após sorteio</span
+                    >Locked after draw</span
                 >
                 <div v-else class="flex items-center gap-2">
                     <button

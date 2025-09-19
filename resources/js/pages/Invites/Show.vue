@@ -78,7 +78,7 @@ const requestJoin = () => {
                     {{ t('invites.already_declined') }}
                 </p>
                 <p v-else-if="props.invitation.status === 'share_link'" class="mt-2 text-xs text-muted-foreground">
-                    {{ t('invites.share_link_intro') || 'Convite aberto via link compartilhado. Peça para ingressar no grupo.' }}
+                    {{ t('invites.share_link_intro') || 'Open invitation via shared link. Request to join the group.' }}
                 </p>
             </div>
             <div v-else class="rounded-md border p-4 text-sm text-destructive">{{ t('invites.invalid') }}</div>

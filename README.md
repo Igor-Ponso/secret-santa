@@ -45,6 +45,7 @@ This project was built with a focus on great user experience, security, and soli
 - Join code generation & regeneration
 - Secret Santa draw with validation (single execution, recipient retrieval, basic metrics)
 - Recipient wishlist visibility post-draw
+- Encrypted at-rest assignments (receiver stored ciphered; plain id not exposed in queries)
 
 ## 🗺️ Upcoming / Planned
 
@@ -137,11 +138,42 @@ Currently supports `en` and `pt_BR` with JSON namespaces (groups, wishlist, onbo
 - Email privacy for invitations (only visible to intended invitee while authenticated).
 - CSRF + session hardening via Laravel defaults.
 - URL normalization helps reduce malformed external links.
+- Assignment receiver user IDs are stored encrypted (`receiver_cipher`) to mitigate accidental data exposure (only decrypted at access time).
 
 ## 🧩 Draw Mechanics (Current State)
 
-- Simple random assignment ensuring no self-draw.
-- Future: exclusions + retries + fairness metrics.
+- Backtracking + heuristic assignment (most constrained first) ensuring:
+    - No self-assignment
+    - Exclusion rules respected (user -> cannot gift -> excluded_user)
+    - Deterministic feasibility check with guarded search limit
+- Preview endpoint (`GET /groups/{group}/exclusions/preview`) returns:
+    - `feasible: boolean`
+    - `sample: { [giver_user_id]: receiver_user_id } | null`
+    - Localized message (`messages.exclusions.preview.*`)
+- On impossibility (e.g. user excludes everyone else) create action rolls back and emits toast (`flash.error`).
+
+### Exclusions API
+
+| Action              | Method & Path                                   | Notes                                                             |
+| ------------------- | ----------------------------------------------- | ----------------------------------------------------------------- |
+| Create exclusion    | `POST /groups/{group}/exclusions`               | Body: `user_id`, `excluded_user_id`, optional `reciprocal` (bool) |
+| Delete exclusion    | `DELETE /groups/{group}/exclusions/{exclusion}` | Owner only, blocked after draw                                    |
+| Preview feasibility | `GET /groups/{group}/exclusions/preview`        | Returns feasibility + sample mapping                              |
+
+Validation rules:
+
+- Both users must be accepted participants (or owner)
+- Not self, distinct ids
+- Duplicate or inverse pair rejected with `messages.exclusions.duplicate`
+- Locked after draw (`messages.exclusions.locked_after_draw`)
+- Impossible state yields toast (not field error) with `messages.exclusions.impossible`
+
+Front-end UX recommendation:
+
+- After each successful create/delete, re-fetch preview to update a badge (e.g. “Viável” / “Inválido”).
+- Disable “Adicionar” button if preview reports infeasible to prevent surprise failures.
+
+I18n keys added (`messages.exclusions.*`) across `en`, `pt_BR`, `fr`.
 
 ## 📈 Metrics & Observability
 
@@ -168,6 +200,9 @@ PRs welcome. Please include or update tests for any behavior changes. Prefer sma
 - Improved invitation privacy + status views.
 - Added join code regeneration + related tests.
 - Refactored i18n keys for groups & wishlist pages.
+- Added exclusions service (creation, deletion, feasibility preview + sample)
+- Implemented backtracking draw solver with heuristic ordering
+- Added preview endpoint and i18n messages for exclusions
 
 ---
 

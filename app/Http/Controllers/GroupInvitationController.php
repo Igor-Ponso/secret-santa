@@ -69,7 +69,7 @@ class GroupInvitationController extends Controller
         // Guard: prevent inviting the group owner (already a participant)
         if ($email === $group->owner->email) {
             return back()->with('flash', [
-                'error' => 'Você já é o dono deste grupo; não é necessário convidar o próprio dono.'
+                'error' => __('messages.invitations.already_owner')
             ]);
         }
 
@@ -80,7 +80,7 @@ class GroupInvitationController extends Controller
             ->exists();
         if ($acceptedParticipantEmailExists) {
             return back()->with('flash', [
-                'error' => 'Este participante já está no grupo.'
+                'error' => __('messages.invitations.participant_exists')
             ]);
         }
 
@@ -129,7 +129,7 @@ class GroupInvitationController extends Controller
         $this->authorize('update', $group);
         abort_unless($invitation->group_id === $group->id, 404);
         $this->service->revoke($invitation);
-        return back()->with('flash', ['info' => 'Convite revogado']);
+        return back()->with('flash', ['info' => __('messages.invitations.revoked')]);
     }
 
     /**
@@ -145,11 +145,11 @@ class GroupInvitationController extends Controller
         abort_unless($invitation->group_id === $group->id, 404);
         $updated = $this->service->resend($invitation);
         if (!$updated) {
-            return back()->with('flash', ['error' => 'Não é possível reenviar este convite.']);
+            return back()->with('flash', ['error' => __('messages.invitations.cannot_resend')]);
         }
         if ($plain = $updated->getAttribute('plain_token')) {
             $updated->notify(new GroupInvitationNotification($group, $plain));
         }
-        return back()->with('flash', ['success' => 'Convite reenviado']);
+        return back()->with('flash', ['success' => __('messages.invitations.resent')]);
     }
 }

@@ -7,7 +7,7 @@ use App\Models\Wishlist;
 
 it('computes readiness metrics (participants + wishlist coverage)', function () {
     $owner = User::factory()->create();
-    $this->actingAs($owner);
+    \Pest\Laravel\actingAs($owner); // Pest helper
     $group = Group::factory()->create(['owner_id' => $owner->id]);
 
     $u1 = User::factory()->create();
@@ -24,9 +24,10 @@ it('computes readiness metrics (participants + wishlist coverage)', function () 
         'item' => 'Livro',
     ]);
 
-    $response = $this->get(route('groups.show', $group));
+    $response = \Pest\Laravel\get(route('groups.show', $group));
     $response->assertStatus(200);
-    $props = $response->viewData('page')['props'];
+    // Inertia response page data
+    $props = $response->viewData('page')['props'] ?? [];
     $metrics = $props['group']['metrics'] ?? [];
 
     expect($metrics)

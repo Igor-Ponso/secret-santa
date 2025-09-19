@@ -22,10 +22,10 @@ class GroupJoinRequestController extends Controller
             return back()->with('flash', ['error' => 'Código inválido.']);
         }
         if ($group->owner_id === $user->id) {
-            return back()->with('flash', ['info' => 'Você já é o dono do grupo.']);
+            return back()->with('flash', ['info' => __('messages.participants.already_owner')]);
         }
         if ($group->isParticipant($user)) {
-            return back()->with('flash', ['info' => 'Você já participa deste grupo.']);
+            return back()->with('flash', ['info' => __('messages.participants.already_participating')]);
         }
         $jr = GroupJoinRequest::firstOrCreate([
             'group_id' => $group->id,
@@ -41,12 +41,12 @@ class GroupJoinRequestController extends Controller
     {
         $user = $request->user();
         if ($group->owner_id === $user->id) {
-            return back()->with('flash', ['error' => 'Você já é dono do grupo.']);
+            return back()->with('flash', ['error' => __('messages.participants.already_owner')]);
         }
         // If user already participant (accepted invitation) block
         $alreadyParticipant = $group->participants()->where('users.id', $user->id)->exists();
         if ($alreadyParticipant) {
-            return back()->with('flash', ['info' => 'Você já participa deste grupo.']);
+            return back()->with('flash', ['info' => __('messages.participants.already_participating')]);
         }
         $jr = GroupJoinRequest::firstOrCreate([
             'group_id' => $group->id,
@@ -64,7 +64,7 @@ class GroupJoinRequestController extends Controller
         $this->authorize('update', $group);
         abort_unless($joinRequest->group_id === $group->id, 404);
         if ($joinRequest->status !== 'pending') {
-            return back()->with('flash', ['error' => 'Não é possível aprovar.']);
+            return back()->with('flash', ['error' => __('messages.participants.cannot_approve')]);
         }
         $joinRequest->forceFill([
             'status' => 'approved',
@@ -88,7 +88,7 @@ class GroupJoinRequestController extends Controller
         $this->authorize('update', $group);
         abort_unless($joinRequest->group_id === $group->id, 404);
         if ($joinRequest->status !== 'pending') {
-            return back()->with('flash', ['error' => 'Não é possível recusar.']);
+            return back()->with('flash', ['error' => __('messages.participants.cannot_reject')]);
         }
         $joinRequest->forceFill([
             'status' => 'denied',

@@ -11,7 +11,22 @@
         "accept_desc": "Vous rejoindrez ce groupe et le propriétaire vous verra comme participant. Continuer ?",
         "decline_desc": "Vous ne pouvez accepter que tant qu'elle est valide. Refuser signifie que vous ne participerez pas sauf nouvelle invitation.",
         "invitation_for": "Invitation pour :",
+        "invitation_for_you": "Cette invitation est pour votre compte.",
+        "login_to_accept": "Vous avez été invité à rejoindre ce groupe. Connectez-vous ou créez un compte pour accepter.",
+        "email_mismatch": "Vous êtes connecté avec un email différent de celui invité.",
+        "revoked": "Cette invitation a été révoquée.",
+        "invalid": "Jeton d'invitation invalide.",
+        "already_accepted": "Invitation déjà acceptée.",
+        "already_declined": "Invitation déjà refusée.",
         "public": {
+            "heading": "Vous avez été invité !",
+            "subheading": "Rejoignez le plaisir et échangez des cadeaux surprises dans un groupe privé.",
+            "benefits": {
+                "gifting": "Tirage intelligent garde les paires secrètes et équitables",
+                "surprise": "Indices wishlist sans gâcher la surprise",
+                "memory": "Construisez une tradition de saison ensemble"
+            },
+            "footer_note": "Plateforme Secret Santa sécurisée et respectueuse de la vie privée. Pas de spam.",
             "invited_sentence": "{user} vous a invité au groupe {group}",
             "invited_you_to_group": "vous a invité au groupe"
         }

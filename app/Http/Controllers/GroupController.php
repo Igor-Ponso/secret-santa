@@ -329,7 +329,7 @@ class GroupController extends Controller
             }
             // Provide a flash warning only once in this request cycle
             session()->flash('flash', [
-                'warning' => 'Aba inválida solicitada. Redirecionado para participantes.'
+                'warning' => __('messages.participants.invalid_tab')
             ]);
         }
 

@@ -16,14 +16,14 @@ class DrawController extends Controller
         Gate::authorize('runDraw', $group); // owner (separate from update so post-draw edit lock doesn't block banner/draw attempts)
 
         if ($group->assignments()->exists()) {
-            return back()->with('error', 'O sorteio já foi realizado.');
+            return back()->with('error', __('messages.draw.already_done'));
         }
 
         $result = $service->run($group);
         if (!$result['success']) {
-            return back()->with('error', $result['message'] ?? 'Falha ao gerar sorteio');
+            return back()->with('error', $result['message'] ?? __('messages.draw.failed'));
         }
-        return back()->with('success', 'Sorteio realizado com sucesso!');
+        return back()->with('success', __('messages.draw.success'));
     }
 
     public function recipient(Request $request, Group $group, DrawService $service)

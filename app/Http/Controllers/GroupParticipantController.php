@@ -24,7 +24,7 @@ class GroupParticipantController extends Controller
         $this->authorize('removeParticipant', $group);
 
         if ($user->id === $group->owner_id) {
-            return back()->with('flash', ['error' => 'Não é possível remover o dono.']);
+            return back()->with('flash', ['error' => __('messages.participants.cannot_remove_owner')]);
         }
 
         // Check draw executed (assignments exist)
@@ -37,7 +37,7 @@ class GroupParticipantController extends Controller
             $hasDraw = false;
         }
         if ($hasDraw) {
-            return back()->with('flash', ['error' => 'Não é possível remover participantes após o sorteio.']);
+            return back()->with('flash', ['error' => __('messages.participants.cannot_remove_after_draw')]);
         }
 
         // Ensure user is actually a participant (accepted invitation)
@@ -58,7 +58,7 @@ class GroupParticipantController extends Controller
 
         // After removal must not drop below 2 if there were >=2 (so that upcoming draw logic remains valid) - optional rule
         if ($participantTotal <= 2) {
-            return back()->with('flash', ['error' => 'Não é possível remover — grupo ficaria sem participantes suficientes.']);
+            return back()->with('flash', ['error' => __('messages.participants.insufficient_after_removal')]);
         }
 
         DB::transaction(function () use ($invitation, $group, $user) {
@@ -77,6 +77,6 @@ class GroupParticipantController extends Controller
 
         Log::info('Participant removed from group', ['group_id' => $group->id, 'user_id' => $user->id]);
 
-        return back()->with('flash', ['info' => 'Participante removido.']);
+        return back()->with('flash', ['info' => __('messages.participants.removed')]);
     }
 }

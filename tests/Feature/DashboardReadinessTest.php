@@ -13,8 +13,8 @@ class DashboardReadinessTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
-    public function it_displays_readiness_summary_for_owned_groups()
+    #[\PHPUnit\Framework\Attributes\Test]
+    public function it_displays_readiness_summary_for_owned_groups(): void
     {
         $owner = User::factory()->create();
         $this->actingAs($owner);

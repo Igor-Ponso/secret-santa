@@ -52,8 +52,8 @@ Built with Laravel 12, Inertia.js 2, Vue 3, Pinia, TypeScript, and ShadCN Vue.
 **Pending / Planned:**
 
 - [ ] Min/max gift value fields
-- [ ] Draw restrictions (exclusions matrix)
-- [ ] Secure audit of assignment storage at rest (encryption / hashing strategy)
+- [x] Draw restrictions (exclusions matrix + preview + sample)
+- [x] Secure audit of assignment storage at rest (encrypted receiver assignments)
 - [ ] Enhanced metrics (draw readiness, wishlist completion %)
 - [ ] Frontend Vitest coverage for critical flows
 

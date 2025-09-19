@@ -129,7 +129,7 @@ const readinessSorted = computed(() => {
                         >
                     </div>
                 </div>
-                <!-- Próximos Sorteios -->
+                <!-- Upcoming Draws -->
                 <div class="rounded-xl border bg-card p-4">
                     <h2 class="mb-2 text-sm font-semibold">{{ t('common.misc.upcoming_draws') }}</h2>
                     <ul v-if="props.upcomingDraws.length" class="space-y-1 text-xs">
@@ -140,7 +140,7 @@ const readinessSorted = computed(() => {
                     </ul>
                     <div v-else class="text-xs text-muted-foreground">{{ t('common.misc.no_upcoming_draws') }}</div>
                 </div>
-                <!-- Convites Pendentes -->
+                <!-- Pending Invitations -->
                 <div class="rounded-xl border bg-card p-4">
                     <h2 class="mb-2 text-sm font-semibold">{{ t('common.misc.pending_invitations') }}</h2>
                     <ul v-if="invitations.length" class="space-y-2 text-xs">

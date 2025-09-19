@@ -52,12 +52,12 @@ class OnboardingController extends Controller
             }
         });
 
-        return redirect()->route('groups.wishlist.index', $group)->with('flash', ['success' => 'Wishlist initialized']);
+        return redirect()->route('groups.wishlist.index', $group)->with('flash', ['success' => __('messages.wishlist.initialized')]);
     }
 
     /** Skip adding items. */
     public function skip(Group $group): RedirectResponse
     {
-        return redirect()->route('groups.wishlist.index', $group)->with('flash', ['info' => 'Você pode adicionar itens depois.']);
+        return redirect()->route('groups.wishlist.index', $group)->with('flash', ['info' => __('messages.wishlist.can_add_later')]);
     }
 }

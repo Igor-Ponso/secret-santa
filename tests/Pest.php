@@ -16,9 +16,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\Concerns\InteractsWithAuthentication;
 use Illuminate\Foundation\Testing\Concerns\InteractsWithHttp;
 
-// Bind Laravel TestCase so HTTP helpers are available.
-uses(TestCase::class)->in('Feature');
-uses(RefreshDatabase::class)->in('Feature');
+// Bind Laravel TestCase so HTTP helpers / application are available.
+uses(TestCase::class)->in('Feature', 'Unit');
+// Refresh database in both Feature and Unit tests using factories / models.
+uses(RefreshDatabase::class)->in('Feature', 'Unit');
 
 /*
 |--------------------------------------------------------------------------

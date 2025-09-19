@@ -35,7 +35,8 @@
             "link": "Link",
             "actions": "Actions",
             "group": "Group",
-            "code": "Code"
+            "code": "Code",
+            "currency": "Currency"
         },
         "misc": {
             "your_groups": "Your Groups",
@@ -71,7 +72,18 @@
             "none": "None",
             "pick_a_date": "Pick a date",
             "choose_draw_date": "Choose a draw date",
-            "expires_on": "Expires on"
+            "expires_on": "Expires on",
+            "pending_join_requests": "Pending Join Requests",
+            "readiness_overview": "Readiness Overview",
+            "group": "Group",
+            "participants": "Participants",
+            "wishlist_coverage": "Wishlist Coverage",
+            "status": "Status",
+            "not_ready": "Not Ready",
+            "readiness_threshold_hint": "Minimum participants and wishlist coverage required to run the draw.",
+            "ready": "Ready",
+            "participants_count": "{count} {count, plural, one {participant} other {participants}}",
+            "wishlist_items_count": "{count} {count, plural, one {wishlist item} other {wishlist items}}"
         },
         "copy": "Copy",
         "copied": "Copied!",

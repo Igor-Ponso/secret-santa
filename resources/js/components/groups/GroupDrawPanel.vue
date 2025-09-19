@@ -42,7 +42,7 @@ const drawCountdownLabel = computed(() => {
     }
     if (d === 0) {
         const today = t('groups.draw_today');
-        return today === 'groups.draw_today' ? 'O sorteio é hoje.' : today;
+        return today === 'groups.draw_today' ? t('groups.draw_today') : today;
     }
     const past = t('groups.draw_date_passed');
     return past === 'groups.draw_date_passed' ? 'Data planejada já passou.' : past;
@@ -50,8 +50,8 @@ const drawCountdownLabel = computed(() => {
 
 const actionLabel = computed(() => {
     if (props.drawing) return t('groups.drawing') || 'Sorteando...';
-    if (props.group.can_draw) return t('groups.run_draw') || 'Executar Sorteio';
-    return t('groups.waiting_participants') || 'Aguardando Participantes';
+    if (props.group.can_draw) return t('groups.run_draw');
+    return t('groups.waiting_participants');
 });
 
 // Mini coverage bar removed to avoid duplication with badges component
@@ -72,7 +72,7 @@ const insufficientWishlist = computed(
                 </div>
                 <GroupReadinessBadges v-if="showBadges" :metrics="readiness" compact class="mt-1" />
                 <div v-else-if="props.group.has_draw" class="mt-1 text-xs font-medium text-green-600 dark:text-green-400">
-                    {{ t('groups.draw_complete') || 'Sorteio concluído' }}
+                    {{ t('groups.draw_complete') }}
                 </div>
             </div>
             <div class="ml-auto flex min-w-[160px] flex-col items-end gap-2">
@@ -91,13 +91,13 @@ const insufficientWishlist = computed(
         </div>
         <div v-if="!showBadges" class="flex flex-wrap gap-3 text-xs text-muted-foreground">
             <span class="inline-flex items-center gap-1 rounded bg-accent/50 px-2 py-0.5">
-                {{ (t('groups.participants') || 'Participantes') + ': ' + props.group.participant_count }}
+                {{ t('common.misc.participants_count', { count: props.group.participant_count }) }}
             </span>
             <span v-if="props.group.has_draw" class="text-green-600 dark:text-green-400">
-                {{ t('groups.draw_complete') || 'Sorteio concluído' }}
+                {{ t('groups.draw_complete') }}
             </span>
             <span v-else-if="insufficientParticipants" class="text-amber-600 dark:text-amber-400">
-                {{ t('groups.min_participants_hint') || 'Mínimo 2 participantes para sortear.' }}
+                {{ t('groups.min_participants_hint') }}
             </span>
             <span v-else-if="insufficientWishlist" class="text-amber-600 dark:text-amber-400">
                 {{

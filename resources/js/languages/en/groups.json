@@ -87,6 +87,15 @@
         "exclusions_dense_warning": "Many exclusions defined — draw may become impossible.",
         "exclusions_offender_item": "{name} (excludes {count} participant(s))",
         "exclusions_error_impossible": "This combination makes the draw impossible.",
-        "error_generic": "An error occurred."
+        "error_generic": "An error occurred.",
+        "invite_add_label": "Add invitation (email)",
+        "invite_email_placeholder": "email@example.com",
+        "invite_submit": "Invite",
+        "min_participants_badge": "Minimum of 2 participants required",
+        "min_participants_badge_hint": "Add more participants to enable the draw.",
+        "wishlist_badge_hint": "Wishlist is optional but helps your Secret Santa choose a better gift.",
+        "ready_for_draw_badge": "Ready for draw",
+        "ready_for_draw_badge_hint": "Requirements met (>=2 participants). Wishlist optional.",
+        "wishlist_coverage_label": "Wishlist coverage"
     }
 }

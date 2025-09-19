@@ -24,7 +24,7 @@ class GroupOwnershipController extends Controller
         $targetId = (int) $validated['user_id'];
 
         if ($targetId === $group->owner_id) {
-            return back()->with('flash', ['error' => 'Esse usuário já é o dono.']);
+            return back()->with('flash', ['error' => __('messages.participants.user_already_owner')]);
         }
 
         // Ensure target is an accepted participant
@@ -34,7 +34,7 @@ class GroupOwnershipController extends Controller
             ->exists();
 
         if (!$isParticipant) {
-            return back()->with('flash', ['error' => 'Usuário não é um participante aceito.']);
+            return back()->with('flash', ['error' => __('messages.participants.user_not_participant')]);
         }
 
         DB::transaction(function () use ($group, $targetId) {

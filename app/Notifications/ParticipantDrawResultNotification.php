@@ -26,12 +26,12 @@ class ParticipantDrawResultNotification extends Notification
         $groupUrl = route('groups.show', $this->group);
 
         return (new MailMessage)
-            ->subject('Sorteio concluído: ' . $this->group->name)
-            ->greeting('Olá!')
-            ->line('O sorteio do grupo "' . $this->group->name . '" foi concluído.')
-            ->line('Clique abaixo para ver quem você tirou e começar a preparar a surpresa!')
-            ->action('Ver meu amigo secreto', $groupUrl)
-            ->line('Dica: atualize sua wishlist para ajudar seu amigo a escolher um presente.')
-            ->line('Se você não esperava este e-mail, pode ignorá-lo.');
+            ->subject(__('messages.emails.draw.subject', ['group' => $this->group->name]))
+            ->greeting(__('messages.emails.greeting'))
+            ->line(__('messages.emails.draw.line', ['group' => $this->group->name]))
+            ->line(__('messages.emails.draw.click_to_view'))
+            ->action(__('messages.emails.draw.view_recipient_cta'), $groupUrl)
+            ->line(__('messages.emails.draw.tip'))
+            ->line(__('messages.emails.draw.unexpected'));
     }
 }

@@ -65,18 +65,20 @@ const statusBadgeClass = (status: string) => {
                     <span class="mt-0.5 inline-flex flex-wrap items-center gap-2 text-xs">
                         <Badge :class="statusBadgeClass(inv.status)">{{ inv.status }}</Badge>
                         <span v-if="inv.expires_at && inv.status === 'pending'" class="text-xs text-muted-foreground" :title="inv.expires_at">
-                            {{ (t('groups.expires_at') || 'expira em') + ' ' + formatDate(inv.expires_at) }}
+                            {{ t('groups.expires_at') + ' ' + formatDate(inv.expires_at) }}
                         </span>
-                        <span v-if="inv.created_at" class="text-xs text-muted-foreground">{{
-                            (t('groups.sent') || 'enviado') + ' ' + formatDate(inv.created_at)
-                        }}</span>
+                        <span v-if="inv.created_at" class="text-xs text-muted-foreground">
+                            {{ t('groups.sent') + ' ' + formatDate(inv.created_at) }}
+                        </span>
                         <span v-if="inv.accepted_at" class="text-xs text-green-600"
                             >{{ t('groups.accepted') }} {{ formatDate(inv.accepted_at) }}</span
                         >
-                        <span v-if="inv.declined_at" class="text-xs text-destructive"
-                            >{{ t('groups.declined') || 'Recusado' }} {{ formatDate(inv.declined_at) }}</span
-                        >
-                        <span v-if="inv.revoked_at" class="text-[11px] text-destructive">Revogado {{ formatDate(inv.revoked_at) }}</span>
+                        <span v-if="inv.declined_at" class="text-xs text-destructive">
+                            {{ t('groups.declined') }} {{ formatDate(inv.declined_at) }}
+                        </span>
+                        <span v-if="inv.revoked_at" class="text-[11px] text-destructive">
+                            {{ t('groups.revoked') }} {{ formatDate(inv.revoked_at) }}
+                        </span>
                     </span>
                 </div>
                 <div class="flex items-center gap-1" v-if="inv.status === 'pending' || inv.status === 'revoked'">
@@ -84,13 +86,13 @@ const statusBadgeClass = (status: string) => {
                         @click.prevent="emit('resend', inv.id)"
                         class="rounded bg-accent px-2 py-0.5 text-xs hover:bg-accent/70 disabled:opacity-50"
                     >
-                        {{ t('groups.resend') || 'Reenviar' }}
+                        {{ t('groups.resend') }}
                     </button>
                     <button
                         @click.prevent="emit('revoke', inv.id)"
                         class="rounded bg-destructive px-2 py-0.5 text-xs text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
                     >
-                        {{ t('groups.revoke') || 'Revogar' }}
+                        {{ t('groups.revoke') }}
                     </button>
                 </div>
             </li>

@@ -27,13 +27,13 @@ class GroupInvitationNotification extends Notification
         $declineUrl = route('invites.decline', $this->plainToken);
 
         $mail = (new MailMessage)
-            ->subject('Convite para participar do grupo: ' . $this->group->name)
-            ->greeting('Olá!')
-            ->line('Você foi convidado para participar do grupo "' . $this->group->name . '".')
+            ->subject(__('messages.emails.invitation.subject', ['group' => $this->group->name]))
+            ->greeting(__('messages.emails.greeting'))
+            ->line(__('messages.emails.invitation.intro', ['group' => $this->group->name]))
             ->line($this->group->description ?: '')
-            ->action('Aceitar Convite', $acceptUrl)
-            ->line('Se não quiser participar, você pode recusar: ' . $declineUrl)
-            ->line('Se você não esperava este e-mail, pode ignorá-lo.');
+            ->action(__('messages.emails.invitation.accept_cta'), $acceptUrl)
+            ->line(__('messages.emails.invitation.decline_line', ['url' => $declineUrl]))
+            ->line(__('messages.emails.invitation.unexpected'));
 
         return $mail;
     }

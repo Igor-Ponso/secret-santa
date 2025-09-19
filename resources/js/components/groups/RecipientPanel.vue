@@ -12,13 +12,13 @@ const hasWishlist = computed(() => (props.wishlist || []).length > 0);
 <template>
     <div>
         <div v-if="hasDraw" class="space-y-2">
-            <p class="text-xs text-muted-foreground">{{ t('groups.your_recipient') || 'Seu amigo secreto:' }}</p>
-            <div v-if="loading" class="text-xs">{{ t('groups.loading') || 'Carregando...' }}</div>
+            <p class="text-xs text-muted-foreground">{{ t('groups.your_recipient') }}</p>
+            <div v-if="loading" class="text-xs">{{ t('groups.loading') }}</div>
             <div v-else-if="recipient" class="flex flex-col gap-2 rounded bg-accent px-3 py-2 text-sm font-medium">
                 <span>{{ recipient.name }}</span>
                 <div v-if="hasWishlist" class="rounded border bg-background/70 p-2">
                     <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        {{ t('groups.wishlist') || 'Wishlist' }}
+                        {{ t('groups.wishlist') }}
                     </p>
                     <ul class="max-h-40 space-y-1 overflow-auto pr-1">
                         <li v-for="w in wishlist" :key="w.id" class="rounded bg-accent/40 px-2 py-1 text-sm leading-tight">
@@ -28,12 +28,12 @@ const hasWishlist = computed(() => (props.wishlist || []).length > 0);
                         </li>
                     </ul>
                 </div>
-                <div v-else class="text-xs text-muted-foreground">{{ t('groups.empty_wishlist') || 'Sem itens na wishlist.' }}</div>
+                <div v-else class="text-xs text-muted-foreground">{{ t('groups.empty_wishlist') }}</div>
             </div>
             <div v-else class="text-xs text-muted-foreground">
-                {{ t('groups.recipient_not_found') || 'Não encontrado (verifique se você participa do grupo).' }}
+                {{ t('groups.recipient_not_found') }}
             </div>
         </div>
-        <div v-else class="text-xs text-muted-foreground">{{ t('groups.not_drawn_yet') || 'Ainda não sorteado.' }}</div>
+        <div v-else class="text-xs text-muted-foreground">{{ t('groups.not_drawn_yet') }}</div>
     </div>
 </template>

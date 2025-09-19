@@ -39,24 +39,14 @@ const { t } = useI18n();
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle>
-                    {{
-                        mode === 'revoke'
-                            ? t('groups.revoke_invite_title') || 'Revogar convite?'
-                            : t('groups.resend_invite_title') || 'Reenviar convite?'
-                    }}
+                    {{ mode === 'revoke' ? t('groups.revoke_invite_title') : t('groups.resend_invite_title') }}
                 </AlertDialogTitle>
                 <AlertDialogDescription class="text-xs">
                     <template v-if="mode === 'revoke'">
-                        {{
-                            t('groups.revoke_invite_desc') ||
-                            'Essa ação impedirá que o convidado aceite o convite existente. Você poderá criar outro depois.'
-                        }}
+                        {{ t('groups.revoke_invite_desc') }}
                     </template>
                     <template v-else>
-                        {{
-                            t('groups.resend_invite_desc') ||
-                            'Um novo token será gerado e o anterior se torna inválido. Garanta que vai reenviar o link atualizado por e-mail.'
-                        }}
+                        {{ t('groups.resend_invite_desc') }}
                     </template>
                 </AlertDialogDescription>
             </AlertDialogHeader>
@@ -64,7 +54,7 @@ const { t } = useI18n();
                 <AlertDialogCancel @click="emit('close')" class="text-xs">{{ t('groups.cancel') }}</AlertDialogCancel>
                 <AlertDialogAction @click="emit('confirm')" :disabled="actingOn" class="flex items-center gap-2 text-xs">
                     <LoaderCircle v-if="actingOn" class="h-4 w-4 animate-spin" />
-                    {{ mode === 'revoke' ? t('groups.revoke') || 'Revogar' : t('groups.resend') || 'Reenviar' }}
+                    {{ mode === 'revoke' ? t('groups.revoke') : t('groups.resend') }}
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>

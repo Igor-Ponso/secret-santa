@@ -48,7 +48,7 @@ Route::get('dashboard', function () {
             ];
         });
 
-    // Próximos sorteios (draw_at futuro)
+    // Upcoming draws (future draw_at)
     $upcomingDraws = $groups->filter(fn($g) => $g->draw_at && $g->draw_at > Carbon::now())
         ->sortBy('draw_at')
         ->map(fn($g) => [
@@ -57,7 +57,7 @@ Route::get('dashboard', function () {
             'draw_at' => $g->draw_at?->toISOString(),
         ])->values();
 
-    // Atividades recentes (mock)
+    // Recent activities (placeholder)
     $recentActivities = [];
 
     // Pending join requests (user perspective)
@@ -144,6 +144,7 @@ Route::middleware(['auth'])
         // Exclusions
         Route::post('/{group}/exclusions', [\App\Http\Controllers\GroupExclusionController::class, 'store'])->name('exclusions.store');
         Route::delete('/{group}/exclusions/{exclusion}', [\App\Http\Controllers\GroupExclusionController::class, 'destroy'])->name('exclusions.destroy');
+        Route::get('/{group}/exclusions/preview', [\App\Http\Controllers\GroupExclusionController::class, 'preview'])->name('exclusions.preview');
         // Join requests
         Route::post('/{group}/join-requests', [\App\Http\Controllers\GroupJoinRequestController::class, 'store'])->name('join_requests.store');
         Route::post('/{group}/join-requests/{joinRequest}/approve', [\App\Http\Controllers\GroupJoinRequestController::class, 'approve'])->name('join_requests.approve');

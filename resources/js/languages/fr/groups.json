@@ -67,6 +67,11 @@
         "post_draw_hint": "Après le tirage, chaque participant ne voit que son destinataire et la wishlist associée.",
         "gift_range": "Fourchette cadeau",
         "draw_date": "Date du tirage",
+        "invite_link": "Lien d'invitation du groupe",
+        "invite_link_placeholder": "Chargement du lien d'invitation...",
+        "generate_invite_link": "Générer un nouveau lien",
+        "my_wishlist": "Ma wishlist",
+        "view_my_wishlist": "Voir ma wishlist",
         "exclusions": "Exclusions",
         "exclusions_help": "Définir des paires interdites dans le tirage.",
         "exclusions_who": "Qui",
@@ -82,6 +87,15 @@
         "exclusions_dense_warning": "Beaucoup d'exclusions — le tirage peut devenir impossible.",
         "exclusions_offender_item": "{name} (exclut {count} participant(s))",
         "exclusions_error_impossible": "Cette combinaison rend le tirage impossible.",
-        "error_generic": "Une erreur est survenue."
+        "invite_add_label": "Ajouter invitation (email)",
+        "invite_email_placeholder": "email@exemple.com",
+        "invite_submit": "Inviter",
+        "error_generic": "Une erreur est survenue.",
+        "min_participants_badge": "Minimum 2 participants requis",
+        "min_participants_badge_hint": "Ajoutez des participants pour activer le tirage.",
+        "wishlist_badge_hint": "La wishlist est optionnelle mais aide à choisir un meilleur cadeau.",
+        "ready_for_draw_badge": "Prêt pour le tirage",
+        "ready_for_draw_badge_hint": "Conditions remplies (>=2 participants). Wishlist optionnelle.",
+        "wishlist_coverage_label": "Couverture wishlist"
     }
 }

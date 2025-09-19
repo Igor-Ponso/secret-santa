@@ -50,13 +50,13 @@ class PublicInvitationController extends Controller
         };
 
         if (!$invitation) {
-            // Tentar resolver como share link
+            // Try resolving as share link
             $shareGroup = app(\App\Services\ShareLinkService::class)->findGroupByPlainToken($plainToken);
             if ($shareGroup) {
                 $shareGroup->loadMissing('owner:id,name');
                 if ($user && $shareGroup->isParticipant($user)) {
                     return redirect()->route('groups.show', $shareGroup->id)
-                        ->with('flash', ['info' => 'Você já participa deste grupo.']);
+                        ->with('flash', ['info' => __('messages.participants.already_participating')]);
                 }
                 if (!$user) {
                     session(['pending_share_token' => $plainToken]);
@@ -124,7 +124,7 @@ class PublicInvitationController extends Controller
 
         if ($user && $invitation->group->isParticipant($user)) {
             return redirect()->route('groups.show', $invitation->group_id)
-                ->with('flash', ['info' => 'Você já participa deste grupo.']);
+                ->with('flash', ['info' => __('messages.participants.already_participating')]);
         }
 
         $resource = new InvitationResource($invitation);
@@ -142,7 +142,7 @@ class PublicInvitationController extends Controller
         }
         abort_if($invitation->isExpired(), 410);
 
-        // Só permite aceitar se o e-mail do usuário autenticado for igual ao do convite
+        // Only allow accept if authenticated user's email matches invitation email
         if (strtolower($request->user()->email) !== strtolower($invitation->email)) {
             abort(403, 'This invitation is not for your account.');
         }
@@ -166,7 +166,7 @@ class PublicInvitationController extends Controller
         }
         abort_if($invitation->isExpired(), 410);
 
-        // Só permite recusar se o e-mail do usuário autenticado for igual ao do convite
+        // Only allow decline if authenticated user's email matches invitation email
         if (strtolower($request->user()->email) !== strtolower($invitation->email)) {
             abort(403, 'This invitation is not for your account.');
         }

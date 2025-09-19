@@ -58,7 +58,7 @@ class WishlistController extends Controller
             'note' => $request->note,
             'url' => $request->url,
         ]);
-        return back()->with('flash', ['success' => 'Wishlist item added']);
+        return back()->with('flash', ['success' => __('messages.wishlist.item_added')]);
     }
 
     /** Batch create wishlist items (up to 5) atomically. */
@@ -111,7 +111,7 @@ class WishlistController extends Controller
             'url' => 'nullable|url|max:255',
         ]);
         $wishlist->update($request->only(['item', 'note', 'url']));
-        return back()->with('flash', ['info' => 'Wishlist item updated']);
+        return back()->with('flash', ['info' => __('messages.wishlist.item_updated')]);
     }
 
     /**
@@ -121,6 +121,6 @@ class WishlistController extends Controller
     {
         $this->authorize('delete', $wishlist);
         $wishlist->delete();
-        return back()->with('flash', ['info' => 'Wishlist item removed']);
+        return back()->with('flash', ['info' => __('messages.wishlist.item_removed')]);
     }
 }

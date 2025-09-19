@@ -87,6 +87,15 @@
         "exclusions_dense_warning": "Muitas exclusões definidas — pode se tornar impossível gerar o sorteio.",
         "exclusions_offender_item": "{name} (exclui {count} participante(s))",
         "exclusions_error_impossible": "Essa combinação torna o sorteio impossível.",
-        "error_generic": "Ocorreu um erro."
+        "invite_add_label": "Adicionar convite (email)",
+        "invite_email_placeholder": "email@exemplo.com",
+        "invite_submit": "Convidar",
+        "error_generic": "Ocorreu um erro.",
+        "min_participants_badge": "Mínimo de 2 participantes é obrigatório",
+        "min_participants_badge_hint": "Adicione mais participantes para poder sortear.",
+        "wishlist_badge_hint": "Wishlist não é obrigatória, mas ajuda seu amigo secreto a escolher melhor.",
+        "ready_for_draw_badge": "Pronto para sorteio",
+        "ready_for_draw_badge_hint": "Requisitos atendidos (>=2 participantes). Wishlist opcional.",
+        "wishlist_coverage_label": "Cobertura de wishlist"
     }
 }

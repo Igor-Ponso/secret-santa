@@ -21,7 +21,7 @@ function submit() {
     errorMsg.value = '';
     if (!form.value.user_id || !form.value.excluded_user_id) return;
     if (form.value.user_id === form.value.excluded_user_id) {
-        errorMsg.value = t('groups.exclusion_same') || 'Participante não pode se excluir.';
+        errorMsg.value = t('groups.exclusion_same') || 'Participant cannot exclude themselves.';
         return;
     }
     submitting.value = true;
@@ -44,11 +44,11 @@ function submit() {
 <template>
     <div v-if="group.exclusions" class="space-y-2 rounded border p-4">
         <h2 class="flex items-center gap-2 text-sm font-semibold">
-            {{ t('groups.exclusions') || 'Exclusões' }}
+            {{ t('groups.exclusions') }}
             <span class="text-[10px] font-normal text-muted-foreground">beta</span>
         </h2>
         <p v-if="!group.exclusions.length" class="text-xs text-muted-foreground">
-            {{ t('groups.no_exclusions') || 'Nenhuma exclusão definida.' }}
+            {{ t('groups.no_exclusions') }}
         </p>
         <ul v-else class="space-y-1 text-xs">
             <li v-for="ex in group.exclusions" :key="ex.id" class="flex items-center justify-between rounded bg-accent/40 px-2 py-1">
@@ -58,7 +58,7 @@ function submit() {
                     type="button"
                     @click="emit('delete', ex.id)"
                 >
-                    {{ t('groups.remove') || 'Remover' }}
+                    {{ t('groups.remove') }}
                 </button>
             </li>
         </ul>
@@ -68,9 +68,7 @@ function submit() {
             class="mt-3 flex flex-col gap-2 rounded border-t pt-3 md:flex-row md:items-end"
         >
             <div class="flex flex-1 flex-col gap-1">
-                <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{{
-                    t('groups.exclusion_giver') || 'Quem não pode tirar'
-                }}</label>
+                <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{{ t('groups.exclusion_giver') }}</label>
                 <select v-model="form.user_id" class="w-full rounded border bg-background px-2 py-1 text-sm">
                     <option :value="null">-</option>
                     <option
@@ -84,9 +82,7 @@ function submit() {
                 </select>
             </div>
             <div class="flex flex-1 flex-col gap-1">
-                <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{{
-                    t('groups.exclusion_receiver') || 'Não pode receber'
-                }}</label>
+                <label class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{{ t('groups.exclusion_receiver') }}</label>
                 <select v-model="form.excluded_user_id" class="w-full rounded border bg-background px-2 py-1 text-sm">
                     <option :value="null">-</option>
                     <option v-for="p in group.participants" :key="p.id" :value="p.id" :disabled="p.id === form.user_id">
@@ -100,7 +96,7 @@ function submit() {
                     :disabled="!form.user_id || !form.excluded_user_id || submitting"
                     class="rounded bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow disabled:opacity-50"
                 >
-                    {{ submitting ? t('groups.saving') || 'Salvando...' : t('groups.add_exclusion') || 'Adicionar' }}
+                    {{ submitting ? t('groups.saving') : t('groups.add_exclusion') }}
                 </button>
             </div>
         </form>

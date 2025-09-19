@@ -313,7 +313,7 @@ onMounted(fetchRecipient);
             </div>
 
             <p class="mt-4 text-sm text-muted-foreground">
-                {{ t('groups.post_draw_hint') || 'Após o sorteio, cada participante vê apenas seu destinatário e a wishlist associada.' }}
+                {{ t('groups.post_draw_hint') }}
             </p>
             <GroupActivitiesPanel v-if="group.is_owner" :activities="group.activities" />
         </div>

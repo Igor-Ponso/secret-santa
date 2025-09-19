@@ -35,7 +35,7 @@ const benefits = ['invites.public.benefits.gifting', 'invites.public.benefits.su
                 <div class="relative">
                     <img
                         :src="inviteHero"
-                        alt="Presente Convite"
+                        alt="Gift Invitation"
                         class="h-auto w-[460px] max-w-full drop-shadow-[0_10px_28px_rgba(0,0,0,0.50)] md:w-[500px] lg:w-[540px]"
                     />
                 </div>

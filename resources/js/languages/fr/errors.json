@@ -1,0 +1,6 @@
+{
+    "errors": {
+        "fetch_invite_link": "Impossible de charger le lien d'invitation.",
+        "generic": "Une erreur inattendue est survenue."
+    }
+}

@@ -35,7 +35,8 @@
             "link": "Lien",
             "actions": "Actions",
             "group": "Groupe",
-            "code": "Code"
+            "code": "Code",
+            "currency": "Devise"
         },
         "misc": {
             "your_groups": "Vos Groupes",
@@ -71,8 +72,22 @@
             "none": "Aucun",
             "pick_a_date": "Choisissez une date",
             "choose_draw_date": "Choisissez la date du tirage",
-            "expires_on": "Expire le"
-        }
+            "expires_on": "Expire le",
+            "pending_join_requests": "Demandes d'entrée en attente",
+            "readiness_overview": "Aperçu de préparation",
+            "group": "Groupe",
+            "participants": "Participants",
+            "wishlist_coverage": "Couverture Wishlist",
+            "status": "Statut",
+            "not_ready": "Pas prêt",
+            "readiness_threshold_hint": "Participants minimum et couverture wishlist requis pour lancer le tirage.",
+            "ready": "Prêt",
+            "participants_count": "{count} {count, plural, one {participant} other {participants}}",
+            "wishlist_items_count": "{count} {count, plural, one {article wishlist} other {articles wishlist}}"
+        },
+        "copy": "Copier",
+        "copied": "Copié !",
+        "loading": "Chargement..."
     },
     "landing": {
         "headline": "Bienvenue sur Secret Santa",
@@ -127,5 +142,8 @@
         "settings": "Paramètres",
         "logout": "Déconnexion",
         "search": "Rechercher"
+    },
+    "footer": {
+        "credit": "Fait avec ❤️ – Secret Santa © {year}"
     }
 }

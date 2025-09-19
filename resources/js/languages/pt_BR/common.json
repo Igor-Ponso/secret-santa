@@ -35,7 +35,8 @@
             "link": "Link",
             "actions": "Ações",
             "group": "Grupo",
-            "code": "Código"
+            "code": "Código",
+            "currency": "Moeda"
         },
         "misc": {
             "your_groups": "Seus Grupos",
@@ -71,7 +72,18 @@
             "none": "Nenhum",
             "pick_a_date": "Escolha uma data",
             "choose_draw_date": "Escolha a data do sorteio",
-            "expires_on": "Expira em"
+            "expires_on": "Expira em",
+            "pending_join_requests": "Pedidos de Entrada Pendentes",
+            "readiness_overview": "Visão de Prontidão",
+            "group": "Grupo",
+            "participants": "Participantes",
+            "wishlist_coverage": "Cobertura de Wishlist",
+            "status": "Status",
+            "not_ready": "Não Pronto",
+            "readiness_threshold_hint": "Mínimo de participantes e cobertura de wishlist necessários para sortear.",
+            "ready": "Pronto",
+            "participants_count": "{count} {count, plural, one {participante} other {participantes}}",
+            "wishlist_items_count": "{count} {count, plural, one {item da wishlist} other {itens da wishlist}}"
         },
         "copy": "Copiar",
         "copied": "Copiado!",

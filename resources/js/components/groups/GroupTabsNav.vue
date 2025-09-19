@@ -51,7 +51,7 @@ const { t } = useI18n();
             :class="['rounded px-3 py-1', activeTab === 'exclusions' ? 'bg-primary text-primary-foreground' : 'bg-accent']"
             @click="emit('update:tab', 'exclusions')"
         >
-            {{ t('groups.exclusions') || 'Exclusões' }}
+            {{ t('groups.exclusions') }}
             <span
                 v-if="group.exclusions && group.exclusions.length"
                 class="ml-1 rounded bg-neutral-800 px-1 text-xs font-medium text-white dark:bg-neutral-200 dark:text-neutral-900"
