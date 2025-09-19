@@ -68,40 +68,35 @@ Built with Laravel 12, Inertia.js 2, Vue 3, Pinia, TypeScript, and ShadCN Vue.
 
 **Delivered:**
 
-- [x] i18n scaffolding (en, pt_BR)
-- [x] Wishlist quick-access button
-- [x] Batch wishlist add mode + Switch UI
-- [x] Avatar upload backend (storage + removal / profile update)
-- [x] Initial notifications (invitation + draw result)
-- [x] Dark mode toggle component (`ThemeToggle.vue` + composable persistence)
-
-**Planned / Next:**
-
 - [ ] Public group landing + countdown
-- [ ] Avatar rendering in participant & invitation lists (frontend usage in all contexts)
-- [ ] Leave group (self-removal) flow
-- [ ] Improved mobile density / navigation
-- [ ] Email notifications expansion (wishlist change reminders, inactivity nudges)
-- [ ] Recipient enhancements (anonymized hint, gift guidelines, notes)
-- [ ] Activity feed & group history timeline
-- [ ] Metrics panel (expanded readiness / participation)
+
+### Public Group Landing (Delivered)
+
+- Minimal public landing page (`/g/{public_code}`) with name, description, participant count, draw countdown & CTAs
+- Uses non-enumerable `public_code` (Base62 random 12 chars)
+- 404 fallback page implemented (Inertia `Errors/NotFound`)
+- No leakage of internal integer IDs on public surface
+
+* [ ] Email notifications expansion (wishlist change reminders, inactivity nudges)
+* [ ] Recipient enhancements (anonymized hint, gift guidelines, notes)
+* [ ] Activity feed & group history timeline
+* [ ] Metrics panel (expanded readiness / participation)
 
 ---
 
-## 📦 Phase 4 — DevOps, Quality & Observability (Status: Upcoming)
-
-**Planned:**
-
-- [ ] Query review & indexing pass
-- [ ] Formalize service boundaries + Form Request adoption everywhere
-- [ ] PHPDocs + type improvements / PHPStan stricter level
 - [ ] GitHub Actions CI (PEST + Vitest + later Playwright)
 - [ ] Containerized deploy (Docker/Forge or CI CD pipeline)
-- [ ] Privacy-friendly analytics (Umami / Plausible)
-- [ ] Error tracking (Sentry / Bugsnag)
-- [ ] Structured logging & request correlation IDs
-- [ ] Manual QA + accessibility audit (WCAG baseline)
-- [ ] Health/metrics endpoint (readiness & liveness probes)
+
+### Identifier Hardening (Delivered Phase 1)
+
+- Unified 404 strategy via `EnsureGroupMembership` middleware (returns 404 for non-members)
+- Added `public_code` to groups with backfill migration
+- Public landing consumes only `public_code`
+- Documentation: `docs/SECURITY_IDENTIFIERS.md`
+- Future (planned): optional slugs + rotation (not started)
+
+* [ ] Manual QA + accessibility audit (WCAG baseline)
+* [ ] Health/metrics endpoint (readiness & liveness probes)
 
 **Partially Done:**
 

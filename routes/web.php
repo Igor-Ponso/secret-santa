@@ -108,7 +108,7 @@ Route::get('dashboard', function () {
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
 
-Route::middleware(['auth'])
+Route::middleware(['auth', \App\Http\Middleware\EnsureGroupMembership::class])
     ->prefix('groups')
     ->name('groups.')
     ->group(function () {
@@ -164,4 +164,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Authenticated direct actions by id (no plain token exposure)
     Route::post('/invitations/{invitation}/accept', [\App\Http\Controllers\UserInvitationActionController::class, 'accept'])->name('invites.auth.accept');
     Route::post('/invitations/{invitation}/decline', [\App\Http\Controllers\UserInvitationActionController::class, 'decline'])->name('invites.auth.decline');
+});
+
+// Public group landing
+Route::get('/g/{code}', [\App\Http\Controllers\PublicGroupController::class, 'show'])->name('public.groups.show');
+
+// Fallback 404 (must be last). Render Inertia 404 page.
+Route::fallback(function () {
+    return Inertia::render('Errors/NotFound')->toResponse(request())->setStatusCode(404);
 });

@@ -164,7 +164,7 @@ class GroupController extends Controller
     /** Show group details & draw status */
     public function show(Request $request, Group $group): Response
     {
-        $this->authorize('view', $group);
+        // Membership & existence already enforced by EnsureGroupMembership middleware -> 404 if not a participant.
         $hasDraw = false;
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('assignments')) {

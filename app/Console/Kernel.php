@@ -16,6 +16,15 @@ class Kernel extends ConsoleKernel
         $schedule->command('groups:run-due-draws')
             ->dailyAt('00:05')
             ->withoutOverlapping();
+
+        // Cipher verification (assignments) - toggle via config('encryption.verify_schedule_enabled')
+        if (config('encryption.verify_schedule_enabled', true)) {
+            $schedule->command('assignments:verify-ciphers')
+                ->dailyAt('02:30')
+                ->onOneServer()
+                ->withoutOverlapping()
+                ->runInBackground();
+        }
     }
 
     protected function commands(): void

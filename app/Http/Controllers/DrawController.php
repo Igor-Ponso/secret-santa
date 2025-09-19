@@ -55,6 +55,7 @@ class DrawController extends Controller
                 'user' => [
                     'id' => $receiver->id,
                     'name' => $receiver->name,
+                    'avatar' => $receiver->avatar,
                 ],
                 'wishlist' => $wishlist,
             ]

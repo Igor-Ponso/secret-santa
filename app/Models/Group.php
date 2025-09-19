@@ -36,7 +36,8 @@ class Group extends Model
         'max_gift_cents',
         'currency',
         'draw_at',
-        'join_code'
+        'join_code',
+        'public_code'
     ];
 
     /**
@@ -134,5 +135,42 @@ class Group extends Model
             ->whereNotNull('accepted_at')
             ->where('invited_user_id', $user->id)
             ->exists();
+    }
+
+    /**
+     * Boot model to ensure public_code generated for new groups.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (Group $group) {
+            if (!$group->public_code) {
+                $group->public_code = self::generateUniquePublicCode();
+            }
+        });
+    }
+
+    protected static function generateUniquePublicCode(): string
+    {
+        $alphabet = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $len = strlen($alphabet);
+        do {
+            $code = '';
+            for ($i = 0; $i < 12; $i++) {
+                $code .= $alphabet[random_int(0, $len - 1)];
+            }
+        } while (self::query()->where('public_code', $code)->exists());
+        return $code;
+    }
+
+    /** Public URL accessor placeholder (route added later) */
+    public function getPublicUrlAttribute(): ?string
+    {
+        if (!$this->public_code)
+            return null;
+        try {
+            return route('public.groups.show', $this->public_code);
+        } catch (\Throwable $e) {
+            return null; // route not yet registered
+        }
     }
 }
