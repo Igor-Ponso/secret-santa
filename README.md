@@ -21,6 +21,30 @@ This project was built with a focus on great user experience, security, and soli
 
 ---
 
+## Table of Contents
+
+1. [Tech Stack](#-tech-stack)
+2. [Key Features](#-key-features-current)
+3. [Getting Started](#-getting-started-locally)
+4. [Architecture Notes](#-architecture-notes)
+5. [Internationalization](#-internationalization)
+6. [Security (Summary)](#-security-considerations)
+7. [Draw Mechanics](#-draw-mechanics-current-state)
+8. [Share Links](#-share-links--join-requests-flow)
+9. [Invitation Payload](#-invitation-payload-viewer-refactor)
+10. [Draw Date Rules](#-draw-date-draw_at-rules)
+11. [Changelog Snapshot](#-changelog-snapshot-recent)
+12. [Contributing](#-contributing)
+13. [License](#-license)
+
+Extended documentation lives under `docs/`:
+
+- `docs/ENCRYPTION.md`
+- `docs/DRAW_MECHANICS.md`
+- `docs/SHARE_LINKS.md`
+- `docs/INVITATION_PAYLOAD.md`
+- `docs/DRAW_DATE.md`
+
 ## 🔧 Tech Stack
 
 - [Laravel 12](https://laravel.com/docs/12.x) with [Inertia.js 2](https://inertiajs.com/)
@@ -45,7 +69,7 @@ This project was built with a focus on great user experience, security, and soli
 - Join code generation & regeneration
 - Secret Santa draw with validation (single execution, recipient retrieval, basic metrics)
 - Recipient wishlist visibility post-draw
-- Encrypted at-rest assignments (receiver stored ciphered; plain id not exposed in queries)
+- Encrypted at-rest assignments (versioned cipher; plain receiver id no longer stored in use)
 
 ## 🗺️ Upcoming / Planned
 
@@ -94,7 +118,7 @@ Frontend: Vitest setup placeholder (tests to follow as UI stabilizes). CI (GitHu
    `composer install`
 
 4. Install JavaScript dependencies:  
-   `npm install` (ou `bun install` se preferir)
+   `npm install` (or `bun install` if you prefer)
 
 5. Copy `.env.example` to `.env`:  
    `cp .env.example .env`
@@ -138,42 +162,22 @@ Currently supports `en` and `pt_BR` with JSON namespaces (groups, wishlist, onbo
 - Email privacy for invitations (only visible to intended invitee while authenticated).
 - CSRF + session hardening via Laravel defaults.
 - URL normalization helps reduce malformed external links.
-- Assignment receiver user IDs are stored encrypted (`receiver_cipher`) to mitigate accidental data exposure (only decrypted at access time).
+- Assignment receiver user IDs are stored encrypted (`receiver_cipher`) with a version prefix (e.g. `v1:`) to support future rotation without schema changes.
 
-## 🧩 Draw Mechanics (Current State)
+### 🔐 Assignment Encryption & Versioning (Summary)
 
-- Backtracking + heuristic assignment (most constrained first) ensuring:
-    - No self-assignment
-    - Exclusion rules respected (user -> cannot gift -> excluded_user)
-    - Deterministic feasibility check with guarded search limit
-- Preview endpoint (`GET /groups/{group}/exclusions/preview`) returns:
-    - `feasible: boolean`
-    - `sample: { [giver_user_id]: receiver_user_id } | null`
-    - Localized message (`messages.exclusions.preview.*`)
-- On impossibility (e.g. user excludes everyone else) create action rolls back and emits toast (`flash.error`).
+Assignments store the receiver encrypted with a versioned cipher (`receiver_cipher`). See `docs/ENCRYPTION.md` for:
 
-### Exclusions API
+- Full threat model
+- Rotation procedure
+- Command reference (`assignments:verify-ciphers`, `assignments:recrypt`)
+- Future enhancement ideas
 
-| Action              | Method & Path                                   | Notes                                                             |
-| ------------------- | ----------------------------------------------- | ----------------------------------------------------------------- |
-| Create exclusion    | `POST /groups/{group}/exclusions`               | Body: `user_id`, `excluded_user_id`, optional `reciprocal` (bool) |
-| Delete exclusion    | `DELETE /groups/{group}/exclusions/{exclusion}` | Owner only, blocked after draw                                    |
-| Preview feasibility | `GET /groups/{group}/exclusions/preview`        | Returns feasibility + sample mapping                              |
+## 🧩 Draw Mechanics (Summary)
 
-Validation rules:
+Heuristic backtracking solver with exclusion constraints and a feasibility preview endpoint. Details, failure modes, and future improvements: `docs/DRAW_MECHANICS.md`.
 
-- Both users must be accepted participants (or owner)
-- Not self, distinct ids
-- Duplicate or inverse pair rejected with `messages.exclusions.duplicate`
-- Locked after draw (`messages.exclusions.locked_after_draw`)
-- Impossible state yields toast (not field error) with `messages.exclusions.impossible`
-
-Front-end UX recommendation:
-
-- After each successful create/delete, re-fetch preview to update a badge (e.g. “Viável” / “Inválido”).
-- Disable “Adicionar” button if preview reports infeasible to prevent surprise failures.
-
-I18n keys added (`messages.exclusions.*`) across `en`, `pt_BR`, `fr`.
+> Exclusions API & validation rules documented in full at `docs/DRAW_MECHANICS.md`.
 
 ## 📈 Metrics & Observability
 
@@ -203,80 +207,23 @@ PRs welcome. Please include or update tests for any behavior changes. Prefer sma
 - Added exclusions service (creation, deletion, feasibility preview + sample)
 - Implemented backtracking draw solver with heuristic ordering
 - Added preview endpoint and i18n messages for exclusions
+- Introduced versioned assignment encryption (`receiver_cipher` with `v1:` prefix)
+- Added operational commands: `assignments:verify-ciphers` & `assignments:recrypt`
+- Made legacy `receiver_user_id` nullable and removed writes to it (migration path to drop later)
 
 ---
 
-## 🔗 Share Links & Join Requests Flow
+## 🔗 Share Links & Join Requests (Summary)
 
-To broaden group growth beyond direct emailed invitations, the platform now supports persistent share links with automatic join request attribution.
-
-### Generation & Rotation
-
-Owner requests a share link (endpoint: `groups/{group}/invitation-link`). Service returns a fresh plain token every call (rotates previous) and stores only the SHA-256 hash in `group_share_links`.
-
-### Public Landing Behavior
-
-Visiting `/invites/{token}` resolves in this order:
-
-1. Standard invitation (email-based) lookup.
-2. Fallback to share link lookup.
-
-If token maps to a share link:
-
-- Status returned: `share_link` (instead of `invalid`).
-- Authenticated non-participants see a “request join” button.
-- Guests have the token persisted in session as `pending_share_token`.
-
-### Session Persistence & Post-Registration Flow
-
-When a guest registers or logs in later:
-
-1. `pending_share_token` is consumed.
-2. If user is neither owner nor participant and no existing join request exists → a `GroupJoinRequest` is created (`status = pending`).
-3. Attribution recorded via `share_link_id` (FK) on the join request for conversion metrics.
-4. Flash success message (“Pedido de entrada enviado…”) is injected.
-
-### Dashboard & History
-
-- Dashboard panel now lists the user’s pending join requests (quick visibility).
-- Dedicated history page: `/join-requests` (filter by status) shows origin (share link vs manual) and resolution timestamps.
-
-### Data Model Additions
-
-| Table                 | Column                        | Purpose                                     |
-| --------------------- | ----------------------------- | ------------------------------------------- |
-| `group_share_links`   | `token` (hashed)              | Secure storage of share link token (sha256) |
-| `group_join_requests` | `share_link_id` (nullable FK) | Attribution of conversion source            |
-
-### Origin Semantics
-
-`origin = share_link` if `share_link_id` present, otherwise treated as manual (code entry or owner-initiated approval flow).
-
-### Security & Privacy
-
-- Same hashing strategy as invitations (plain token never stored).
-- Rotation invalidates previous plain token (no reuse after regeneration).
-- Join request prevents duplicate spam (unique `group_id` + `user_id`).
-
-### Testing Coverage
-
-- `ShareLinkInvitationTest` ensures no phantom invitation rows are created.
-- `ShareLinkRegistrationFlowTest` ensures post-registration attribution and pending request creation.
-
-### Future Enhancements (Ideas)
-
-- Revocation / disable share link endpoint (soft delete + UI indicator).
-- Conversion analytics: per share link accepted vs pending vs denied funnel.
-- Multi-share links (segmented campaigns per owner).
-- Expirable share links (`expires_at`).
+Growth mechanism via a regenerable share token that enables join requests without direct email invitations. Full flow, storage, security notes, and roadmap: `docs/SHARE_LINKS.md`.
 
 ---
 
 ---
 
-## � Invitation Payload (Viewer Refactor)
+## 📩 Invitation Payload (Summary)
 
-The invitation landing endpoint (`/invites/{token}`) now returns a normalized structure:
+Normalized JSON response for `/invites/{token}`. Full contract: `docs/INVITATION_PAYLOAD.md`.
 
 ```
 invitation: {
@@ -306,54 +253,9 @@ Behavior:
 3. `join_requested` disables the join button client-side.
 4. Email is omitted unless the authenticated viewer matches the invitation email.
 
-## ⏰ Draw Date (`draw_at`) Rules
+## ⏰ Draw Date Rules (Summary)
 
-`draw_at` agora é somente DATA (formato `YYYY-MM-DD`, sem hora/minuto). Motivações:
-
-1. Simplifica a regra de negócio – o sorteio é um evento do dia, não de horário.
-2. Evita discrepâncias de fuso / DST.
-3. Permite batch noturno simples (`groups:run-due-draws`) sem preocupações de granularidade.
-
-Validação: `required | date_format:Y-m-d | after_or_equal:today` nas requests de create/update.
-
-Persistência: Cast como `date` no model `Group`. O service normaliza qualquer entrada para `Y-m-d`.
-
-Execução Automática:
-
-- Comando agendado diário (`00:05`) roda sorteios vencidos (grupos com `draw_at <= hoje` e ainda sem draw).
-- Dono pode rodar manualmente antes via UI (futuro) ou esperar o batch.
-
-### Sorteio Manual e Banner de Status
-
-O dono pode executar manualmente o sorteio assim que houver pelo menos 2 participantes (dono + 1 aceito), mesmo antes da data configurada. A página do grupo mostra um banner com:
-
-- Dias restantes até a data (`days_until_draw`)
-- Mensagem se é hoje ou se a data já passou
-- Botão "Executar sorteio manual" (somente dono, enquanto não houver sorteio)
-
-### Imutabilidade Pós-Sorteio
-
-Após `has_draw = true`:
-
-- Política (`GroupPolicy@update`) bloqueia qualquer edição → respostas 403.
-- UI remove botão de editar cabeçalho e mostra selo de bloqueio.
-- Mantém consistência das regras do jogo para todos os participantes.
-
-Testes:
-
-- `GroupDrawDateValidationTest` (create)
-- `GroupDrawDateUpdateValidationTest` (update)
-- Ajustes no `GroupTest` para usar `toDateString()`.
-
-Frontend:
-
-- `DateTimePicker` substituído por calendário simples (date-only) nos formulários de criação/edição.
-- Seleção inferior à data atual desabilitada visualmente (cells `data-disabled`).
-
-Impacto de Migração:
-
-- Se havia valores com horário previamente, apenas a parte da data é relevante agora.
-- Qualquer lógica futura baseada em horário deve ser reprojetada.
+Date-only scheduling of automatic draws plus manual early execution. Full rationale, validation, UI behavior, and migration notes: `docs/DRAW_DATE.md`.
 
 ## 🤝 Join Requests via Invite Page
 
@@ -365,7 +267,7 @@ If the invitation cannot be accepted by the authenticated user (email mismatch /
 
 ---
 
-## �🙌 Contributions
+## 🙌 Contributions
 
 Contributions are welcome!  
 Feel free to open Issues or Pull Requests with improvements, bug fixes, or suggestions.
