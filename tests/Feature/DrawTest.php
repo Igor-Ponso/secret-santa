@@ -36,11 +36,13 @@ it('runs a draw and creates valid assignments', function () {
     expect($assignments)->toHaveCount(4); // owner + 3
 
     $givers = $assignments->pluck('giver_user_id');
-    $receivers = $assignments->pluck('receiver_user_id');
+    // Legacy plain column now null; use decrypted accessor
+    $receivers = $assignments->map(fn($a) => $a->decrypted_receiver_id);
 
     // No self matches
     foreach ($assignments as $a) {
-        expect($a->giver_user_id)->not->toBe($a->receiver_user_id);
+        expect($a->giver_user_id)->not->toBe($a->decrypted_receiver_id);
+        expect($a->receiver_user_id)->toBeNull(); // legacy column cleared
     }
 
     // All unique givers & receivers

@@ -30,12 +30,13 @@ class Assignment extends Model
 
     /**
      * Get decrypted receiver user id (prefers cipher, falls back to legacy plain column).
+     * Supports versioned cipher format: v<digit>:<base64/serialized cipher json>
      */
     public function getDecryptedReceiverIdAttribute(): ?int
     {
         if ($this->receiver_cipher) {
             try {
-                return (int) decrypt($this->receiver_cipher);
+                return $this->decryptReceiverCipher($this->receiver_cipher);
             } catch (\Throwable $e) {
                 return null; // corrupted or invalid
             }
@@ -44,12 +45,32 @@ class Assignment extends Model
     }
 
     /**
-     * Convenience to set encrypted receiver (also leaves plain column null if present).
+     * Encrypt and set receiver using current version prefix.
      */
     public function setEncryptedReceiver(int $receiverUserId): void
     {
-        $this->receiver_cipher = encrypt((string) $receiverUserId);
-        // Optionally null out legacy plain column in future: $this->receiver_user_id = null;
+        $version = config('encryption.assignments_version', 1);
+        $payload = encrypt((string) $receiverUserId);
+        // Prefix with version marker for future rotations.
+        $this->receiver_cipher = 'v' . $version . ':' . $payload;
+        // legacy column intentionally left null
+    }
+
+    /**
+     * Internal: decrypt versioned (or legacy unversioned) cipher.
+     */
+    protected function decryptReceiverCipher(string $cipher): int
+    {
+        if (str_starts_with($cipher, 'v')) {
+            $pos = strpos($cipher, ':');
+            if ($pos !== false) {
+                $version = substr($cipher, 1, $pos - 1); // currently unused but reserved
+                $raw = substr($cipher, $pos + 1);
+                return (int) decrypt($raw);
+            }
+        }
+        // Fallback: treat as legacy raw cipher without version prefix
+        return (int) decrypt($cipher);
     }
 
     public function group(): BelongsTo

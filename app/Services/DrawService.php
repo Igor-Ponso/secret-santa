@@ -40,10 +40,8 @@ class DrawService
                 $assignment = new Assignment([
                     'group_id' => $group->id,
                     'giver_user_id' => $giver,
-                    // Keep legacy plain column populated until a future migration makes it nullable/removed
-                    'receiver_user_id' => $receiver,
                 ]);
-                // Store encrypted receiver alongside plain id
+                // Persist only encrypted receiver (legacy column now nullable & cleared)
                 $assignment->setEncryptedReceiver($receiver);
                 $assignment->save();
             }
