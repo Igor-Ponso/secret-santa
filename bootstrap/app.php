@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             SetLocale::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            \App\Http\Middleware\EnsureSecondFactor::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

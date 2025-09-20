@@ -19,6 +19,7 @@ const sidebarNavItems: SettingsNavItem[] = [
     { key: 'settings.nav_password', href: '/settings/password' },
     { key: 'settings.nav_appearance', href: '/settings/appearance' },
     { key: 'settings.nav_language', href: '/settings/language' },
+    { key: 'settings.nav_security', href: '/settings/security' },
 ];
 
 const page = usePage();

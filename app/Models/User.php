@@ -25,6 +25,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'profile_photo_path',
         'provider_name',
         'provider_id',
+        'two_factor_mode',
     ];
 
     /**
