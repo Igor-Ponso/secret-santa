@@ -25,8 +25,23 @@ class EnsureSecondFactor
             $user->two_factor_mode = 'disabled';
         }
 
-        // Bypass for already on challenge routes or logout
-        if ($request->routeIs('2fa.challenge', '2fa.verify', '2fa.resend') || $request->routeIs('logout')) {
+        // Bypass for challenge & management routes or logout
+        if (
+            $request->routeIs(
+                '2fa.challenge',
+                '2fa.verify',
+                '2fa.resend',
+                '2fa.cancel',
+                'logout',
+                // Allow managing 2FA/devices without triggering fresh challenge (password gate still applies)
+                'settings.security.2fa.enable',
+                'settings.security.2fa.disable',
+                'settings.security.devices.rename',
+                'settings.security.devices.destroy',
+                'settings.security.devices.destroyAll',
+                'settings.security.logoutOthers'
+            )
+        ) {
             return $next($request);
         }
 
@@ -46,8 +61,31 @@ class EnsureSecondFactor
 
         // First try cookie trusted_device_token validation (if present) to avoid unnecessary DB lookups / challenges
         $trustedToken = $request->cookies->get('trusted_device_token');
-        if ($trustedToken && $this->service->validateTrustedToken($user, $fingerprint, $trustedToken)) {
+        $context = [
+            'ip' => $request->ip(),
+            'user_agent' => (string) $request->userAgent(),
+        ];
+        if ($trustedToken && $this->service->validateTrustedToken($user, $fingerprint, $trustedToken, $context)) {
             return $next($request);
+        }
+
+        // (Removed grace period to ensure immediate re-challenge when device revoked in tests)
+
+        // If user recently passed a challenge we allow them through (until device untrusted / revoked events clear it)
+        $passedAtIso = $request->session()->get('2fa.passed_at');
+        if ($passedAtIso) {
+            // Could add max freshness window if desired in future
+            return $next($request);
+        }
+
+        // Honor temporary skip window ONLY if there is no active forced situation (e.g., not immediately after revoke all)
+        $skipUntilIso = $request->session()->get('2fa.skip_until');
+        if ($skipUntilIso) {
+            $skipUntil = \Carbon\Carbon::parse($skipUntilIso);
+            if ($skipUntil->isFuture()) {
+                return $next($request);
+            }
+            $request->session()->forget('2fa.skip_until');
         }
 
         $needs = $this->service->needsChallenge($user, $fingerprint);

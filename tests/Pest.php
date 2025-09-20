@@ -51,3 +51,9 @@ function something()
 {
     // ..
 }
+
+function actingAsUser(\App\Models\User $user): \App\Models\User
+{
+    test()->actingAs($user);
+    return $user;
+}

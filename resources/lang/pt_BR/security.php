@@ -1,0 +1,36 @@
+<?php
+
+return [
+    'title' => 'Configurações de Segurança',
+    'breadcrumb' => 'Segurança',
+    '2fa' => [
+        'title' => 'Autenticação em Dois Fatores',
+        'enabled_badge' => 'ATIVO',
+        'disabled_badge' => 'DESATIVADO',
+        'description' => 'Envia um código por email quando você acessa de um novo dispositivo ou navegador.',
+        'processing' => 'Processando...',
+        'enable' => 'Ativar',
+        'disable' => 'Desativar',
+        'confirm_password_title' => 'Confirmar senha',
+        'confirm_password_body' => 'Digite sua senha para :action a autenticação em dois fatores.',
+        'action_enable' => 'ativar',
+        'action_disable' => 'desativar',
+    ],
+    'devices' => [
+        'title' => 'Dispositivos Confiáveis',
+        'description' => 'Lista de dispositivos nos quais você confiou após passar pelo desafio 2FA.',
+        'none' => 'Nenhum dispositivo confiável ainda.',
+        'revoke_all' => 'Revogar todos',
+        'revoke' => 'Revogar',
+        'rename' => 'renomear',
+        'visible' => 'Visível...',
+        'show' => 'Mostrar',
+        'last_used' => 'Último uso',
+        'added' => 'Adicionado',
+    ],
+    'sessions' => [
+        'title' => 'Encerrar outras sessões',
+        'description' => 'Encerra sessões autenticadas em outros navegadores/dispositivos.',
+        'logout' => 'Logout',
+    ],
+];

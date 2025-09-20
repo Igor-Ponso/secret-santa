@@ -42,6 +42,7 @@ Route::middleware('auth')->group(function () {
     Route::get('two-factor/challenge', [\App\Http\Controllers\TwoFactorController::class, 'challenge'])->name('2fa.challenge');
     Route::post('two-factor/verify', [\App\Http\Controllers\TwoFactorController::class, 'verify'])->name('2fa.verify');
     Route::post('two-factor/resend', [\App\Http\Controllers\TwoFactorController::class, 'resend'])->name('2fa.resend');
+    Route::post('two-factor/cancel', [\App\Http\Controllers\TwoFactorController::class, 'cancel'])->name('2fa.cancel');
     // Email verification
     Route::get('verify-email', EmailVerificationPromptController::class)->name('verification.notice');
     Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)

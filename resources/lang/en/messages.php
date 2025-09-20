@@ -1,0 +1,101 @@
+<?php
+
+return [
+    'participants' => [
+        'invalid_tab' => 'Invalid tab parameter provided.',
+        'already_owner' => 'This user already owns the group.',
+        'already_participating' => 'User is already participating.',
+        'cannot_approve' => 'Cannot approve this request.',
+        'cannot_reject' => 'Cannot reject this request.',
+        'user_already_owner' => 'User is already the owner.',
+        'user_not_participant' => 'User is not a participant.',
+        'cannot_remove_owner' => 'Cannot remove the owner.',
+        'cannot_remove_after_draw' => 'Cannot remove participants after the draw.',
+        'insufficient_after_removal' => 'Removal would leave insufficient participants.',
+        'removed' => 'Participant removed.',
+    ],
+    'draw' => [
+        'already_done' => 'The draw has already been performed.',
+        'failed' => 'The draw could not be completed.',
+        'success' => 'The draw was completed successfully!',
+    ],
+    'emails' => [
+        'invitation' => [
+            'subject' => 'You have been invited to :group',
+            'intro' => 'You have received an invitation to join the group :group.',
+            'accept_cta' => 'Accept Invitation',
+            'decline_line' => 'If you do not wish to participate you can safely ignore this message.',
+            'unexpected' => 'If you did not expect this invitation, you can ignore this email.',
+        ],
+        'draw' => [
+            'subject' => 'Your Secret Santa draw for :group',
+            'line' => 'The Secret Santa draw for :group has been completed.',
+            'click_to_view' => 'Click the button below to view your recipient.',
+            'view_recipient_cta' => 'View Recipient',
+            'tip' => 'Remember to keep it secret and have fun!',
+            'unexpected' => 'If you did not expect this email, you can ignore it.',
+        ],
+        'greeting' => 'Hello!',
+    ],
+    'console' => [
+        'run_due_draws' => [
+            'option_dry' => 'Run without committing any changes',
+            'description' => 'Run scheduled draws that are due.',
+            'none_eligible' => 'No groups are eligible for drawing right now.',
+            'skip_insufficient' => 'Skipping group :group (not enough participants).',
+            'dry_run' => 'Dry run: would draw for :group with :count participants.',
+            'race' => 'Another process completed the draw for :group.',
+            'fail' => 'Failed to perform draw for :group.',
+            'ok' => 'Draw completed for :group with :count participants.',
+            'table_headers' => ['Group', 'Participants', 'Status'],
+        ],
+    ],
+    'exclusions' => [
+        'locked_after_draw' => 'Exclusions can no longer be modified after the draw.',
+        'not_found' => 'The exclusion entry was not found.',
+        'invalid_participant' => 'The provided participants are not valid for this group.',
+        'duplicate' => 'This exclusion pair already exists.',
+        'created' => 'Exclusion created successfully.',
+        'deleted' => 'Exclusion removed.',
+        'impossible' => 'These exclusions make the draw impossible.',
+        'preview' => [
+            'feasible' => 'The proposed exclusions are feasible.',
+            'infeasible' => 'The proposed exclusions would make a draw impossible.',
+        ],
+    ],
+    'invitations' => [
+        'accepted' => 'Invitation accepted successfully.',
+        'declined' => 'Invitation declined.',
+        'already_owner' => 'You already own this group.',
+        'participant_exists' => 'That participant is already part of the group.',
+        'revoked' => 'Invitation revoked.',
+        'cannot_resend' => 'Cannot resend this invitation.',
+        'resent' => 'Invitation resent.',
+    ],
+    'wishlist' => [
+        'initialized' => 'Wishlist initialized successfully.',
+        'can_add_later' => 'You can add more items later.',
+        'item_added' => 'Item added to wishlist.',
+        'item_updated' => 'Wishlist item updated.',
+        'item_removed' => 'Wishlist item removed.',
+    ],
+    // participants key already defined above
+    'security' => [
+        'devices' => [
+            'map_title' => 'Approximate Location',
+            'map_disclaimer' => 'Location is IP-based and approximate.',
+            'current_badge' => 'Current',
+            'name_placeholder' => 'Device name',
+            'no_geo' => 'No location data',
+        ],
+        '2fa' => [
+            'instructions' => 'Enter the verification code we sent to your email.',
+            'expired' => 'Code expired. Request a new one.',
+            'resend' => 'Resend code',
+            'cancel' => 'Cancel',
+            'trust_this_device' => 'Trust this device',
+            'expires_in' => 'Expires in :time',
+            'new_code_sent' => 'New code sent.',
+        ],
+    ],
+];

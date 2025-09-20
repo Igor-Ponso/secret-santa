@@ -30,5 +30,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('settings/security/2fa/disable', [SecurityController::class, 'disableTwoFactor'])->name('settings.security.2fa.disable');
     Route::delete('settings/security/devices/{device}', [SecurityController::class, 'destroyDevice'])->name('settings.security.devices.destroy');
     Route::delete('settings/security/devices', [SecurityController::class, 'destroyAllDevices'])->name('settings.security.devices.destroyAll');
+    Route::patch('settings/security/devices/{device}', [SecurityController::class, 'renameDevice'])->name('settings.security.devices.rename');
     Route::post('settings/security/logout-others', [SecurityController::class, 'logoutOthers'])->name('settings.security.logoutOthers');
 });

@@ -23,6 +23,7 @@ it("cannot delete someone else's group", function () {
     actingAs($user);
 
     $response = delete(route('groups.destroy', $group));
-    $response->assertForbidden();
+    // Non-owner receives 404 (membership hidden) instead of 403
+    $response->assertNotFound();
     expect(Group::find($group->id))->not()->toBeNull();
 });

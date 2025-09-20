@@ -32,7 +32,7 @@ it('non owner cannot create invitation', function () {
     $group = Group::factory()->for($owner, 'owner')->create();
     actingAs($other);
     post(route('groups.invitations.store', $group), ['email' => 'x@test.com'])
-        ->assertForbidden();
+        ->assertNotFound();
 });
 
 it('owner cannot duplicate pending invitation', function () {
@@ -191,19 +191,19 @@ it('cannot create new invitation after decline for same email', function () {
     expect($count)->toBe(1);
 });
 
-it('user can request to join and owner can approve', function () {
+it('user can request to join via code and owner can approve', function () {
     $owner = User::factory()->create(['email_verified_at' => now()]);
     $user = User::factory()->create(['email_verified_at' => now()]);
     $group = Group::factory()->for($owner, 'owner')->create();
+    // user submits join request using join code endpoint (not protected by membership middleware)
     actingAs($user);
-    post(route('groups.join_requests.store', $group));
+    post(route('groups.join_requests.join_by_code'), ['code' => $group->join_code])->assertRedirect();
     $jr = \App\Models\GroupJoinRequest::where('group_id', $group->id)->where('user_id', $user->id)->first();
     expect($jr)->not()->toBeNull();
     actingAs($owner);
-    post(route('groups.join_requests.approve', [$group, $jr]));
+    post(route('groups.join_requests.approve', [$group, $jr]))->assertRedirect();
     $jr->refresh();
     expect($jr->status)->toBe('approved');
-    // Should have created an accepted invitation linking user
     $accepted = $group->invitations()->where('invited_user_id', $user->id)->whereNotNull('accepted_at')->exists();
     expect($accepted)->toBeTrue();
 });

@@ -101,7 +101,8 @@ it('forbids non participant from recipient', function () {
 
     $outsider = User::factory()->create();
     actingAs($outsider);
-    get(route('groups.draw.recipient', $group))->assertForbidden();
+    // Outsider should get 404 due to EnsureGroupMembership masking
+    get(route('groups.draw.recipient', $group))->assertNotFound();
 });
 
 it('exposes participant count, can_draw and recipient wishlist after draw', function () {

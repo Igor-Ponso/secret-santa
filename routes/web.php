@@ -169,6 +169,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Public group landing
 Route::get('/g/{code}', [\App\Http\Controllers\PublicGroupController::class, 'show'])->name('public.groups.show');
 
+// Geo lookup (auth optional). Apply light rate limiting to reduce abuse.
+Route::middleware('throttle:30,1')->get('/geo/ip', [\App\Http\Controllers\GeoController::class, 'ip'])->name('geo.ip');
+
 // Fallback 404 (must be last). Render Inertia 404 page.
 Route::fallback(function () {
     return Inertia::render('Errors/NotFound')->toResponse(request())->setStatusCode(404);

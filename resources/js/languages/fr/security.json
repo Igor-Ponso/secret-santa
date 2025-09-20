@@ -1,0 +1,35 @@
+{
+    "security": {
+        "title": "Paramètres de Sécurité",
+        "breadcrumb": "Sécurité",
+        "2fa": {
+            "title": "Authentification à Deux Facteurs",
+            "description": "Envoie un code par e-mail lorsque vous accédez depuis un nouvel appareil ou navigateur.",
+            "enabled_badge": "ACTIF",
+            "disabled_badge": "DÉSACTIVÉ",
+            "enable": "Activer",
+            "disable": "Désactiver",
+            "confirm_password_title": "Confirmer le mot de passe",
+            "confirm_password_body": "Entrez votre mot de passe pour :action l'authentification à deux facteurs.",
+            "action_enable": "activer",
+            "action_disable": "désactiver"
+        },
+        "devices": {
+            "title": "Appareils de Confiance",
+            "description": "Liste des appareils que vous avez approuvés après le défi 2FA.",
+            "none": "Aucun appareil de confiance pour l'instant.",
+            "revoke_all": "Révoquer tout",
+            "revoke": "Révoquer",
+            "rename": "renommer",
+            "visible": "Visible...",
+            "show": "Afficher",
+            "last_used": "Dernière utilisation",
+            "added": "Ajouté"
+        },
+        "sessions": {
+            "title": "Déconnexion des autres sessions",
+            "description": "Met fin aux sessions authentifiées sur d'autres navigateurs/appareils.",
+            "logout": "Déconnexion"
+        }
+    }
+}

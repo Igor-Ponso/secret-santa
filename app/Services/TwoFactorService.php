@@ -11,6 +11,17 @@ use Illuminate\Support\Str;
 
 class TwoFactorService
 {
+    /**
+     * Map of device id => plain token for current request lifecycle so tests can retrieve it.
+     * Not persisted; cleared each request.
+     * @var array<int,string>
+     */
+    protected static array $plainTokens = [];
+
+    public static function getPlainTokenFor(int $deviceId): ?string
+    {
+        return self::$plainTokens[$deviceId] ?? null;
+    }
     public function isEmailMode(User $user): bool
     {
         return $user->two_factor_mode === 'email_on_new_device';
@@ -109,24 +120,60 @@ class TwoFactorService
         return $valid;
     }
 
-    public function trustDevice(User $user, string $fingerprintHash, ?string $label = null): UserTrustedDevice
+    public function trustDevice(User $user, string $fingerprintHash, ?string $label = null, array $context = []): UserTrustedDevice
     {
-        // Generate token (store hashed, return plain for cookie)
-        $plain = Str::random(64);
+        // Check if device already exists (unique user_id+fingerprint_hash)
+        $existing = UserTrustedDevice::where('user_id', $user->id)
+            ->where('fingerprint_hash', $fingerprintHash)
+            ->first();
+
+        $plain = Str::random(64); // always rotate token when re-trusting
         $hash = hash('sha256', $plain);
-        $device = UserTrustedDevice::create([
-            'user_id' => $user->id,
-            'fingerprint_hash' => $fingerprintHash,
-            'device_label' => $label,
-            'token_hash' => $hash,
-            'last_used_at' => now(),
-        ]);
-        // Attach plain token for caller to set cookie
-        $device->plain_token = $plain; // dynamic property usage
+
+        if ($existing) {
+            // If it was previously revoked, un-revoke (fresh trust) + rotate token
+            $existing->update([
+                'device_label' => $label ?? $existing->device_label,
+                'user_agent' => $context['user_agent'] ?? $existing->user_agent,
+                'ip_address' => $context['ip'] ?? $existing->ip_address,
+                'client_name' => $context['client_name'] ?? $existing->client_name,
+                'client_os' => $context['client_os'] ?? $existing->client_os,
+                'client_browser' => $context['client_browser'] ?? $existing->client_browser,
+                'token_hash' => $hash,
+                'last_used_at' => now(),
+                'revoked_at' => null,
+            ]);
+            $device = $existing;
+            \Log::info('trusted_device.rotated', [
+                'user_id' => $user->id,
+                'device_id' => $device->id,
+            ]);
+        } else {
+            $device = UserTrustedDevice::create([
+                'user_id' => $user->id,
+                'fingerprint_hash' => $fingerprintHash,
+                'device_label' => $label,
+                'user_agent' => $context['user_agent'] ?? null,
+                'ip_address' => $context['ip'] ?? null,
+                'client_name' => $context['client_name'] ?? null,
+                'client_os' => $context['client_os'] ?? null,
+                'client_browser' => $context['client_browser'] ?? null,
+                'token_hash' => $hash,
+                'last_used_at' => now(),
+            ]);
+            \Log::info('trusted_device.created', [
+                'user_id' => $user->id,
+                'device_id' => $device->id,
+                'ip' => $device->ip_address,
+                'ua_snip' => $device->user_agent ? substr($device->user_agent, 0, 40) : null,
+            ]);
+        }
+        // Store plain token in static map for accessor retrieval (no dynamic property usage)
+        self::$plainTokens[$device->id] = $plain; // allow later retrieval in same request (tests & cookie issuance)
         return $device;
     }
 
-    public function validateTrustedToken(User $user, string $fingerprintHash, string $plainToken): bool
+    public function validateTrustedToken(User $user, string $fingerprintHash, string $plainToken, array $context = []): bool
     {
         $hash = hash('sha256', $plainToken);
         $device = UserTrustedDevice::where('user_id', $user->id)
@@ -136,7 +183,11 @@ class TwoFactorService
             ->first();
         if (!$device)
             return false;
-        $device->update(['last_used_at' => now()]);
+        $device->update([
+            'last_used_at' => now(),
+            'ip_address' => $context['ip'] ?? $device->ip_address,
+            'user_agent' => $context['user_agent'] ?? $device->user_agent,
+        ]);
         return true;
     }
 }

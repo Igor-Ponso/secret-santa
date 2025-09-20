@@ -55,7 +55,7 @@ it('non-owner cannot create exclusion', function () {
     post(route('groups.exclusions.store', $group->id), [
         'user_id' => $a->id,
         'excluded_user_id' => $b->id,
-    ])->assertForbidden();
+    ])->assertNotFound();
 });
 
 it('cannot create duplicate exclusion pair', function () {

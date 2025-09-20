@@ -35,7 +35,7 @@ it('non owner cannot regenerate join code', function () {
     $group = Group::factory()->for($owner, 'owner')->create();
     $original = $group->join_code;
     actingAs($other);
-    post(route('groups.regenerate_code', $group))->assertForbidden();
+    post(route('groups.regenerate_code', $group))->assertNotFound();
     $group->refresh();
     expect($group->join_code)->toBe($original);
 });

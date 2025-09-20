@@ -1,0 +1,35 @@
+{
+    "security": {
+        "title": "Security Settings",
+        "breadcrumb": "Security",
+        "2fa": {
+            "title": "Two-Factor Authentication",
+            "description": "Send a code by email when you access from a new device or browser.",
+            "enabled_badge": "ENABLED",
+            "disabled_badge": "DISABLED",
+            "enable": "Enable",
+            "disable": "Disable",
+            "confirm_password_title": "Confirm password",
+            "confirm_password_body": "Enter your password to :action two-factor authentication.",
+            "action_enable": "enable",
+            "action_disable": "disable"
+        },
+        "devices": {
+            "title": "Trusted Devices",
+            "description": "List of devices you trusted after passing 2FA challenge.",
+            "none": "No trusted devices yet.",
+            "revoke_all": "Revoke all",
+            "revoke": "Revoke",
+            "rename": "rename",
+            "visible": "Visible...",
+            "show": "Show",
+            "last_used": "Last used",
+            "added": "Added"
+        },
+        "sessions": {
+            "title": "Logout other sessions",
+            "description": "Ends authenticated sessions on other browsers/devices.",
+            "logout": "Logout"
+        }
+    }
+}
