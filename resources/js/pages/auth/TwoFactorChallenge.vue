@@ -1,49 +1,72 @@
 <script setup lang="ts">
-import { PinInput, PinInputGroup, PinInputSlot } from '@/components/ui/pin-input';
+import { PinInput, PinInputGroup, PinInputSeparator, PinInputSlot } from '@/components/ui/pin-input';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-const props = defineProps<{
-    mode: string;
-    resent: boolean;
-    expires_at?: string | null;
+interface PendingAction {
+    type?: string;
+    id?: string | number | null;
+    name?: string | null;
+}
+interface Props {
+    mode?: string;
+    resent?: boolean;
+    expires_at?: string;
     remaining_seconds?: number;
     server_time?: string;
-    pending_action?: { type: string | null; id?: number | null; name?: string | null } | null;
     resend_allowed?: boolean;
     resend_wait_seconds?: number;
     resend_suspended?: boolean;
     resend_min_interval?: number;
     next_resend_at?: string | null;
-}>();
+    resend_attempt_count?: number;
+    resend_max_before_suspend?: number;
+    pending_action?: PendingAction | null;
+}
+const props = defineProps<Props>();
+const { t } = useI18n();
+
 function pendingLabel() {
     const type = props.pending_action?.type;
     if (!type) return '';
     const map: Record<string, string> = {
-        enable_2fa: t('security.2fa.action_enable_2fa', 'Enable Two-Factor Authentication'),
-        disable_2fa: t('security.2fa.action_disable_2fa', 'Disable Two-Factor Authentication'),
-        revoke_all: t('security.2fa.action_revoke_all', 'Revoke all trusted devices'),
-        revoke_one: t('security.2fa.action_revoke_one', 'Revoke a trusted device'),
-        rename: t('security.2fa.action_rename', 'Rename a trusted device'),
+        enable_2fa: 'Enable Two-Factor Authentication',
+        disable_2fa: 'Disable Two-Factor Authentication',
+        revoke_all: 'Revoke all trusted devices',
+        revoke_one: 'Revoke a trusted device',
+        rename: 'Rename a trusted device',
     };
     return map[type] || '';
 }
 const form = useForm({ code: '', trust: true });
-const { t } = useI18n();
 const length = 6;
 const values = ref<string[]>(Array(length).fill(''));
 const submitting = ref(false);
 const error = ref<string | null>(null);
 const resentFlag = ref(props.resent);
 const remaining = ref(props.remaining_seconds ?? 0);
-// Resend / throttle state
+// Resend / throttle state & attempt labels
 const resendWait = ref(props.resend_wait_seconds ?? 0);
 const nextResendAt = ref<Date | null>(props.next_resend_at ? new Date(props.next_resend_at) : null);
 const resendAllowed = ref(props.resend_allowed ?? true);
 const resendSuspended = ref(props.resend_suspended ?? false);
 let resendTimer: any = null;
 let timer: any = null;
+const attemptLabel = computed(() => {
+    if (typeof props.resend_attempt_count !== 'number' || typeof props.resend_max_before_suspend !== 'number') return '';
+    const current = (props.resend_attempt_count || 0) + 1;
+    const total = props.resend_max_before_suspend;
+    return `Attempt ${current} of ${total}`;
+});
+const showAttemptLabel = computed(() => attemptLabel.value && !resendSuspended.value);
+const warningLabel = computed(() => {
+    if (resendSuspended.value || typeof props.resend_attempt_count !== 'number' || typeof props.resend_max_before_suspend !== 'number') return '';
+    const remaining = props.resend_max_before_suspend - props.resend_attempt_count;
+    if (remaining > 2 || props.resend_attempt_count >= props.resend_max_before_suspend) return '';
+    return `After ${props.resend_max_before_suspend} attempts your account will be temporarily locked.`;
+});
+const showWarning = computed(() => warningLabel.value.length > 0);
 
 function formatResendWait(seconds: number): string {
     if (seconds <= 0) return '0s';
@@ -226,9 +249,14 @@ watch(
             </div>
             <form @submit.prevent="submit" class="space-y-4">
                 <div class="flex flex-col items-center gap-4">
-                    <PinInput v-model="values" :otp="true" :disabled="submitting || isExpired()" class="flex gap-2">
-                        <PinInputGroup>
-                            <PinInputSlot v-for="(val, idx) in values" :key="idx" :index="idx" class="h-12 w-10 text-lg font-semibold" />
+                    <PinInput v-model="values" :otp="true" :disabled="submitting || isExpired()" class="flex">
+                        <PinInputGroup class="flex items-center">
+                            <template v-for="(val, idx) in values" :key="idx">
+                                <PinInputSlot :index="idx" class="h-12 w-10 text-lg font-semibold" />
+                                <PinInputSeparator v-if="idx < values.length - 1" class="mx-1 select-none text-sm font-medium text-muted-foreground"
+                                    >-</PinInputSeparator
+                                >
+                            </template>
                         </PinInputGroup>
                     </PinInput>
                     <div class="flex items-center gap-2 text-xs">
@@ -245,9 +273,9 @@ watch(
                             >
                                 {{ t('security.2fa.resend') }}
                             </button>
-                            <span v-if="resendSuspended" class="text-[10px] font-medium text-destructive">
-                                {{ t('security.2fa.resend_suspended') || 'Suspended' }}
-                            </span>
+                            <span v-if="resendSuspended" class="text-[10px] font-medium text-destructive">{{
+                                t('security.2fa.resend_suspended') || 'Suspended'
+                            }}</span>
                             <span
                                 v-else-if="!resendAllowed && resendWait > 0"
                                 class="text-[10px] text-muted-foreground"
@@ -256,6 +284,8 @@ watch(
                                 {{ formatResendWait(resendWait) }}
                             </span>
                         </div>
+                        <div v-if="showAttemptLabel" class="text-[10px] text-muted-foreground">{{ attemptLabel }}</div>
+                        <div v-if="showWarning" class="text-[10px] font-medium text-amber-600">{{ warningLabel }}</div>
                         <button type="button" @click="cancel" class="text-xs text-muted-foreground underline hover:text-foreground">
                             {{ t('security.2fa.cancel') }}
                         </button>

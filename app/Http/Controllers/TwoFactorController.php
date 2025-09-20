@@ -32,7 +32,7 @@ class TwoFactorController extends Controller
             $remaining = max(0, now()->diffInSeconds($expiresAt, false));
         }
         $pending = $request->session()->get('2fa.pending_action');
-        [$canResend, $wait, $suspended, $nextResendAt] = $this->service->resendStatus($request->user());
+        [$canResend, $wait, $suspended, $nextResendAt, $resendCount, $maxBeforeSuspend] = $this->service->resendStatus($request->user());
         $minInterval = (int) config('twofactor.min_resend_interval', 5);
         return Inertia::render('auth/TwoFactorChallenge', [
             'mode' => $request->user()->two_factor_mode,
@@ -45,6 +45,8 @@ class TwoFactorController extends Controller
             'resend_suspended' => $suspended,
             'resend_min_interval' => $minInterval,
             'next_resend_at' => $nextResendAt,
+            'resend_attempt_count' => $resendCount,
+            'resend_max_before_suspend' => $maxBeforeSuspend,
             'pending_action' => $pending && is_array($pending) ? [
                 'type' => $pending['type'] ?? null,
                 'id' => $pending['id'] ?? null,

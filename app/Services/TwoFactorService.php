@@ -146,17 +146,18 @@ class TwoFactorService
 
     /**
      * Returns structured resend status:
-     * [allowed(bool), wait_seconds(int), suspended(bool), next_resend_at(?string ISO8601)]
+     * [allowed(bool), wait_seconds(int), suspended(bool), next_resend_at(?string ISO8601), resend_count(int), max_before_suspend(int)]
      */
     public function resendStatus(User $user): array
     {
         $stat = TwoFactorResendStat::where('user_id', $user->id)->first();
         $minInterval = (int) config('twofactor.min_resend_interval', 5);
+        $maxBeforeSuspend = (int) config('twofactor.max_resends_before_suspend', 7);
         if (!$stat) {
-            return [true, 0, false, null];
+            return [true, 0, false, null, 0, $maxBeforeSuspend];
         }
         if ($stat->suspended_at) {
-            return [false, 0, true, null];
+            return [false, 0, true, null, $stat->resend_count, $maxBeforeSuspend];
         }
         $soonest = null;
         if ($stat->next_allowed_resend_at && $stat->next_allowed_resend_at->isFuture()) {
@@ -179,9 +180,9 @@ class TwoFactorService
                 ]);
                 $wait = 1;
             }
-            return [false, max(1, $wait), false, $soonest->toIso8601String()];
+            return [false, max(1, $wait), false, $soonest->toIso8601String(), $stat->resend_count, $maxBeforeSuspend];
         }
-        return [true, 0, false, null];
+        return [true, 0, false, null, $stat->resend_count, $maxBeforeSuspend];
     }
 
     protected function generateCode(): string
