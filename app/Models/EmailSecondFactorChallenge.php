@@ -22,4 +22,8 @@ class EmailSecondFactorChallenge extends Model
         'expires_at' => 'datetime',
         'consumed_at' => 'datetime',
     ];
+
+    protected $hidden = [
+        'code_hash',
+    ];
 }

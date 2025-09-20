@@ -42,6 +42,10 @@ class GroupInvitation extends Model
         'expires_at' => 'datetime',
     ];
 
+    protected $hidden = [
+        'token', // hashed token
+    ];
+
     public function group(): BelongsTo
     {
         return $this->belongsTo(Group::class);

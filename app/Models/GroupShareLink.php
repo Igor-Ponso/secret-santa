@@ -25,4 +25,8 @@ class GroupShareLink extends Model
     {
         return $this->belongsTo(User::class, 'creator_id');
     }
+
+    protected $hidden = [
+        'token',
+    ];
 }

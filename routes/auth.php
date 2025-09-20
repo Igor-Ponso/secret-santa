@@ -40,7 +40,9 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     // Two-Factor (email on new device) challenge routes
     Route::get('two-factor/challenge', [\App\Http\Controllers\TwoFactorController::class, 'challenge'])->name('2fa.challenge');
-    Route::post('two-factor/verify', [\App\Http\Controllers\TwoFactorController::class, 'verify'])->name('2fa.verify');
+    Route::post('two-factor/verify', [\App\Http\Controllers\TwoFactorController::class, 'verify'])
+        ->middleware('throttle:2fa-verify')
+        ->name('2fa.verify');
     Route::post('two-factor/resend', [\App\Http\Controllers\TwoFactorController::class, 'resend'])->name('2fa.resend');
     Route::post('two-factor/cancel', [\App\Http\Controllers\TwoFactorController::class, 'cancel'])->name('2fa.cancel');
     // Email verification

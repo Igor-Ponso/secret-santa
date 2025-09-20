@@ -10,6 +10,7 @@ use App\Models\Wishlist;
 use App\Policies\WishlistPolicy;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\Request;
+use Illuminate\Cache\RateLimiting\Limit;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,6 +35,13 @@ class AppServiceProvider extends ServiceProvider
             $userId = optional($request->user())->id ?: 'guest';
             // Allow 20 actions per minute per user (link + create + resend + revoke grouped)
             return \Illuminate\Cache\RateLimiting\Limit::perMinute(20)->by('invitation:' . $userId);
+        });
+
+        // Additional protection: limit 2FA verification attempts independent of per-challenge attempt counter
+        RateLimiter::for('2fa-verify', function (Request $request) {
+            $userPart = optional($request->user())->id ?: $request->ip();
+            // 15 verification submissions per minute (covers both success & failure) per user (fallback IP)
+            return Limit::perMinute(15)->by('2fa-verify:' . $userPart);
         });
 
         \Inertia\Inertia::share('flash', function () {

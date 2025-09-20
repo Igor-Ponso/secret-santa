@@ -30,6 +30,11 @@ class UserTrustedDevice extends Model
 
     protected $appends = ['plain_token'];
 
+    protected $hidden = [
+        'token_hash',
+        'fingerprint_hash',
+    ];
+
     public function getPlainTokenAttribute(): ?string
     {
         // Retrieve ephemeral plain token retained in service for current lifecycle (mainly for tests)
