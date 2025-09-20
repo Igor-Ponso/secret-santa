@@ -80,6 +80,16 @@ return [
         'removed' => 'Participant retiré.',
     ],
     'security' => [
+        'nav_security' => 'Sécurité',
+        'breadcrumb' => 'Sécurité',
+        'nav_devices' => 'Appareils de confiance',
+        'nav_two_factor' => 'Double authentification',
+        'enable_2fa' => 'Activer 2FA',
+        'disable_2fa' => 'Désactiver 2FA',
+        'revoke_all' => 'Révoquer tout',
+        'revoke' => 'Révoquer',
+        'rename' => 'Renommer',
+        'logout_others' => 'Déconnecter les autres',
         'devices' => [
             'map_title' => 'Localisation Approximative',
             'map_disclaimer' => 'Localisation basée sur l’IP (approx.).',
@@ -88,6 +98,7 @@ return [
             'no_geo' => 'Aucune donnée de localisation',
         ],
         '2fa' => [
+            'heading' => 'Contrôle de Sécurité',
             'instructions' => 'Saisissez le code de vérification envoyé par email.',
             'expired' => 'Code expiré. Demandez-en un nouveau.',
             'resend' => 'Renvoyer le code',

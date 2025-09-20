@@ -12,7 +12,22 @@
             "confirm_password_title": "Confirm password",
             "confirm_password_body": "Enter your password to :action two-factor authentication.",
             "action_enable": "enable",
-            "action_disable": "disable"
+            "action_disable": "disable",
+            "heading": "Security Check",
+            "instructions": "Enter the verification code we sent to your email.",
+            "expired": "Code expired. Request a new one.",
+            "resend": "Resend code",
+            "cancel": "Cancel",
+            "trust_this_device": "Trust this device",
+            "expires_in": "Expires in {time}",
+            "new_code_sent": "New code sent.",
+            "disclaimer": "For your security this step appears on new devices. Keep your email secure.",
+            "pending_confirm": "Confirm action:",
+            "action_enable_2fa": "Enable two-factor authentication",
+            "action_disable_2fa": "Disable two-factor authentication",
+            "action_revoke_all": "Revoke all trusted devices",
+            "action_revoke_one": "Revoke trusted device",
+            "action_rename": "Rename trusted device"
         },
         "devices": {
             "title": "Trusted Devices",

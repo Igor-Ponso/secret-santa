@@ -18,7 +18,7 @@ function issueAndTrust(User $user, array $fp): UserTrustedDevice
     return UserTrustedDevice::first();
 }
 
-it('renames a trusted device', function () {
+it('renames a trusted device only after verification', function () {
     $user = User::factory()->create([
         'password' => Hash::make('Passw0rd!'),
         'two_factor_mode' => 'email_on_new_device',
@@ -28,8 +28,15 @@ it('renames a trusted device', function () {
     $device = issueAndTrust($user, $fp);
     expect($device)->not()->toBeNull();
     test()->patch(route('settings.security.devices.rename', $device->id), ['name' => 'Notebook Casa'])
-        ->assertRedirect();
-    test()->assertDatabaseHas('user_trusted_devices', ['id' => $device->id, 'device_label' => 'Notebook Casa']);
+        ->assertRedirect(route('2fa.challenge'));
+    $device->refresh();
+    expect($device->device_label)->toBeNull();
+    // Fulfill second challenge
+    $latest = EmailSecondFactorChallenge::latest('id')->first();
+    $latest->update(['code_hash' => hash('sha256', 'AAAAAA')]);
+    test()->withUnencryptedCookies(['device_id' => $fp['device_id']])->post(route('2fa.verify'), ['code' => 'AAAAAA']);
+    $device->refresh();
+    expect($device->device_label)->toBe('Notebook Casa');
 });
 
 it('prevents renaming device of another user', function () {

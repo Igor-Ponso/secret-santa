@@ -12,7 +12,22 @@
             "confirm_password_title": "Confirmer le mot de passe",
             "confirm_password_body": "Entrez votre mot de passe pour :action l'authentification à deux facteurs.",
             "action_enable": "activer",
-            "action_disable": "désactiver"
+            "action_disable": "désactiver",
+            "heading": "Contrôle de Sécurité",
+            "instructions": "Saisissez le code de vérification envoyé par email.",
+            "expired": "Code expiré. Demandez-en un nouveau.",
+            "resend": "Renvoyer le code",
+            "cancel": "Annuler",
+            "trust_this_device": "Faire confiance à cet appareil",
+            "expires_in": "Expire dans {time}",
+            "new_code_sent": "Nouveau code envoyé.",
+            "disclaimer": "Pour votre sécurité cette étape apparaît sur les nouveaux appareils. Gardez votre e-mail sécurisé.",
+            "pending_confirm": "Confirmer l'action :",
+            "action_enable_2fa": "Activer l'authentification à deux facteurs",
+            "action_disable_2fa": "Désactiver l'authentification à deux facteurs",
+            "action_revoke_all": "Révoquer tous les appareils de confiance",
+            "action_revoke_one": "Révoquer un appareil de confiance",
+            "action_rename": "Renommer un appareil de confiance"
         },
         "devices": {
             "title": "Appareils de Confiance",

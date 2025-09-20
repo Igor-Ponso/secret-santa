@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\EmailSecondFactorChallenge;
 use App\Models\User;
 use App\Models\UserTrustedDevice;
+use App\Models\TwoFactorResendStat;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -62,6 +63,11 @@ class TwoFactorService
             'expires_at' => now()->addSeconds((int) config('twofactor.code_ttl', 300)),
         ]);
 
+        // Expose plain code for automated tests (never in non-testing env)
+        if (app()->environment('testing')) {
+            session(['2fa.last_code' => $code]);
+        }
+
         // Dispatch email (queue or send based on config)
         $mailable = new \App\Mail\TwoFactorCodeMail($user, $code);
         if (config('twofactor.use_queue')) {
@@ -80,6 +86,102 @@ class TwoFactorService
         }
 
         return $challenge;
+    }
+
+    /**
+     * Determine if user can request a resend right now and optionally increment counters.
+     * Returns array: [allowed(bool), wait_seconds(int), suspended(bool)]
+     */
+    public function registerResendAttempt(User $user): array
+    {
+        $cfg = config('twofactor.resend_backoff', []);
+        $maxBeforeSuspend = (int) config('twofactor.max_resends_before_suspend', 7);
+        // Lock row to prevent race conditions in concurrent requests
+        $stat = TwoFactorResendStat::where('user_id', $user->id)->lockForUpdate()->first();
+        if (!$stat) {
+            $stat = TwoFactorResendStat::create(['user_id' => $user->id]);
+        }
+
+        // Check suspension
+        if ($stat->suspended_at) {
+            return [false, 0, true];
+        }
+        // Check timing gate
+        if ($stat->next_allowed_resend_at && $stat->next_allowed_resend_at->isFuture()) {
+            $wait = max(1, $stat->next_allowed_resend_at->diffInSeconds(now()));
+            return [false, $wait, false];
+        }
+        $minInterval = (int) config('twofactor.min_resend_interval', 5);
+        if ($stat->last_resend_at && $stat->last_resend_at->diffInSeconds(now()) < $minInterval) {
+            $elapsed = $stat->last_resend_at->diffInSeconds(now());
+            $remaining = $minInterval - $elapsed;
+            if ($remaining < 0) {
+                \Log::warning('2fa.resend.negative_remaining_interval', [
+                    'user_id' => $user->id,
+                    'elapsed' => $elapsed,
+                    'min_interval' => $minInterval,
+                ]);
+                $remaining = 1;
+            }
+            return [false, max(1, $remaining), false];
+        }
+
+        // Increment attempt
+        $stat->resend_count += 1;
+        $stat->last_resend_at = now();
+
+        // Determine next backoff or suspension
+        if ($stat->resend_count >= $maxBeforeSuspend) {
+            $stat->suspended_at = now();
+            $stat->next_allowed_resend_at = null;
+            $stat->save();
+            return [false, 0, true];
+        }
+
+        $delay = $cfg[$stat->resend_count] ?? end($cfg) ?: 300; // fallback last or 5m
+        $stat->next_allowed_resend_at = now()->addSeconds($delay);
+        $stat->save();
+        return [true, $delay, false];
+    }
+
+    /**
+     * Returns structured resend status:
+     * [allowed(bool), wait_seconds(int), suspended(bool), next_resend_at(?string ISO8601)]
+     */
+    public function resendStatus(User $user): array
+    {
+        $stat = TwoFactorResendStat::where('user_id', $user->id)->first();
+        $minInterval = (int) config('twofactor.min_resend_interval', 5);
+        if (!$stat) {
+            return [true, 0, false, null];
+        }
+        if ($stat->suspended_at) {
+            return [false, 0, true, null];
+        }
+        $soonest = null;
+        if ($stat->next_allowed_resend_at && $stat->next_allowed_resend_at->isFuture()) {
+            $soonest = $stat->next_allowed_resend_at->copy();
+        }
+        if ($stat->last_resend_at && $stat->last_resend_at->diffInSeconds(now()) < $minInterval) {
+            $candidate = $stat->last_resend_at->clone()->addSeconds($minInterval);
+            if (!$soonest || $candidate->gt($soonest)) {
+                $soonest = $candidate;
+            }
+        }
+        if ($soonest) {
+            $wait = $soonest->diffInSeconds(now());
+            if ($wait < 0) {
+                \Log::warning('2fa.resend.negative_wait_calculated', [
+                    'user_id' => $user->id,
+                    'soonest' => $soonest->toIso8601String(),
+                    'now' => now()->toIso8601String(),
+                    'raw_wait' => $wait,
+                ]);
+                $wait = 1;
+            }
+            return [false, max(1, $wait), false, $soonest->toIso8601String()];
+        }
+        return [true, 0, false, null];
     }
 
     protected function generateCode(): string

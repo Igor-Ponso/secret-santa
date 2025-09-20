@@ -59,6 +59,20 @@ class EnsureSecondFactor
         }
         $fingerprint = $this->service->generateFingerprint($deviceId, (string) $request->userAgent(), (string) ($request->header('Sec-CH-UA-Platform') ?? ''));
 
+        // If there is a pending sensitive action awaiting confirmation we must force the user
+        // through the challenge flow even if the current device is already trusted. This prevents
+        // navigating the application with an unconfirmed destructive operation queued.
+        if ($request->session()->has('2fa.pending_action')) {
+            if (!$request->session()->has('2fa.fingerprint')) {
+                $this->service->issueChallenge($user, $fingerprint);
+                $request->session()->put('2fa.fingerprint', $fingerprint);
+                if (!$request->session()->has('url.intended')) {
+                    $request->session()->put('url.intended', $request->fullUrl());
+                }
+            }
+            return redirect()->route('2fa.challenge');
+        }
+
         // First try cookie trusted_device_token validation (if present) to avoid unnecessary DB lookups / challenges
         $trustedToken = $request->cookies->get('trusted_device_token');
         $context = [

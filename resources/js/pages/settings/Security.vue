@@ -240,6 +240,8 @@ function logoutOthers() {
                                 <div class="flex gap-2">
                                     <input
                                         type="password"
+                                        :name="'logout_pwd_' + Date.now()"
+                                        autocomplete="new-password"
                                         v-model="logoutOthersForm.password"
                                         placeholder="Senha atual"
                                         class="w-full rounded border bg-background px-2 py-1 text-sm"
@@ -273,6 +275,8 @@ function logoutOthers() {
                         <form @submit.prevent="submit2fa" class="space-y-3">
                             <input
                                 type="password"
+                                :name="'confirm_pwd_' + Date.now()"
+                                autocomplete="new-password"
                                 v-model="passwordForm.password"
                                 placeholder="Senha atual"
                                 class="w-full rounded border bg-background px-2 py-1 text-sm"

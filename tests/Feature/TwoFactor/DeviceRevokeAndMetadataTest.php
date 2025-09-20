@@ -14,18 +14,21 @@ function trustDeviceFlow(User $user, array $fp, string $code = 'ABCDEF'): UserTr
     return UserTrustedDevice::latest('id')->first();
 }
 
-it('revokes all devices', function () {
+it('revokes all devices only after verification (single device scenario)', function () {
     $user = User::factory()->create([
         'password' => Hash::make('Passw0rd!'),
         'two_factor_mode' => 'email_on_new_device',
     ]);
     actingAsUser($user);
-    $fp1 = ['device_id' => bin2hex(random_bytes(8)), 'ua' => 'UA1', 'platform' => 'Test'];
-    $fp2 = ['device_id' => bin2hex(random_bytes(8)), 'ua' => 'UA2', 'platform' => 'Test'];
-    trustDeviceFlow($user, $fp1);
-    trustDeviceFlow($user, $fp2, 'FEDCBA');
-    expect(UserTrustedDevice::where('user_id', $user->id)->count())->toBe(2);
-    test()->delete(route('settings.security.devices.destroyAll'))->assertRedirect();
+    $fp = ['device_id' => bin2hex(random_bytes(8)), 'ua' => 'UA1', 'platform' => 'Test'];
+    trustDeviceFlow($user, $fp);
+    expect(UserTrustedDevice::where('user_id', $user->id)->whereNull('revoked_at')->count())->toBe(1);
+    test()->delete(route('settings.security.devices.destroyAll'))->assertRedirect(route('2fa.challenge'));
+    // Not yet revoked
+    expect(UserTrustedDevice::where('user_id', $user->id)->whereNull('revoked_at')->count())->toBe(1);
+    $latest = EmailSecondFactorChallenge::latest('id')->first();
+    $latest->update(['code_hash' => hash('sha256', 'CCCCCC')]);
+    test()->withUnencryptedCookies(['device_id' => $fp['device_id']])->post(route('2fa.verify'), ['code' => 'CCCCCC']);
     expect(UserTrustedDevice::where('user_id', $user->id)->whereNull('revoked_at')->count())->toBe(0);
 });
 

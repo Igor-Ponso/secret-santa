@@ -80,6 +80,17 @@ class SecurityController extends Controller
             }
         }
 
+        // Fallback: if no currentId resolved via cookies but session indicates a recent pass, pick latest device
+        if (!$currentId && $request->session()->has('2fa.passed_at')) {
+            $recent = UserTrustedDevice::where('user_id', $user->id)
+                ->whereNull('revoked_at')
+                ->orderByDesc('last_used_at')
+                ->first();
+            if ($recent) {
+                $currentId = $recent->id;
+            }
+        }
+
         $devices = $devices->map(function ($d) use ($currentId) {
             if ($d['id'] === $currentId) {
                 $d['current'] = true;
@@ -101,16 +112,14 @@ class SecurityController extends Controller
         if (!Hash::check($request->password, $user->password)) {
             return back()->withErrors(['password' => 'Password does not match']);
         }
-        if ($user->two_factor_mode !== 'email_on_new_device') {
-            $user->forceFill([
-                'two_factor_mode' => 'email_on_new_device',
-                'two_factor_email_enabled_at' => now(),
-            ])->save();
-            // Clear any skip/passed flags so a fresh challenge is enforced
-            $request->session()->forget('2fa.passed_at');
-            $request->session()->forget('2fa.skip_until');
+        if ($user->two_factor_mode === 'email_on_new_device') {
+            return back(); // already enabled
         }
-        return back();
+        // Defer enabling until after successful 2FA challenge
+        $this->queueForcedChallenge($request, [
+            'type' => 'enable_2fa',
+        ]);
+        return redirect()->route('2fa.challenge');
     }
 
     public function disableTwoFactor(Request $request)
@@ -120,53 +129,75 @@ class SecurityController extends Controller
         if (!Hash::check($request->password, $user->password)) {
             return back()->withErrors(['password' => 'Password does not match']);
         }
-        if ($user->two_factor_mode !== 'disabled') {
-            $user->forceFill(['two_factor_mode' => 'disabled'])->save();
-            $request->session()->forget('2fa.passed_at');
-            $request->session()->forget('2fa.skip_until');
+        if ($user->two_factor_mode === 'disabled') {
+            return back(); // already disabled
         }
-        return back();
+        $this->queueForcedChallenge($request, [
+            'type' => 'disable_2fa',
+        ]);
+        return redirect()->route('2fa.challenge');
     }
 
     public function destroyDevice(Request $request, UserTrustedDevice $device)
     {
-        $this->authorize('update', $request->user()); // simple ownership gate; can refine
-        if ($device->user_id === $request->user()->id) {
-            $device->update(['revoked_at' => now()]);
-            // Removing current trusted device should force re-challenge next request
-            $request->session()->forget('2fa.passed_at');
-            \Log::info('trusted_device.revoked', [
-                'user_id' => $request->user()->id,
-                'device_id' => $device->id,
-            ]);
-        }
-        return back();
+        if ($device->user_id !== $request->user()->id)
+            abort(403);
+        $this->queueForcedChallenge($request, [
+            'type' => 'revoke_one',
+            'id' => $device->id,
+        ]);
+        return redirect()->route('2fa.challenge');
     }
 
     public function destroyAllDevices(Request $request)
     {
-        UserTrustedDevice::where('user_id', $request->user()->id)
-            ->whereNull('revoked_at')
-            ->update(['revoked_at' => now()]);
-        // Force fresh challenge next navigation
-        $request->session()->forget('2fa.passed_at');
-        $request->session()->forget('2fa.skip_until');
-        return back();
+        $this->queueForcedChallenge($request, [
+            'type' => 'revoke_all',
+        ]);
+        return redirect()->route('2fa.challenge');
     }
 
     public function renameDevice(Request $request, UserTrustedDevice $device)
     {
         $request->validate(['name' => ['nullable', 'string', 'max:100']]);
-        if ($device->user_id !== $request->user()->id) {
+        if ($device->user_id !== $request->user()->id)
             abort(403);
-        }
-        $device->update(['device_label' => $request->input('name') ?: null]);
-        \Log::info('trusted_device.renamed', [
-            'user_id' => $request->user()->id,
-            'device_id' => $device->id,
-            'new_label' => $device->device_label,
+        $this->queueForcedChallenge($request, [
+            'type' => 'rename',
+            'id' => $device->id,
+            'name' => $request->input('name'),
         ]);
-        return back();
+        return redirect()->route('2fa.challenge');
+    }
+
+    /**
+     * Queue a forced challenge and store pending action details.
+     */
+    protected function queueForcedChallenge(Request $request, array $pending): void
+    {
+        $request->session()->put('2fa.pending_action', $pending);
+        $request->session()->put('2fa.forced', true);
+        $request->session()->forget('2fa.skip_until');
+        // Do NOT clear passed_at; keeping it avoids unnecessary re-challenges while action pending
+
+        // Ensure a fingerprint & challenge exist (if not already issued in this session)
+        if (!$request->session()->has('2fa.fingerprint')) {
+            $deviceId = $request->cookies->get('device_id');
+            if (!$deviceId) {
+                $deviceId = bin2hex(random_bytes(16));
+                cookie()->queue(cookie('device_id', $deviceId, 60 * 24 * 365));
+            }
+            $fingerprint = $this->service->generateFingerprint(
+                $deviceId,
+                (string) $request->userAgent(),
+                (string) ($request->header('Sec-CH-UA-Platform') ?? '')
+            );
+            $this->service->issueChallenge($request->user(), $fingerprint);
+            $request->session()->put('2fa.fingerprint', $fingerprint);
+            if (!$request->session()->has('url.intended')) {
+                $request->session()->put('url.intended', $request->fullUrl());
+            }
+        }
     }
 
     public function logoutOthers(Request $request)

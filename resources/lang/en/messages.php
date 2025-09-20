@@ -81,6 +81,16 @@ return [
     ],
     // participants key already defined above
     'security' => [
+        'nav_security' => 'Security',
+        'breadcrumb' => 'Security',
+        'nav_devices' => 'Trusted Devices',
+        'nav_two_factor' => 'Two-Factor',
+        'enable_2fa' => 'Enable 2FA',
+        'disable_2fa' => 'Disable 2FA',
+        'revoke_all' => 'Revoke All',
+        'revoke' => 'Revoke',
+        'rename' => 'Rename',
+        'logout_others' => 'Logout Others',
         'devices' => [
             'map_title' => 'Approximate Location',
             'map_disclaimer' => 'Location is IP-based and approximate.',
@@ -89,6 +99,7 @@ return [
             'no_geo' => 'No location data',
         ],
         '2fa' => [
+            'heading' => 'Security Check',
             'instructions' => 'Enter the verification code we sent to your email.',
             'expired' => 'Code expired. Request a new one.',
             'resend' => 'Resend code',

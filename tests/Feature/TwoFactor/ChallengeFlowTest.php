@@ -16,24 +16,24 @@ function fakeFingerprint(): array
     ];
 }
 
-it('issues challenge and redirects to 2fa.challenge for new device', function () {
+it('issues challenge and redirects to 2fa.challenge for new device (mail may be queued or sent)', function () {
     Mail::fake();
     $user = User::factory()->create([
         'password' => Hash::make('Passw0rd!'),
         'two_factor_mode' => 'email_on_new_device',
     ]);
-
     actingAsUser($user);
-
     $fp = fakeFingerprint();
-
-    $response = test()->withUnencryptedCookies([
-        'device_id' => $fp['device_id'],
-    ])->get('/dashboard');
-
+    $response = test()->withUnencryptedCookies(['device_id' => $fp['device_id']])->get('/dashboard');
     $response->assertRedirect(route('2fa.challenge'));
-    Mail::assertQueued(TwoFactorCodeMail::class); // or sent depending on config
+    // In testing we expose plain code in session; ensure at least one challenge row exists
     expect(DB::table('email_second_factor_challenges')->count())->toBe(1);
+    // If queue enabled assertQueued else assert conditionally send
+    if (config('twofactor.use_queue')) {
+        Mail::assertQueued(TwoFactorCodeMail::class);
+    } else {
+        Mail::assertSent(TwoFactorCodeMail::class);
+    }
 });
 
 it('verifies valid code and trusts device', function () {
@@ -86,15 +86,13 @@ it('resend regenerates challenge', function () {
     expect($latest->id)->toBeGreaterThan($firstId);
 });
 
-it('revoking device forces new challenge', function () {
-    Mail::fake();
+it('revoking device defers until verification and then applies', function () {
     $user = User::factory()->create([
         'password' => Hash::make('Passw0rd!'),
         'two_factor_mode' => 'email_on_new_device',
     ]);
     actingAsUser($user);
     $fp = fakeFingerprint();
-
     // initial challenge and verify
     test()->withUnencryptedCookies(['device_id' => $fp['device_id']])->get('/dashboard');
     $challenge = EmailSecondFactorChallenge::first();
@@ -103,10 +101,15 @@ it('revoking device forces new challenge', function () {
     $device = \App\Models\UserTrustedDevice::first();
     expect($device)->not()->toBeNull();
 
-    // Revoke
-    test()->delete(route('settings.security.devices.destroy', $device->id));
+    // Revoke initiates pending action and redirects to challenge but should NOT revoke yet
+    test()->delete(route('settings.security.devices.destroy', $device->id))->assertRedirect(route('2fa.challenge'));
+    $device->refresh();
+    expect($device->revoked_at)->toBeNull();
 
-    // Should trigger challenge again
-    $again = test()->withUnencryptedCookies(['device_id' => $fp['device_id']])->get('/dashboard');
-    $again->assertRedirect(route('2fa.challenge'));
+    // Complete verification for pending revoke
+    $latest = EmailSecondFactorChallenge::latest('id')->first();
+    $latest->update(['code_hash' => hash('sha256', 'FEDCBA')]);
+    test()->withUnencryptedCookies(['device_id' => $fp['device_id']])->post(route('2fa.verify'), ['code' => 'FEDCBA']);
+    $device->refresh();
+    expect($device->revoked_at)->not()->toBeNull();
 });

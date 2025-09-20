@@ -37,24 +37,29 @@ class CurrentDeviceE2ETest extends TestCase
             ->latest('id')->first();
         $this->assertNotNull($challenge, 'Challenge not created');
 
-        // We don't know real code (it was hashed); bypass by directly marking consumed and trusting device via service
-        // Simulate verify route effect
-        $challenge->update(['consumed_at' => now()]);
-        $device = app(\App\Services\TwoFactorService::class)->trustDevice($user, $fingerprint, null, [
-            'ip' => '127.0.0.1',
-            'user_agent' => $ua,
+        // Override code hash so we can call the real verify route (ensuring session cleanup & passed_at set)
+        $challenge->update(['code_hash' => hash('sha256', 'ABCDEF')]);
+        // Retrieve device_id cookie from initial redirect response (middleware queued it)
+        $deviceId = $resp->headers->getCookies()[0]->getValue() ?? null; // first cookie should be device_id
+        $this->assertNotNull($deviceId, 'device_id cookie not set');
+        $verify = $this->withUnencryptedCookies(['device_id' => $deviceId])->post(route('2fa.verify'), [
+            'code' => 'ABCDEF',
+            'trust' => true,
         ]);
-        // Queue cookies manually (Laravel TestResponse cookieQueue won't persist across manual operations), so set unencrypted
-        $this->withUnencryptedCookies([
-            'trusted_device_token' => $device->plain_token,
-        ]);
-        session()->forget('2fa.fingerprint');
+        $verify->assertRedirect();
+        // Grab trusted device token issued (from cookie jar on TestResponse)
+        $trustedToken = collect($verify->headers->getCookies())
+            ->firstWhere(fn($c) => $c->getName() === 'trusted_device_token')?->getValue();
+        $this->assertNotNull($trustedToken, 'trusted_device_token cookie missing after verification');
 
         // Second access should now succeed and mark current device
-        $resp2 = $this->get(route('security.index'), [
-            'User-Agent' => $ua,
-            'Sec-CH-UA-Platform' => $platform,
-        ]);
+        $resp2 = $this->withUnencryptedCookies([
+            'device_id' => $deviceId,
+            'trusted_device_token' => $trustedToken,
+        ])->get(route('security.index'), [
+                    'User-Agent' => $ua,
+                    'Sec-CH-UA-Platform' => $platform,
+                ]);
         $resp2->assertOk();
         $page = $resp2->inertiaPage();
         $currentId = $page['props']['current_device_id'] ?? null;

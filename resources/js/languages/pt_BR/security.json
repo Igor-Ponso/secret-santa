@@ -12,7 +12,22 @@
             "confirm_password_title": "Confirmar senha",
             "confirm_password_body": "Digite sua senha para :action a autenticação em dois fatores.",
             "action_enable": "ativar",
-            "action_disable": "desativar"
+            "action_disable": "desativar",
+            "heading": "Verificação de Segurança",
+            "instructions": "Digite o código que enviamos para seu e-mail.",
+            "expired": "Código expirado. Peça um novo.",
+            "resend": "Reenviar código",
+            "cancel": "Cancelar",
+            "trust_this_device": "Confiar neste dispositivo",
+            "expires_in": "Expira em {time}",
+            "new_code_sent": "Novo código enviado.",
+            "disclaimer": "Por segurança esta etapa aparece em novos dispositivos. Mantenha seu email seguro.",
+            "pending_confirm": "Confirmar ação:",
+            "action_enable_2fa": "Ativar autenticação em duas etapas",
+            "action_disable_2fa": "Desativar autenticação em duas etapas",
+            "action_revoke_all": "Revogar todos os dispositivos confiáveis",
+            "action_revoke_one": "Revogar dispositivo confiável",
+            "action_rename": "Renomear dispositivo confiável"
         },
         "devices": {
             "title": "Dispositivos Confiáveis",

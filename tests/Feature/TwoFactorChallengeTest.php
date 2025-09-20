@@ -24,13 +24,13 @@ it('shows remaining seconds on challenge and reaches zero after expiry', functio
 
     $resp = get(route('2fa.challenge'));
     $resp->assertStatus(200);
-    $page = $resp->inertia();
+    $page = $resp->inertiaPage();
     expect($page['props']['remaining_seconds'])->toBeGreaterThan(0);
 
     // Fast-forward past expiry
     Carbon::setTestNow(now()->addSeconds(10));
     $resp2 = get(route('2fa.challenge'));
-    $page2 = $resp2->inertia();
+    $page2 = $resp2->inertiaPage();
     expect($page2['props']['remaining_seconds'])->toBe(0);
     Carbon::setTestNow();
 });
