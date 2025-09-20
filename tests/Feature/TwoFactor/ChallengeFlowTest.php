@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TwoFactorCodeMail;
 use Illuminate\Support\Carbon;
+require_once __DIR__ . '/../../Support/TestCredentials.php';
 
 function fakeFingerprint(): array
 {
@@ -19,7 +20,7 @@ function fakeFingerprint(): array
 it('issues challenge and redirects to 2fa.challenge for new device (mail may be queued or sent)', function () {
     Mail::fake();
     $user = User::factory()->create([
-        'password' => Hash::make('Passw0rd!'),
+        'password' => Hash::make(TEST_PASSWORD),
         'two_factor_mode' => 'email_on_new_device',
     ]);
     actingAsUser($user);
@@ -39,7 +40,7 @@ it('issues challenge and redirects to 2fa.challenge for new device (mail may be 
 it('verifies valid code and trusts device', function () {
     Mail::fake();
     $user = User::factory()->create([
-        'password' => Hash::make('Passw0rd!'),
+        'password' => Hash::make(TEST_PASSWORD),
         'two_factor_mode' => 'email_on_new_device',
     ]);
     actingAsUser($user);
@@ -71,7 +72,7 @@ it('verifies valid code and trusts device', function () {
 it('resend regenerates challenge', function () {
     Mail::fake();
     $user = User::factory()->create([
-        'password' => Hash::make('Passw0rd!'),
+        'password' => Hash::make(TEST_PASSWORD),
         'two_factor_mode' => 'email_on_new_device',
     ]);
     actingAsUser($user);
@@ -88,7 +89,7 @@ it('resend regenerates challenge', function () {
 
 it('revoking device defers until verification and then applies', function () {
     $user = User::factory()->create([
-        'password' => Hash::make('Passw0rd!'),
+        'password' => Hash::make(TEST_PASSWORD),
         'two_factor_mode' => 'email_on_new_device',
     ]);
     actingAsUser($user);

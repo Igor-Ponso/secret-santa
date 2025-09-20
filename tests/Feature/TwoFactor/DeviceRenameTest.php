@@ -4,6 +4,7 @@ use App\Models\User;
 use App\Models\UserTrustedDevice;
 use App\Models\EmailSecondFactorChallenge;
 use Illuminate\Support\Facades\Hash;
+require_once __DIR__ . '/../../Support/TestCredentials.php';
 
 function issueAndTrust(User $user, array $fp): UserTrustedDevice
 {
@@ -20,7 +21,7 @@ function issueAndTrust(User $user, array $fp): UserTrustedDevice
 
 it('renames a trusted device only after verification', function () {
     $user = User::factory()->create([
-        'password' => Hash::make('Passw0rd!'),
+        'password' => Hash::make(TEST_PASSWORD),
         'two_factor_mode' => 'email_on_new_device',
     ]);
     actingAsUser($user);
@@ -40,8 +41,8 @@ it('renames a trusted device only after verification', function () {
 });
 
 it('prevents renaming device of another user', function () {
-    $userA = User::factory()->create(['password' => Hash::make('Passw0rd!'), 'two_factor_mode' => 'email_on_new_device']);
-    $userB = User::factory()->create(['password' => Hash::make('Passw0rd!'), 'two_factor_mode' => 'email_on_new_device']);
+    $userA = User::factory()->create(['password' => Hash::make(TEST_PASSWORD), 'two_factor_mode' => 'email_on_new_device']);
+    $userB = User::factory()->create(['password' => Hash::make(TEST_PASSWORD), 'two_factor_mode' => 'email_on_new_device']);
     actingAsUser($userA);
     $fp = ['device_id' => bin2hex(random_bytes(8)), 'ua' => 'Mozilla', 'platform' => 'Test'];
     $device = issueAndTrust($userA, $fp);

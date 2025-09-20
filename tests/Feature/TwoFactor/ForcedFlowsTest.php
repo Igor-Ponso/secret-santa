@@ -4,6 +4,7 @@ use App\Models\User;
 use App\Models\UserTrustedDevice;
 use App\Models\EmailSecondFactorChallenge;
 use Illuminate\Support\Facades\Hash;
+require_once __DIR__ . '/../../Support/TestCredentials.php';
 
 /**
  * Helper: bootstrap a challenge (first access) and override code to known value.
@@ -20,14 +21,14 @@ function startChallenge(User $user, array $fp, string $overrideCode = 'ABCDEF'):
 
 it('does not enable 2FA before verification and enables after code', function () {
     $user = User::factory()->create([
-        'password' => Hash::make('Passw0rd!'),
+        'password' => Hash::make(TEST_PASSWORD),
         'two_factor_mode' => 'disabled',
     ]);
     actingAsUser($user);
     $fp = ['device_id' => bin2hex(random_bytes(8))];
 
     // Request enabling -> should redirect to challenge, but NOT update DB yet
-    $resp = test()->post(route('settings.security.2fa.enable'), ['password' => 'Passw0rd!']);
+    $resp = test()->post(route('settings.security.2fa.enable'), ['password' => TEST_PASSWORD]);
     $resp->assertRedirect();
     $user->refresh();
     expect($user->two_factor_mode)->toBe('disabled');
@@ -45,12 +46,12 @@ it('does not enable 2FA before verification and enables after code', function ()
 
 it('canceling pending enable leaves mode unchanged', function () {
     $user = User::factory()->create([
-        'password' => Hash::make('Passw0rd!'),
+        'password' => Hash::make(TEST_PASSWORD),
         'two_factor_mode' => 'disabled',
     ]);
     actingAsUser($user);
     $fp = ['device_id' => bin2hex(random_bytes(8))];
-    test()->post(route('settings.security.2fa.enable'), ['password' => 'Passw0rd!'])->assertRedirect();
+    test()->post(route('settings.security.2fa.enable'), ['password' => TEST_PASSWORD])->assertRedirect();
     $user->refresh();
     expect($user->two_factor_mode)->toBe('disabled');
     // Cancel
@@ -61,7 +62,7 @@ it('canceling pending enable leaves mode unchanged', function () {
 
 it('revoke all executes only after verify', function () {
     $user = User::factory()->create([
-        'password' => Hash::make('Passw0rd!'),
+        'password' => Hash::make(TEST_PASSWORD),
         'two_factor_mode' => 'email_on_new_device',
     ]);
     actingAsUser($user);
@@ -96,7 +97,7 @@ it('revoke all executes only after verify', function () {
 
 it('canceling revoke all leaves devices intact', function () {
     $user = User::factory()->create([
-        'password' => Hash::make('Passw0rd!'),
+        'password' => Hash::make(TEST_PASSWORD),
         'two_factor_mode' => 'email_on_new_device',
     ]);
     actingAsUser($user);
@@ -116,7 +117,7 @@ it('canceling revoke all leaves devices intact', function () {
 
 it('rename device deferred until verify', function () {
     $user = User::factory()->create([
-        'password' => Hash::make('Passw0rd!'),
+        'password' => Hash::make(TEST_PASSWORD),
         'two_factor_mode' => 'email_on_new_device',
     ]);
     actingAsUser($user);

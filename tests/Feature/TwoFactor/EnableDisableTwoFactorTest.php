@@ -2,18 +2,17 @@
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\TwoFactorCodeMail;
+require_once __DIR__ . '/../../Support/TestCredentials.php';
 
 it('enables two-factor only after verification', function () {
     $user = User::factory()->create([
-        'password' => Hash::make('Passw0rd!'),
+        'password' => Hash::make(TEST_PASSWORD),
         'two_factor_mode' => 'disabled',
     ]);
     actingAsUser($user);
     $fp = ['device_id' => bin2hex(random_bytes(8))];
     $response = test()->withUnencryptedCookies(['device_id' => $fp['device_id']])->post(route('settings.security.2fa.enable'), [
-        'password' => 'Passw0rd!',
+        'password' => TEST_PASSWORD,
     ]);
     $response->assertRedirect(route('2fa.challenge'));
     $user->refresh();
@@ -28,7 +27,7 @@ it('enables two-factor only after verification', function () {
 
 it('rejects enable with wrong password', function () {
     $user = User::factory()->create([
-        'password' => Hash::make('Passw0rd!'),
+        'password' => Hash::make(TEST_PASSWORD),
         'two_factor_mode' => 'disabled',
     ]);
 
@@ -45,13 +44,13 @@ it('rejects enable with wrong password', function () {
 
 it('disables two-factor only after verification', function () {
     $user = User::factory()->create([
-        'password' => Hash::make('Passw0rd!'),
+        'password' => Hash::make(TEST_PASSWORD),
         'two_factor_mode' => 'email_on_new_device',
     ]);
     actingAsUser($user);
     $fp = ['device_id' => bin2hex(random_bytes(8))];
     $response = test()->withUnencryptedCookies(['device_id' => $fp['device_id']])->delete(route('settings.security.2fa.disable'), [
-        'password' => 'Passw0rd!',
+        'password' => TEST_PASSWORD,
     ]);
     $response->assertRedirect(route('2fa.challenge'));
     $user->refresh();
@@ -65,7 +64,7 @@ it('disables two-factor only after verification', function () {
 
 it('rejects disable with wrong password', function () {
     $user = User::factory()->create([
-        'password' => Hash::make('Passw0rd!'),
+        'password' => Hash::make(TEST_PASSWORD),
         'two_factor_mode' => 'email_on_new_device',
     ]);
 

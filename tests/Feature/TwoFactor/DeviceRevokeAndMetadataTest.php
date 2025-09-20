@@ -4,6 +4,7 @@ use App\Models\User;
 use App\Models\UserTrustedDevice;
 use App\Models\EmailSecondFactorChallenge;
 use Illuminate\Support\Facades\Hash;
+require_once __DIR__ . '/../../Support/TestCredentials.php';
 
 function trustDeviceFlow(User $user, array $fp, string $code = 'ABCDEF'): UserTrustedDevice
 {
@@ -16,7 +17,7 @@ function trustDeviceFlow(User $user, array $fp, string $code = 'ABCDEF'): UserTr
 
 it('revokes all devices only after verification (single device scenario)', function () {
     $user = User::factory()->create([
-        'password' => Hash::make('Passw0rd!'),
+        'password' => Hash::make(TEST_PASSWORD),
         'two_factor_mode' => 'email_on_new_device',
     ]);
     actingAsUser($user);
@@ -35,7 +36,7 @@ it('revokes all devices only after verification (single device scenario)', funct
 it('updates last_used_at and ip when validating trusted device token', function () {
     // User trusts a device, then subsequent access updates last_used_at & retains ip
     $user = User::factory()->create([
-        'password' => Hash::make('Passw0rd!'),
+        'password' => Hash::make(TEST_PASSWORD),
         'two_factor_mode' => 'email_on_new_device',
     ]);
     actingAsUser($user);
