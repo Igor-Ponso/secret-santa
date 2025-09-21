@@ -33,6 +33,10 @@ if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
 fi
 
 # Run migrations (safe if already up-to-date)
+if ! php -m | grep -qi pdo_sqlite; then
+  echo "[start.sh][WARN] pdo_sqlite extension not loaded. SQLite connection will fail." >&2
+fi
+
 php artisan migrate --force || true
 
 # Cache config/routes/views (ignore if fails; app can still boot)
