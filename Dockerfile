@@ -37,12 +37,18 @@ RUN php -r "copy('https://getcomposer.org/installer','composer-setup.php');" \
  && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
  && rm composer-setup.php
 
-# Install PHP dependencies (no dev for staging/prod)
-# If you prefer to skip scripts entirely you could append: --no-scripts
-RUN composer install --no-dev --prefer-dist --no-interaction --no-progress
+# Install PHP dependencies (no dev for staging/prod) WITHOUT running scripts yet
+# We delay artisan-related scripts until after full source is copied to avoid
+# missing route/config file errors.
+RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --no-scripts
 
 # Copy rest of application source
 COPY . .
+
+# Now that the full application tree (routes/, config/, app/, etc.) exists, run
+# the previously skipped composer scripts (package discovery, etc.). We guard
+# with `|| true` so a non-critical script failure won't break image builds.
+RUN composer run-script post-autoload-dump || true
 
 # Ensure SQLite file exists and proper permissions
 RUN mkdir -p database \
