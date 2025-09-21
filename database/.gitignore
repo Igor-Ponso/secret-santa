@@ -1,1 +1,5 @@
 *.sqlite*
+!database.sqlite
+
+# We keep an empty tracked SQLite file (database.sqlite) for staging/demo deployments
+# so that the container/platform has the file path present. Other sqlite files remain ignored.
