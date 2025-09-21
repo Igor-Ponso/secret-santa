@@ -8,6 +8,9 @@ use App\Models\GroupInvitation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
 
+// Lightweight health endpoint (no DB) for platform liveness checks
+Route::get('/health', fn() => response()->json(['ok' => true]))->name('health');
+
 Route::middleware(['auth', 'verified'])->prefix('groups/{group}/wishlist')->name('groups.wishlist.')->group(function () {
     Route::get('/', [WishlistController::class, 'index'])->name('index');
     Route::post('/', [WishlistController::class, 'store'])->name('store');
