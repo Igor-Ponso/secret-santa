@@ -1,0 +1,14 @@
+# Exclude files not needed in the final image build context
+.git
+.github
+.vscode
+node_modules
+storage/logs/*
+Dockerfile
+.dockerignore
+npm-debug.log
+yarn.lock
+pnp.*
+*.log
+# You can also exclude vendor to force clean install inside container:
+# vendor
