@@ -10,11 +10,12 @@ FROM php:8.3-apache
 
 # Install system dependencies and PHP extensions
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-       git unzip libzip-dev libsqlite3-dev sqlite3 libonig-dev \
-    && docker-php-ext-install pdo pdo_sqlite sqlite3 zip \
-    && a2enmod rewrite \
-    && rm -rf /var/lib/apt/lists/*
+     && apt-get install -y --no-install-recommends \
+         git unzip libzip-dev libsqlite3-dev sqlite3 libonig-dev \
+     # pdo is built-in; we only need pdo_sqlite and zip
+     && docker-php-ext-install pdo_sqlite zip \
+     && a2enmod rewrite \
+     && rm -rf /var/lib/apt/lists/*
 
 # Set Apache Document Root to /public
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
