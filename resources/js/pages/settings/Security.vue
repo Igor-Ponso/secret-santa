@@ -17,18 +17,24 @@ const props = defineProps<{
     current_device_id: number | null;
 }>();
 
+// Constants
+const IP_REVEAL_DURATION_MS = 15000;
+const MAX_GEO_LOOKUPS = 15;
+
+// Forms
 const passwordForm = useForm({ password: '' });
 const revokeForm = useForm<{ id?: number }>({});
 const logoutOthersForm = useForm({ password: '' });
 const renameForm = useForm<{ name: string }>({ name: '' });
 
+// State
 const enabling = ref(false);
 const showPasswordDialog = ref(false);
 const desired2faState = ref<'enable' | 'disable' | null>(null);
 const editingDeviceId = ref<number | null>(null);
 const revealedIps = ref<Record<number, boolean>>({});
-const revealTimers: Record<number, any> = {};
-// geo cache per IP
+const revealTimers: Record<number, ReturnType<typeof setTimeout>> = {};
+
 interface DeviceGeo {
     latitude?: number | null;
     longitude?: number | null;
@@ -36,16 +42,16 @@ interface DeviceGeo {
 const deviceGeo = ref<Record<string, DeviceGeo>>({});
 const loadingGeo = ref(false);
 
-function openToggle(state: 'enable' | 'disable') {
+const openToggle = (state: 'enable' | 'disable'): void => {
     desired2faState.value = state;
     passwordForm.reset('password');
     showPasswordDialog.value = true;
-}
+};
 
 const { t } = useI18n();
 const breadcrumbs: BreadcrumbItem[] = [{ title: t('security.breadcrumb', 'Segurança'), href: '/settings/security' }];
 
-function submit2fa() {
+const submit2fa = (): void => {
     const active = props.two_factor_mode && props.two_factor_mode !== 'disabled';
     if (desired2faState.value === 'enable' && !active) {
         enabling.value = true;
@@ -64,83 +70,76 @@ function submit2fa() {
     } else {
         showPasswordDialog.value = false;
     }
-}
+};
 
-function toggle2fa(val: boolean) {
+const toggle2fa = (val: boolean): void => {
     const active = props.two_factor_mode && props.two_factor_mode !== 'disabled';
-    if (val && !active) {
-        openToggle('enable');
-    } else if (!val && active) {
-        openToggle('disable');
-    }
-}
+    if (val && !active) openToggle('enable');
+    else if (!val && active) openToggle('disable');
+};
 
-function revoke(id: number) {
-    revokeForm.delete(route('settings.security.devices.destroy', id), {
-        preserveScroll: true,
-    });
-}
+const revoke = (id: number): void => {
+    revokeForm.delete(route('settings.security.devices.destroy', id), { preserveScroll: true });
+};
 
-function revokeAll() {
-    revokeForm.delete(route('settings.security.devices.destroyAll'), {
-        preserveScroll: true,
-    });
-}
+const revokeAll = (): void => {
+    revokeForm.delete(route('settings.security.devices.destroyAll'), { preserveScroll: true });
+};
 
-function submitRename(d: TrustedDevice) {
+const submitRename = (d: TrustedDevice): void => {
     renameForm.patch(route('settings.security.devices.rename', d.id), {
         preserveScroll: true,
         onSuccess: () => (editingDeviceId.value = null),
     });
-}
+};
 
-const revealIp = (d: TrustedDevice) => {
+const revealIp = (d: TrustedDevice): void => {
     if (revealedIps.value[d.id]) return;
     revealedIps.value[d.id] = true;
     if (revealTimers[d.id]) clearTimeout(revealTimers[d.id]);
     revealTimers[d.id] = setTimeout(() => {
         revealedIps.value[d.id] = false;
-    }, 15000); // 15s
+    }, IP_REVEAL_DURATION_MS);
 };
 
-async function fetchGeoFor(ip: string) {
+const fetchGeoFor = async (ip: string): Promise<void> => {
     if (!ip || deviceGeo.value[ip]) return;
     try {
         const resp = await fetch(`/geo/ip?ip=${encodeURIComponent(ip)}`);
         if (!resp.ok) return;
         const json = await resp.json();
-        if (json?.data) {
-            deviceGeo.value[ip] = { latitude: json.data.latitude, longitude: json.data.longitude };
-        }
+        if (json?.data) deviceGeo.value[ip] = { latitude: json.data.latitude, longitude: json.data.longitude };
     } catch {
-        // silent
+        /* silent */
     }
-}
+};
 
-async function primeGeo() {
+const primeGeo = async (): Promise<void> => {
     loadingGeo.value = true;
-    const ips = Array.from(new Set(props.devices.map((d) => d.ip_address).filter(Boolean) as string[])).slice(0, 15); // cap to 15 lookups
+    const ips = Array.from(new Set(props.devices.map((d) => d.ip_address).filter(Boolean) as string[])).slice(0, MAX_GEO_LOOKUPS);
     await Promise.all(ips.map((ip) => fetchGeoFor(ip)));
     loadingGeo.value = false;
-}
+};
 
 onMounted(() => {
     primeGeo();
 });
 
-const devicesWithGeo = computed(() => {
-    return props.devices.map((d) => {
+const devicesWithGeo = computed(() =>
+    props.devices.map((d) => {
         const geo = d.ip_address ? deviceGeo.value[d.ip_address] : undefined;
-        return { ...d, latitude: geo?.latitude, longitude: geo?.longitude, _revealed: revealedIps.value[d.id] } as any;
-    });
-});
+        return { ...d, latitude: geo?.latitude, longitude: geo?.longitude, _revealed: revealedIps.value[d.id] } as TrustedDevice & {
+            _revealed: boolean;
+        };
+    }),
+);
 
-function logoutOthers() {
+const logoutOthers = (): void => {
     logoutOthersForm.post(route('settings.security.logoutOthers'), {
         preserveScroll: true,
         onSuccess: () => logoutOthersForm.reset('password'),
     });
-}
+};
 </script>
 
 <template>

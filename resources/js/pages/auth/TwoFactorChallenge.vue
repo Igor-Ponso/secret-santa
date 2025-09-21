@@ -1,123 +1,49 @@
 <script setup lang="ts">
 import { PinInput, PinInputGroup, PinInputSeparator, PinInputSlot } from '@/components/ui/pin-input';
+import { useCountdown } from '@/composables/useCountdown';
+import { usePendingActionLabel } from '@/composables/usePendingActionLabel';
+import { useResendWindow } from '@/composables/useResendWindow';
+import { useTwoFactorAttempts } from '@/composables/useTwoFactorAttempts';
+import { useTwoFactorResend } from '@/composables/useTwoFactorResend';
+import type { TwoFactorChallengeProps } from '@/interfaces/twofactor';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-interface PendingAction {
-    type?: string;
-    id?: string | number | null;
-    name?: string | null;
-}
-interface Props {
-    mode?: string;
-    resent?: boolean;
-    expires_at?: string;
-    remaining_seconds?: number;
-    server_time?: string;
-    resend_allowed?: boolean;
-    resend_wait_seconds?: number;
-    resend_suspended?: boolean;
-    resend_min_interval?: number;
-    next_resend_at?: string | null;
-    resend_attempt_count?: number;
-    resend_max_before_suspend?: number;
-    pending_action?: PendingAction | null;
-}
-const props = defineProps<Props>();
+const props = defineProps<TwoFactorChallengeProps>();
 const { t } = useI18n();
 
-function pendingLabel() {
-    const type = props.pending_action?.type;
-    if (!type) return '';
-    const map: Record<string, string> = {
-        enable_2fa: 'Enable Two-Factor Authentication',
-        disable_2fa: 'Disable Two-Factor Authentication',
-        revoke_all: 'Revoke all trusted devices',
-        revoke_one: 'Revoke a trusted device',
-        rename: 'Rename a trusted device',
-    };
-    return map[type] || '';
-}
+// Constants
+const CODE_LENGTH = 6;
+const RESEND_REFRESH_KEYS: Array<keyof TwoFactorChallengeProps> = ['resend_wait_seconds', 'next_resend_at', 'resend_allowed', 'resend_suspended'];
+
+// Countdown for challenge expiration
+const { remaining, start: startCountdown, isExpired, mmss } = useCountdown(props.remaining_seconds ?? 0);
+// Resend window control
+const resendWindow = useResendWindow({
+    nextResendAt: () => props.next_resend_at,
+    waitSeconds: () => props.resend_wait_seconds,
+    suspended: () => props.resend_suspended,
+    allowed: () => props.resend_allowed,
+});
+// Attempt labels
+const attempts = useTwoFactorAttempts(
+    () => props.resend_attempt_count,
+    () => props.resend_max_before_suspend,
+    () => !!resendWindow.resendSuspended.value,
+);
+// Pending action label
+const { pendingActionLabel } = usePendingActionLabel(() => props.pending_action);
+
+// Form / state
 const form = useForm({ code: '', trust: true });
-const length = 6;
-const values = ref<string[]>(Array(length).fill(''));
+const values = ref<string[]>(Array(CODE_LENGTH).fill(''));
 const submitting = ref(false);
 const error = ref<string | null>(null);
 const resentFlag = ref(props.resent);
-const remaining = ref(props.remaining_seconds ?? 0);
-// Resend / throttle state & attempt labels
-const resendWait = ref(props.resend_wait_seconds ?? 0);
-const nextResendAt = ref<Date | null>(props.next_resend_at ? new Date(props.next_resend_at) : null);
-const resendAllowed = ref(props.resend_allowed ?? true);
-const resendSuspended = ref(props.resend_suspended ?? false);
-let resendTimer: any = null;
-let timer: any = null;
-const attemptLabel = computed(() => {
-    if (typeof props.resend_attempt_count !== 'number' || typeof props.resend_max_before_suspend !== 'number') return '';
-    const current = (props.resend_attempt_count || 0) + 1;
-    const total = props.resend_max_before_suspend;
-    return `Attempt ${current} of ${total}`;
-});
-const showAttemptLabel = computed(() => attemptLabel.value && !resendSuspended.value);
-const warningLabel = computed(() => {
-    if (resendSuspended.value || typeof props.resend_attempt_count !== 'number' || typeof props.resend_max_before_suspend !== 'number') return '';
-    const remaining = props.resend_max_before_suspend - props.resend_attempt_count;
-    if (remaining > 2 || props.resend_attempt_count >= props.resend_max_before_suspend) return '';
-    return `After ${props.resend_max_before_suspend} attempts your account will be temporarily locked.`;
-});
-const showWarning = computed(() => warningLabel.value.length > 0);
 
-function formatResendWait(seconds: number): string {
-    if (seconds <= 0) return '0s';
-    if (seconds < 60) return `${seconds}s`;
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    if (h > 0) {
-        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    }
-    return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-function startTimer() {
-    if (timer) clearInterval(timer);
-    if (remaining.value <= 0) return;
-    timer = setInterval(() => {
-        if (remaining.value > 0) remaining.value -= 1;
-        if (remaining.value <= 0) {
-            clearInterval(timer);
-            timer = null;
-        }
-    }, 1000);
-}
-startTimer();
-onBeforeUnmount(() => {
-    if (timer) clearInterval(timer);
-    if (resendTimer) clearInterval(resendTimer);
-});
-
-const isExpired = () => remaining.value <= 0;
-const mmss = () => {
-    const m = Math.floor(remaining.value / 60)
-        .toString()
-        .padStart(2, '0');
-    const s = Math.floor(remaining.value % 60)
-        .toString()
-        .padStart(2, '0');
-    return `${m}:${s}`;
-};
-
-watch(values, (v) => {
-    if (isExpired()) return;
-    form.code = v.join('').toUpperCase();
-    error.value = null;
-    if (form.code.length === length) {
-        submit();
-    }
-});
-
-function submit() {
+// Submission
+const submit = (): void => {
     if (submitting.value) return;
     submitting.value = true;
     form.post(route('2fa.verify'), {
@@ -125,102 +51,65 @@ function submit() {
         onError: (errs) => {
             error.value = (errs.code as string) || 'Invalid code';
             submitting.value = false;
-            // reset code fields
-            values.value = Array(length).fill('');
+            values.value = Array(CODE_LENGTH).fill('');
         },
         onSuccess: () => {
             submitting.value = false;
         },
     });
-}
+};
 
-function resend() {
-    if (resendSuspended.value) return;
-    if (!resendAllowed.value) return;
-    router.post(
-        route('2fa.resend'),
-        {},
-        {
-            onSuccess: () => {
-                router.reload({ only: ['expires_at', 'remaining_seconds', 'resent', 'resend_allowed', 'resend_wait_seconds', 'resend_suspended'] });
-            },
-            onError: (errs) => {
-                // Expect error bag key 'resend'
-                const msg = (errs.resend as string) || 'Cannot resend now.';
-                error.value = msg;
-                // Try to extract wait seconds: "Please wait Xs before..."
-                const match = msg.match(/wait\s+(\d+)s/i);
-                if (match) {
-                    const w = parseInt(match[1], 10);
-                    if (!isNaN(w) && w > 0) {
-                        resendWait.value = w;
-                        resendAllowed.value = false;
-                        if (resendTimer) clearInterval(resendTimer);
-                        resendTimer = setInterval(() => {
-                            if (resendWait.value > 0) resendWait.value -= 1;
-                            if (resendWait.value <= 0) {
-                                resendAllowed.value = !resendSuspended.value;
-                                clearInterval(resendTimer);
-                                resendTimer = null;
-                            }
-                        }, 1000);
-                    }
-                }
-                // Try partial reload to update wait seconds
-                router.reload({ only: ['resend_allowed', 'resend_wait_seconds', 'resend_suspended'] });
-            },
-        },
-    );
-}
+// Resend handler via composable
+const resend = (): void => resendComposable.resend();
+const resendComposable = useTwoFactorResend({
+    suspended: () => !!resendWindow.resendSuspended.value,
+    allowed: () => !!resendWindow.resendAllowed.value,
+    setError: (m: string) => {
+        error.value = m;
+    },
+    setWait: (s: number) => {
+        resendWindow.resendWait.value = s;
+    },
+    setAllowed: (v: boolean) => {
+        resendWindow.resendAllowed.value = v;
+    },
+    reload: () =>
+        router.reload({
+            only: ['expires_at', 'remaining_seconds', 'resent', 'resend_allowed', 'resend_wait_seconds', 'resend_suspended', 'next_resend_at'],
+        }),
+});
 
-function cancel() {
+const cancel = (): void => {
     router.post(route('2fa.cancel'));
-}
+};
 
-// React to updated props after resend (Inertia partial reload)
+// Watch PIN values to auto-submit
+watch(values, (v) => {
+    if (isExpired()) return;
+    form.code = v.join('').toUpperCase();
+    error.value = null;
+    if (form.code.length === CODE_LENGTH) submit();
+});
+
+// React to challenge refresh
 watch(
     () => props.remaining_seconds,
     (val) => {
         if (typeof val === 'number' && val > 0) {
-            remaining.value = val;
-            // reset state for fresh attempt
-            values.value = Array(length).fill('');
+            remaining.value = val; // direct adjust
+            values.value = Array(CODE_LENGTH).fill('');
             error.value = null;
             resentFlag.value = props.resent;
-            startTimer();
+            startCountdown(val);
         }
     },
 );
 
-// Watch resend props updates
+// React to resend-related prop changes (trigger internal recompute)
 watch(
-    () => [props.resend_wait_seconds, props.next_resend_at, props.resend_allowed, props.resend_suspended],
+    () => RESEND_REFRESH_KEYS.map((k) => props[k]),
     () => {
-        resendSuspended.value = !!props.resend_suspended;
-        nextResendAt.value = props.next_resend_at ? new Date(props.next_resend_at) : null;
-        if (nextResendAt.value) {
-            const diff = Math.ceil((nextResendAt.value.getTime() - Date.now()) / 1000);
-            resendWait.value = diff > 0 ? diff : 0;
-        } else {
-            resendWait.value = props.resend_wait_seconds ?? 0;
-        }
-        resendAllowed.value = !!props.resend_allowed && resendWait.value === 0 && !resendSuspended.value;
-        if (resendTimer) clearInterval(resendTimer);
-        if (!resendSuspended.value && resendWait.value > 0) {
-            resendTimer = setInterval(() => {
-                if (nextResendAt.value) {
-                    const diff2 = Math.ceil((nextResendAt.value.getTime() - Date.now()) / 1000);
-                    resendWait.value = diff2 > 0 ? diff2 : 0;
-                } else if (resendWait.value > 0) {
-                    resendWait.value -= 1;
-                }
-                if (resendWait.value <= 0) {
-                    resendAllowed.value = !resendSuspended.value;
-                    clearInterval(resendTimer);
-                    resendTimer = null;
-                }
-            }, 1000);
-        }
+        /* hydrated internally by useResendWindow watcher */
     },
     { immediate: true },
 );
@@ -244,7 +133,7 @@ watch(
                 <p v-if="resentFlag" class="text-xs text-emerald-600">{{ t('security.2fa.new_code_sent') }}</p>
                 <p v-if="!isExpired()" class="text-xs">{{ t('security.2fa.expires_in', { time: mmss() }) }}</p>
                 <div v-if="props.pending_action" class="mt-2 rounded bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-700">
-                    {{ t('security.2fa.pending_confirm') }} {{ pendingLabel() }}
+                    {{ t('security.2fa.pending_confirm') }} {{ pendingActionLabel }}
                 </div>
             </div>
             <form @submit.prevent="submit" class="space-y-4">
@@ -269,23 +158,23 @@ watch(
                                 type="button"
                                 @click="resend"
                                 class="text-xs underline hover:text-primary disabled:opacity-40"
-                                :disabled="submitting || !resendAllowed || resendSuspended"
+                                :disabled="submitting || !resendWindow.resendAllowed.value || resendWindow.resendSuspended.value"
                             >
                                 {{ t('security.2fa.resend') }}
                             </button>
-                            <span v-if="resendSuspended" class="text-[10px] font-medium text-destructive">{{
-                                t('security.2fa.resend_suspended') || 'Suspended'
-                            }}</span>
+                            <span v-if="resendWindow.resendSuspended.value" class="text-[10px] font-medium text-destructive">
+                                {{ t('security.2fa.resend_suspended') || 'Suspended' }}
+                            </span>
                             <span
-                                v-else-if="!resendAllowed && resendWait > 0"
+                                v-else-if="!resendWindow.resendAllowed.value && (resendWindow.resendWait.value || 0) > 0"
                                 class="text-[10px] text-muted-foreground"
                                 :title="t('security.2fa.resend_waiting')"
                             >
-                                {{ formatResendWait(resendWait) }}
+                                {{ resendWindow.formatCompact(resendWindow.resendWait.value || 0) }}
                             </span>
                         </div>
-                        <div v-if="showAttemptLabel" class="text-[10px] text-muted-foreground">{{ attemptLabel }}</div>
-                        <div v-if="showWarning" class="text-[10px] font-medium text-amber-600">{{ warningLabel }}</div>
+                        <div v-if="attempts.showAttemptLabel.value" class="text-[10px] text-muted-foreground">{{ attempts.attemptLabel.value }}</div>
+                        <div v-if="attempts.showWarning.value" class="text-[10px] font-medium text-amber-600">{{ attempts.warningLabel.value }}</div>
                         <button type="button" @click="cancel" class="text-xs text-muted-foreground underline hover:text-foreground">
                             {{ t('security.2fa.cancel') }}
                         </button>

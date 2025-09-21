@@ -1,37 +1,47 @@
 <script setup lang="ts">
+import type { GroupRef, OnboardingDraftItem } from '@/interfaces/onboarding';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 interface Props {
-    group: { id: number; name: string };
+    group: GroupRef;
 }
 const props = defineProps<Props>();
 const { t } = useI18n();
 
-interface DraftItem {
-    item: string;
-    note?: string;
-    url?: string;
-}
-const drafts = ref<DraftItem[]>([{ item: '', note: '', url: '' }]);
+// Constants
+const MAX_ITEMS = 3;
 
-function addRow() {
-    if (drafts.value.length < 3) drafts.value.push({ item: '', note: '', url: '' });
-}
-function removeRow(i: number) {
-    if (drafts.value.length > 1) drafts.value.splice(i, 1);
-}
+// State
+const drafts = ref<OnboardingDraftItem[]>([{ item: '', note: '', url: '' }]);
 
-function submit() {
+// Helpers
+const addRow = (): void => {
+    if (drafts.value.length < MAX_ITEMS) {
+        drafts.value.push({ item: '', note: '', url: '' });
+    }
+};
+
+const removeRow = (i: number): void => {
+    if (drafts.value.length > 1) {
+        drafts.value.splice(i, 1);
+    }
+};
+
+const submit = (): void => {
     const payload = drafts.value.filter((d) => d.item.trim().length);
-    if (!payload.length) return skip();
+    if (!payload.length) {
+        skip();
+        return;
+    }
     router.post(route('groups.onboarding.store', props.group.id), { items: payload });
-}
-function skip() {
+};
+
+const skip = (): void => {
     router.post(route('groups.onboarding.skip', props.group.id));
-}
+};
 </script>
 
 <template>
@@ -83,7 +93,7 @@ function skip() {
                     <button
                         type="button"
                         @click="addRow"
-                        :disabled="drafts.length >= 3"
+                        :disabled="drafts.length >= MAX_ITEMS"
                         class="inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent disabled:opacity-40"
                     >
                         {{ t('onboarding.add_item') }}

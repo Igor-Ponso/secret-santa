@@ -16,34 +16,36 @@ const emit = defineEmits<{
     (e: 'reveal-ip', id: number): void;
 }>();
 
+// Constants
+const IP_REVEAL_DURATION_MS = 15000;
+
+// Local state
 const renaming = ref(false);
 const nameInput = ref('');
+const revealed = ref(false); // local UI state for revealed IP (mirrors previous parent behavior)
+
 const { t } = useI18n();
 
-function startRename() {
+const startRename = (): void => {
     renaming.value = true;
     nameInput.value = props.device.name || '';
-}
-function cancelRename() {
+};
+const cancelRename = (): void => {
     renaming.value = false;
-}
-function submitRename() {
+};
+const submitRename = (): void => {
     emit('rename', { id: props.device.id, name: nameInput.value.trim() });
-}
-
-function revoke() {
+};
+const revoke = (): void => {
     emit('revoke', props.device.id);
-}
-function revealIp() {
+};
+const revealIp = (): void => {
     emit('reveal-ip', props.device.id);
     if (!revealed.value) {
         revealed.value = true;
-        setTimeout(() => (revealed.value = false), 15000);
+        setTimeout(() => (revealed.value = false), IP_REVEAL_DURATION_MS);
     }
-}
-
-// local UI state for revealed IP (mirrors previous parent behavior)
-const revealed = ref(false);
+};
 </script>
 
 <template>
