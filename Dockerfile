@@ -62,7 +62,12 @@ RUN php artisan config:cache || true \
  && php artisan route:cache || true \
  && php artisan view:cache || true
 
-EXPOSE 80
+# Koyeb deployment definition expects container to serve on port 8000.
+# Adjust Apache to listen on 8000 (default image listens on 80).
+RUN sed -ri 's/^Listen 80$/Listen 8000/' /etc/apache2/ports.conf \
+ && sed -ri 's!<VirtualHost \*:80>!<VirtualHost *:8000>!' /etc/apache2/sites-available/000-default.conf
+
+EXPOSE 8000
 
 # Launch script will run migrations at runtime (see docker-start.sh)
 COPY docker-start.sh /usr/local/bin/docker-start.sh
