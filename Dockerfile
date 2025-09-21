@@ -27,12 +27,18 @@ WORKDIR /var/www/html
 # Copy composer manifests first for layer caching
 COPY composer.json composer.lock* ./
 
+# Also copy minimal framework bootstrap (artisan + bootstrap folder) so that
+# composer post-autoload-dump scripts that invoke artisan won't fail.
+COPY artisan artisan
+COPY bootstrap ./bootstrap
+
 # Install Composer
 RUN php -r "copy('https://getcomposer.org/installer','composer-setup.php');" \
  && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
  && rm composer-setup.php
 
 # Install PHP dependencies (no dev for staging/prod)
+# If you prefer to skip scripts entirely you could append: --no-scripts
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress
 
 # Copy rest of application source
