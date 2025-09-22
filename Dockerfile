@@ -6,6 +6,22 @@
 # separate DB (MySQL/Postgres) and maybe a robust web server config.
 # -------------------------------------------------------------------
 
+###############################
+# 1) Frontend build stage
+###############################
+FROM node:20-alpine AS frontend-build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev=false
+COPY resources ./resources
+COPY tsconfig.json vite.config.ts tailwind.config.js ./
+COPY components.json ./components.json
+COPY postcss.config.js ./postcss.config.js 2>/dev/null || true
+RUN npm run build
+
+###############################
+# 2) PHP runtime stage
+###############################
 FROM php:8.3-apache
 
 # Install system dependencies and PHP extensions
@@ -44,6 +60,9 @@ RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --no-
 
 # Copy rest of application source
 COPY . .
+
+# Copy built frontend assets from build stage
+COPY --from=frontend-build /app/public/build ./public/build
 
 # Now that the full application tree (routes/, config/, app/, etc.) exists, run
 # the previously skipped composer scripts (package discovery, etc.). We guard
