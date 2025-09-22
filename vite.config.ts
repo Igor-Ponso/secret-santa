@@ -1,11 +1,11 @@
 import vue from '@vitejs/plugin-vue';
 import autoprefixer from 'autoprefixer';
 import laravel from 'laravel-vite-plugin';
-import { resolve } from 'node:path';
 import path from 'path';
 import tailwindcss from 'tailwindcss';
 import { defineConfig } from 'vite';
 import vueDevTools from 'vite-plugin-vue-devtools';
+
 
 export default defineConfig({
     plugins: [
@@ -31,7 +31,6 @@ export default defineConfig({
         alias: {
             '@': path.resolve(__dirname, './resources/js'), // JS/TS source
             '@assets': path.resolve(__dirname, './resources/assets'), // Static assets (images, etc.)
-            'ziggy-js': resolve(__dirname, 'vendor/tightenco/ziggy'),
         },
     },
     css: {
