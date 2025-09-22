@@ -78,36 +78,6 @@ class AppServiceProvider extends ServiceProvider
         if (strcasecmp($invitation->email, $user->email) !== 0) {
             // store mismatch flag for UI feedback maybe
             session(['invite_email_mismatch' => true]);
-            // Ensure we correctly detect HTTPS behind a reverse proxy (e.g., Koyeb)
-            // If APP_URL is set to https but generated asset URLs are http, it's usually because
-            // the framework does not trust the X-Forwarded-Proto header or APP_URL is misconfigured.
-            // Trust common proxy headers and force https scheme in production when request indicates it.
-            if (app()->environment('production')) {
-                // Trust proxy headers (keep it broad - platform sets X-Forwarded-* ).
-                // In Laravel 11/12 minimal bootstrap, trusting proxies can be done via setTrustedProxies.
-                try {
-                    // Use available header constants; fallback to trusting X-Forwarded-Proto only
-                    $headerSet = 0;
-                    foreach (['HEADER_X_FORWARDED_AWS_ELB', 'HEADER_X_FORWARDED_ALL', 'HEADER_X_FORWARDED_FOR', 'HEADER_X_FORWARDED_HOST', 'HEADER_X_FORWARDED_PORT', 'HEADER_X_FORWARDED_PROTO'] as $c) {
-                        if (defined(\Illuminate\Http\Request::class . '::' . $c)) {
-                            $headerSet |= constant(\Illuminate\Http\Request::class . '::' . $c);
-                        }
-                    }
-                    if ($headerSet === 0 && defined(\Illuminate\Http\Request::class . '::HEADER_X_FORWARDED_PROTO')) {
-                        $headerSet = constant(\Illuminate\Http\Request::class . '::HEADER_X_FORWARDED_PROTO');
-                    }
-                    if ($headerSet) {
-                        \Illuminate\Http\Request::setTrustedProxies(['*'], $headerSet);
-                    }
-                } catch (\Throwable $e) {
-                    // Ignore; not critical
-                }
-
-                // Force URL generator to use https so @vite() and asset() links are https.
-                if (config('app.url') && str_starts_with(config('app.url'), 'https://')) {
-                    \Illuminate\Support\Facades\URL::forceScheme('https');
-                }
-            }
             return;
         }
         if (!$invitation->accepted_at && !$invitation->declined_at && !$invitation->isExpired()) {
