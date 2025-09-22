@@ -16,7 +16,7 @@ RUN npm ci --omit=dev=false
 COPY resources ./resources
 COPY tsconfig.json vite.config.ts tailwind.config.js ./
 COPY components.json ./components.json
-COPY postcss.config.js ./postcss.config.js 2>/dev/null || true
+# (No postcss.config.js needed; plugins declared inline in vite.config.ts)
 RUN npm run build
 
 ###############################
